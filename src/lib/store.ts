@@ -29,8 +29,15 @@ export interface FormState {
   att?: Record<number, boolean>;
 }
 
+export interface MsgStats {
+  total: number;
+  ok: number;
+  byKind: Record<string, number>;
+}
+
 interface AppState {
   hydrated: boolean;
+  msgStats: MsgStats | null; // KPI thật từ message_log (null = chưa có / demo)
   lang: Lang;
   dark: boolean;
   menuOpen: boolean;
@@ -172,8 +179,28 @@ async function loadFromSupabase() {
   return mapped;
 }
 
+async function loadMsgStats(): Promise<MsgStats | null> {
+  const supa = sb();
+  if (!supa) return null;
+  const now = new Date();
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+  const res = await supa.from("message_log").select("kind,ok").gte("sent_at", monthStart);
+  if (res.error) return null; // bảng chưa có (chưa migration) → giữ số demo
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const rows = (res.data || []) as any[];
+  const byKind: Record<string, number> = {};
+  let ok = 0;
+  rows.forEach((r) => {
+    byKind[r.kind] = (byKind[r.kind] || 0) + 1;
+    if (r.ok) ok++;
+  });
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+  return { total: rows.length, ok, byKind };
+}
+
 export const useApp = create<AppState>((set, get) => ({
   hydrated: false,
+  msgStats: null,
   lang: "vi",
   dark: false,
   menuOpen: false,
@@ -201,6 +228,7 @@ export const useApp = create<AppState>((set, get) => ({
           if (data) set(data);
         })
         .catch((e) => get().showToast("Supabase: " + (e?.message || "load error")));
+      loadMsgStats().then((stats) => stats && set({ msgStats: stats }));
     }
   },
 

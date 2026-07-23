@@ -1,6 +1,9 @@
 // Logic nhắc lịch học tự động — dùng ở API route /api/cron/reminders.
 // Múi giờ Việt Nam cố định UTC+7 (không DST).
 import type { Session, Student, ZaloLink } from "./types";
+import { presentCount, paidSessions } from "./derived";
+
+export type ReminderKind = "schedule" | "attendance" | "grades" | "tuition" | "risk";
 
 const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -59,14 +62,20 @@ function candidateStarts(session: Session, nowMs: number, force = false): number
 }
 
 export interface DueReminder {
-  sessionId: number;
+  kind: ReminderKind;
+  sessionId?: number;
   studentId: number;
   studentName: string;
   chatId: string;
   token: string;
   text: string;
   dedupKey: string;
-  startVN: string; // "HH:MM DD/MM"
+  startVN?: string; // "HH:MM DD/MM"
+}
+
+/** Học viên đã liên kết Zalo (có chat_id, không phải "Not linked"). */
+function linkFor(student: Student, zalo: ZaloLink[]) {
+  return zalo.find((z) => z.name === student.name && z.status !== "Not linked" && z.chatId);
 }
 
 function buildMessage(student: Student, session: Session, startMs: number): string {
@@ -113,17 +122,143 @@ export function dueReminders(
         const link = zalo.find((z) => z.name === student.name && z.status !== "Not linked");
         if (!link || !link.chatId) continue; // chưa liên kết Zalo → bỏ qua
         out.push({
+          kind: "schedule",
           sessionId: session.id,
           studentId: sid,
           studentName: student.name,
           chatId: link.chatId,
           token: link.token || "",
           text: buildMessage(student, session, startMs),
-          dedupKey: `${session.id}:${dayKey}:${sid}`,
+          dedupKey: `schedule:${session.id}:${dayKey}:${sid}`,
           startVN: `${pad(p.hh)}:${pad(p.mm)} ${pad(p.da)}/${pad(p.mo)}`,
         });
       }
     }
+  }
+  return out;
+}
+
+// ---------- Các tự động khác (gắn với công tắc ở trang Zalo Bot) ----------
+
+const todayKeyVN = (nowMs: number) => vnDateStr(nowMs).replace(/-/g, "");
+
+/** Cảnh báo chuyên cần: buổi đã bắt đầu ~15p mà học viên chưa được điểm danh có mặt. */
+export function buildAttendanceAlerts(
+  sessions: Session[], students: Student[], zalo: ZaloLink[], nowMs: number,
+  opts: { afterMin?: number; windowMin?: number; force?: boolean } = {}
+): DueReminder[] {
+  const after = opts.afterMin ?? 15;
+  const win = opts.windowMin ?? 10;
+  const out: DueReminder[] = [];
+  for (const s of sessions) {
+    const { hh, mm } = slotStart(s.t);
+    // mốc bắt đầu hôm nay (VN); buổi có ngày cụ thể thì dùng đúng ngày đó
+    const startMs = startUTCms(s.date || vnDateStr(nowMs), hh, mm);
+    const minsSince = (nowMs - startMs) / 60000;
+    const inWindow = minsSince >= after && minsSince < after + win;
+    if (!opts.force && !inWindow) continue;
+    // Chỉ cảnh báo khi GV đã điểm danh (att có dữ liệu) và học viên KHÔNG có mặt
+    const taken = s.att && Object.keys(s.att).length > 0;
+    if (!opts.force && !taken) continue;
+    for (const sid of s.studentIds || []) {
+      if (s.att && s.att[sid]) continue; // có mặt → bỏ
+      const st = students.find((x) => x.id === sid);
+      if (!st) continue;
+      const link = linkFor(st, zalo);
+      if (!link) continue;
+      out.push({
+        kind: "attendance", sessionId: s.id, studentId: sid, studentName: st.name,
+        chatId: link.chatId, token: link.token || "",
+        text:
+          `⚠️ AIhoclaptrinh · Cảnh báo chuyên cần\n\n` +
+          `Em ${st.name} chưa có mặt tại lớp "${s.n}" (${s.t}) hôm nay. ` +
+          `Nhờ quý phụ huynh kiểm tra giúp ạ. Cảm ơn!`,
+        dedupKey: `attendance:${s.id}:${todayKeyVN(nowMs)}:${sid}`,
+      });
+    }
+  }
+  return out;
+}
+
+/** Nhắc học phí: học viên đã đến kỳ thu (owed ≥ cycle). Tối đa 1 lần/ngày. */
+export function buildTuitionReminders(
+  students: Student[], sessions: Session[], zalo: ZaloLink[], nowMs: number,
+  opts: { force?: boolean } = {}
+): DueReminder[] {
+  const out: DueReminder[] = [];
+  for (const st of students) {
+    const owed = presentCount(st, sessions) - paidSessions(st);
+    const due = owed >= (st.cycle || 10);
+    if (!opts.force && !due) continue;
+    const link = linkFor(st, zalo);
+    if (!link) continue;
+    out.push({
+      kind: "tuition", studentId: st.id, studentName: st.name,
+      chatId: link.chatId, token: link.token || "",
+      text:
+        `💰 AIhoclaptrinh · Nhắc học phí\n\n` +
+        `Em ${st.name} đã học đủ số buổi của kỳ. Học phí kỳ này${st.fee ? " (" + st.fee + ")" : ""} ` +
+        `đã đến hạn thanh toán. Nhờ quý phụ huynh sắp xếp giúp ạ. Xin cảm ơn!`,
+      dedupKey: `tuition:${todayKeyVN(nowMs)}:${st.id}`,
+    });
+  }
+  return out;
+}
+
+/** Báo cáo điểm hàng tuần: chỉ gửi vào Thứ Sáu ~17:00 (giờ VN). Tối đa 1 lần/tuần. */
+export function buildGradeReports(
+  students: Student[], sessions: Session[], zalo: ZaloLink[], nowMs: number,
+  opts: { hour?: number; windowMin?: number; force?: boolean } = {}
+): DueReminder[] {
+  const hour = opts.hour ?? 17;
+  const win = opts.windowMin ?? 7;
+  const p = vnParts(nowMs);
+  const isFriday = p.dow === 5;
+  const minsOfDay = p.hh * 60 + p.mm;
+  const target = hour * 60;
+  const inWindow = isFriday && minsOfDay >= target && minsOfDay < target + win;
+  if (!opts.force && !inWindow) return [];
+  const weekKey = todayKeyVN(nowMs); // dedup theo ngày Thứ Sáu đó
+  const out: DueReminder[] = [];
+  for (const st of students) {
+    const link = linkFor(st, zalo);
+    if (!link) continue;
+    const att = st.attendance != null ? st.attendance + "%" : "—";
+    out.push({
+      kind: "grades", studentId: st.id, studentName: st.name,
+      chatId: link.chatId, token: link.token || "",
+      text:
+        `📊 AIhoclaptrinh · Báo cáo tuần\n\n` +
+        `Em ${st.name}\n` +
+        `• GPA: ${st.gpa || "—"}\n` +
+        `• Chuyên cần: ${att}\n` +
+        `• Trạng thái: ${st.status}\n\n` +
+        `Chúc gia đình cuối tuần vui vẻ!`,
+      dedupKey: `grades:${weekKey}:${st.id}`,
+    });
+  }
+  return out;
+}
+
+/** Cảnh báo rủi ro AI: học viên đang "At risk". Tối đa 1 lần/ngày. */
+export function buildRiskAlerts(
+  students: Student[], zalo: ZaloLink[], nowMs: number,
+  opts: { force?: boolean } = {}
+): DueReminder[] {
+  const out: DueReminder[] = [];
+  for (const st of students) {
+    if (!opts.force && st.status !== "At risk") continue;
+    const link = linkFor(st, zalo);
+    if (!link) continue;
+    out.push({
+      kind: "risk", studentId: st.id, studentName: st.name,
+      chatId: link.chatId, token: link.token || "",
+      text:
+        `🚨 AIhoclaptrinh · Cảnh báo rủi ro\n\n` +
+        `Hệ thống AI ghi nhận em ${st.name} đang có dấu hiệu cần quan tâm ` +
+        `(chuyên cần/điểm số giảm). Nhà trường sẽ liên hệ để cùng hỗ trợ em ạ.`,
+      dedupKey: `risk:${todayKeyVN(nowMs)}:${st.id}`,
+    });
   }
   return out;
 }

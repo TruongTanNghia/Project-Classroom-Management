@@ -11,43 +11,53 @@ const GRID = "2fr 1.5fr 1.1fr 1fr 1.6fr 40px";
 export default function ZaloBotPage() {
   const lang = useApp((s) => s.lang);
   const zalo = useApp((s) => s.zalo);
+  const students = useApp((s) => s.students);
   const zaloAuto = useApp((s) => s.zaloAuto);
   const toggleAuto = useApp((s) => s.toggleAuto);
   const openModal = useApp((s) => s.openModal);
+  const msgStats = useApp((s) => s.msgStats);
   const t = dicts[lang];
   const vi = lang !== "en";
 
+  // KPI thật: đã liên kết = có chat_id & không "Not linked"; hủy nhận = "Not linked"
+  const linked = zalo.filter((z) => z.chatId && z.status !== "Not linked").length;
+  const optOut = zalo.filter((z) => z.status === "Not linked").length;
+  const total = students.length || zalo.length;
+  const rate = linked && total ? Math.round((linked / total) * 1000) / 10 : 0;
+  // Số tin nhắn: từ message_log tháng này (msgStats). Chưa migration → hiện "—".
+  const monthTotal = msgStats ? msgStats.total : null;
+  const delivery = msgStats && msgStats.total ? Math.round((msgStats.ok / msgStats.total) * 1000) / 10 : null;
+  const kindCount = (k: string) => (msgStats ? msgStats.byKind[k] || 0 : null);
+  const statText = (n: number | null) =>
+    n == null ? (vi ? "chờ chạy" : "pending") : n + (vi ? " tin tháng này" : " sent this month");
+
   const kpis = [
-    { label: vi ? "Gia đình đã liên kết" : "Linked families", value: "1,047", note: vi ? "trên 1.284 học viên · 81,5%" : "of 1,284 students · 81.5%" },
-    { label: vi ? "Tin nhắn tháng này" : "Messages this month", value: "1,501", note: vi ? "tự động + thủ công" : "automated + manual" },
-    { label: vi ? "Tỷ lệ gửi thành công" : "Delivery rate", value: "97.2%", note: vi ? "tỷ lệ đọc 89,4%" : "read rate 89.4%" },
-    { label: vi ? "Hủy nhận tin" : "Opt-outs", value: "12", note: vi ? "3 mới tháng này" : "3 new this month" },
+    { label: vi ? "Gia đình đã liên kết" : "Linked families", value: String(linked), note: (vi ? "trên " : "of ") + total + (vi ? " học viên · " : " students · ") + rate + "%" },
+    { label: vi ? "Tin nhắn tháng này" : "Messages this month", value: monthTotal == null ? "—" : String(monthTotal), note: vi ? "tự động + thủ công" : "automated + manual" },
+    { label: vi ? "Tỷ lệ gửi thành công" : "Delivery rate", value: delivery == null ? "—" : delivery + "%", note: vi ? "gửi tới bot thành công" : "delivered to bot" },
+    { label: vi ? "Hủy nhận tin" : "Opt-outs", value: String(optOut), note: vi ? "chưa liên kết Zalo" : "not linked" },
   ];
 
-  const autos: { key: keyof ZaloAuto; title: string; desc: string; stat: string }[] = [
+  const autos: { key: keyof ZaloAuto; logKind: string; title: string; desc: string }[] = [
     {
-      key: "attend",
+      key: "attend", logKind: "attendance",
       title: vi ? "Cảnh báo chuyên cần" : "Attendance alerts",
-      desc: vi ? "Báo phụ huynh qua Zalo trong 15 phút khi vắng không phép" : "Notify parents on Zalo within 15 min of an unexcused absence",
-      stat: vi ? "214 tin tháng này" : "214 sent this month",
+      desc: vi ? "Báo phụ huynh qua Zalo ~15 phút sau khi điểm danh vắng" : "Notify parents on Zalo ~15 min after an unmarked absence",
     },
     {
-      key: "grades",
+      key: "grades", logKind: "grades",
       title: vi ? "Báo cáo điểm hàng tuần" : "Weekly grade reports",
       desc: vi ? "Gửi tóm tắt điểm cho từng gia đình thứ Sáu 17:00 hằng tuần" : "Send each family a grade summary every Friday at 5:00 PM",
-      stat: vi ? "1.180 tin tháng này" : "1,180 sent this month",
     },
     {
-      key: "tuition",
+      key: "tuition", logKind: "tuition",
       title: vi ? "Nhắc học phí" : "Tuition reminders",
-      desc: vi ? "Nhắc trước hạn 3 ngày, nhắc lại sau 7 ngày quá hạn" : "Remind 3 days before invoice due date, follow up after 7 days overdue",
-      stat: vi ? "96 tin tháng này" : "96 sent this month",
+      desc: vi ? "Tự nhắc khi học viên đã học đủ số buổi của kỳ" : "Auto-remind when a student completes their paid cycle",
     },
     {
-      key: "risk",
+      key: "risk", logKind: "risk",
       title: vi ? "Cảnh báo rủi ro AI" : "AI risk escalation",
-      desc: vi ? "Báo GV chủ nhiệm khi học viên bị gắn cờ rủi ro cao" : "Alert homeroom teacher when a student is flagged High risk",
-      stat: vi ? "11 tin tháng này" : "11 sent this month",
+      desc: vi ? "Báo phụ huynh khi học viên bị gắn cờ rủi ro cao" : "Alert parents when a student is flagged at risk",
     },
   ];
 
@@ -109,7 +119,7 @@ export default function ZaloBotPage() {
               <div style={{ fontWeight: 500 }}>{a.title}</div>
               <div style={{ fontSize: 12.5, color: "var(--text-2)", marginTop: 1 }}>{a.desc}</div>
             </div>
-            <span style={{ fontSize: 12, color: "var(--text-3)", whiteSpace: "nowrap" }}>{a.stat}</span>
+            <span style={{ fontSize: 12, color: "var(--text-3)", whiteSpace: "nowrap" }}>{statText(kindCount(a.logKind))}</span>
             <button
               className={"toggle " + (zaloAuto[a.key] ? "on" : "")}
               onClick={() => toggleAuto(a.key)}
