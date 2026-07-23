@@ -13,16 +13,21 @@ const ZAPPS_BASE = "https://bot-api.zapps.me";
 async function fetchUpdates(token: string) {
   const res = await fetch(`${ZAPPS_BASE}/bot${token}/getUpdates`, { cache: "no-store" });
   const data = await res.json().catch(() => ({}));
-  const chats = (data.result || [])
+  // Zapps trả result là 1 object đơn; Telegram trả mảng — xử lý cả hai.
+  const raw = data.result;
+  const updates: any[] = Array.isArray(raw) ? raw : raw ? [raw] : [];
+  const chats = updates
     .map((u: any) => {
-      const msg = u.message || u.edited_message || {};
+      const msg = u.message || u.edited_message || u || {};
       const chat = msg.chat || {};
+      const from = msg.from || {};
       return {
-        chatId: chat.id,
+        chatId: chat.id || from.id || "",
         name:
+          from.display_name ||
           chat.title ||
-          [chat.first_name, chat.last_name].filter(Boolean).join(" ") ||
-          chat.username ||
+          [from.first_name, from.last_name].filter(Boolean).join(" ") ||
+          from.username ||
           "",
         text: msg.text || "",
       };

@@ -44,9 +44,12 @@ export default function ZaloModal() {
       const data = await res.json();
       if (data.ok && Array.isArray(data.chats) && data.chats.length) {
         setFound(data.chats);
+        // Bắt được rồi thì dừng nghe (tránh getUpdates "nuốt" tin kế tiếp)
+        stopListening();
         // Tự điền nếu chỉ có đúng 1 người nhắn
         if (data.chats.length === 1 && !form.chatId) {
           setForm({ chatId: String(data.chats[0].chatId) });
+          showToast(vi ? "Đã lấy được Chat ID ✓" : "Chat ID captured ✓");
         }
       } else if (!data.ok) {
         stopListening();
