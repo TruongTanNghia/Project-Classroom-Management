@@ -13,8 +13,21 @@ Học phí (KPI doanh thu, doanh thu theo khóa, nhắc phí qua Zalo) · Tin nh
 
 Logic nghiệp vụ then chốt (tự động, xuyên màn hình):
 **điểm danh trên Lịch học** → đếm số buổi đã học → so với **chu kỳ đóng phí** của học viên →
-đủ chu kỳ thì hiện **"Đến kỳ thu học phí"** → bấm **Nhắc qua Zalo** (tạo tin nhắn + toast) →
-**Ghi nhận đã thu** → KPI doanh thu cập nhật.
+đủ chu kỳ thì hiện **"Đến kỳ thu học phí"** → bấm **Nhắc qua Zalo** (gửi tin thật qua Zalo Bot
+nếu học viên có Chat ID + toast) → **Ghi nhận đã thu** → KPI doanh thu cập nhật.
+
+## Gửi thông báo Zalo thật (Zalo Bot)
+
+Nút **Nhắc** gọi API route server-side `/api/zalo/send` (giữ token bí mật, không lộ ra trình
+duyệt) → gửi qua **Zapps Bot API** (`bot-api.zapps.me`). Cần:
+
+1. Điền `ZALO_BOT_TOKEN` vào `.env.local` (xem `.env.local.example`) — **không** có tiền tố
+   `NEXT_PUBLIC_`. Trên Vercel: thêm biến này ở **Settings → Environment Variables**.
+2. **Onboard Chat ID cho từng phụ huynh**: bảo phụ huynh nhắn 1 tin cho bot → mở
+   `https://<app>/api/zalo/updates` (hoặc gọi GET route đó) để lấy `chatId` → vào trang
+   **Zalo Bot**, sửa liên kết của học viên, dán Chat ID vào. Từ đó nút Nhắc sẽ gửi thật tới họ.
+
+Học viên **chưa có Chat ID** → nút Nhắc chỉ ghi nhận trong app (không gửi ra ngoài), không lỗi.
 
 ## Chạy local
 
@@ -53,8 +66,12 @@ Restart `npm run dev` → mọi thao tác thêm/sửa/xoá/điểm danh/thu họ
    ```
 
 2. Vào [vercel.com/new](https://vercel.com/new) → **Import** repo → framework tự nhận Next.js.
-3. Ở bước **Environment Variables**, thêm `NEXT_PUBLIC_SUPABASE_URL` và
-   `NEXT_PUBLIC_SUPABASE_ANON_KEY` (bỏ qua bước này nếu muốn chạy demo mode) → **Deploy**.
+3. Ở bước **Environment Variables**, thêm:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (hoặc `NEXT_PUBLIC_SUPABASE_ANON_KEY`)
+   - `ZALO_BOT_TOKEN` (nếu muốn gửi Zalo thật — **không** có `NEXT_PUBLIC_`)
+
+   (Bỏ hết nếu chỉ muốn chạy demo mode.) → **Deploy**.
 
 ## Lưu ý bảo mật (v1 chưa có đăng nhập)
 

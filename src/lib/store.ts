@@ -418,6 +418,22 @@ export const useApp = create<AppState>((set, get) => ({
     const touched = zalo.find((r) => r.name === name && r.status !== "Not linked");
     if (touched) sb()?.from("zalo_links").update({ last_msg: msg }).eq("id", touched.id).then(({ error }) => reportSync(error));
     sb()?.from("threads").insert(threadToRow(thread)).then(({ error }) => reportSync(error));
+
+    // Gửi Zalo THẬT qua API route server-side nếu học viên đã có chat_id liên kết.
+    // Không có chat_id → chỉ ghi nhận trong app (tin mô phỏng), không gửi ra ngoài.
+    if (touched && touched.chatId) {
+      fetch("/api/zalo/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chatId: touched.chatId, text: preview }),
+      })
+        .then((r) => r.json())
+        .then((d) => {
+          if (!d.ok) get().showToast((vi ? "Zalo gửi lỗi: " : "Zalo error: ") + (d.error || "?"));
+        })
+        .catch(() => get().showToast(vi ? "Không gọi được Zalo API" : "Zalo API unreachable"));
+    }
+
     get().showToast(
       vi ? "Đã gửi nhắc học phí tới " + name + " qua Zalo" : "Tuition reminder sent to " + name + " via Zalo"
     );
