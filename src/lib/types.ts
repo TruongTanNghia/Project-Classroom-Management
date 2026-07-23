@@ -1,0 +1,82 @@
+export type StudentStatus = "Active" | "At risk" | "Inactive";
+export type ZaloStatus = "Connected" | "Pending" | "Not linked";
+export type Subject = "Math" | "Science" | "English" | "History" | "Arts" | "CS";
+
+export interface Payment {
+  id: number;
+  date: string; // DD/MM/YYYY
+  sessions: number;
+  amount: string; // e.g. "1.200.000₫"
+}
+
+export interface Student {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string;
+  grade?: string;
+  homeroom?: string;
+  attendance?: number;
+  gpa?: string;
+  status: StudentStatus;
+  cycle: number; // sessions per payment cycle
+  fee?: string; // tuition per cycle, free text
+  payments: Payment[];
+}
+
+export interface Course {
+  id: number;
+  subject: Subject;
+  name: string;
+  teacher: string;
+  schedule: string;
+  students: number;
+  avg: string;
+  progress: number;
+}
+
+export interface Session {
+  id: number;
+  day: number; // 0-4 (Mon-Fri)
+  t: string; // slot time, e.g. "07:30–09:00"
+  n: string; // class/course name
+  r: string; // room
+  s: Subject;
+  studentIds: number[];
+  att: Record<number, boolean>;
+}
+
+export interface ZaloLink {
+  id: number;
+  code: string;
+  name: string;
+  token: string;
+  chatId: string;
+  status: ZaloStatus;
+  lastMsg: string;
+}
+
+export interface Thread {
+  id: number;
+  from: string;
+  role: string;
+  subject: string;
+  preview: string;
+  time: string;
+  unread: boolean;
+}
+
+export interface ZaloAuto {
+  attend: boolean;
+  grades: boolean;
+  tuition: boolean;
+  risk: boolean;
+}
+
+export type EntityKind = "student" | "course" | "zalo" | "thread" | "sched";
+
+export interface ModalState {
+  mode: "add" | "edit" | "delete";
+  kind: EntityKind;
+  id?: number;
+}
