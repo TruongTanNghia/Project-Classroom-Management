@@ -24,6 +24,7 @@ export interface FormState {
   room?: string;
   time?: string;
   day?: number;
+  date?: string;
   studentIds?: number[];
   att?: Record<number, boolean>;
 }
@@ -95,7 +96,7 @@ const studentToRow = (s: Student) => ({
 });
 const sessionToRow = (b: Session) => ({
   id: b.id, day: b.day, slot: b.t, name: b.n, room: b.r, subject: b.s,
-  student_ids: b.studentIds, attendance: b.att,
+  student_ids: b.studentIds, attendance: b.att, date: b.date || null,
 });
 const zaloToRow = (z: ZaloLink) => ({
   id: z.id, code: z.code, student_name: z.name, token: z.token, chat_id: z.chatId,
@@ -154,7 +155,7 @@ async function loadFromSupabase() {
     })),
     sessions: (sessions.data || []).map((r: any): Session => ({
       id: r.id, day: r.day, t: r.slot, n: r.name, r: r.room, s: r.subject,
-      studentIds: r.student_ids || [], att: r.attendance || {},
+      studentIds: r.student_ids || [], att: r.attendance || {}, date: r.date || undefined,
     })),
     zalo: (zalo.data || []).map((r: any): ZaloLink => ({
       id: r.id, code: r.code, name: r.student_name, token: r.token || "",
@@ -336,6 +337,7 @@ export const useApp = create<AppState>((set, get) => ({
       r: (F.room || "").trim() || "—",
       t: (F.time || "").trim() || "07:30–09:00",
       day: F.day ?? 0,
+      date: (F.date || "").trim() || undefined,
       s: (F.subject || "CS") as Session["s"],
       studentIds: (F.studentIds || []).slice(),
       att: { ...(F.att || {}) },
@@ -420,12 +422,14 @@ export const useApp = create<AppState>((set, get) => ({
     sb()?.from("threads").insert(threadToRow(thread)).then(({ error }) => reportSync(error));
 
     // Gửi Zalo THẬT qua API route server-side nếu học viên đã có chat_id liên kết.
+    // Mỗi học viên 1 bot riêng → dùng token riêng của học viên (touched.token);
+    // nếu để trống thì route dùng ZALO_BOT_TOKEN chung.
     // Không có chat_id → chỉ ghi nhận trong app (tin mô phỏng), không gửi ra ngoài.
     if (touched && touched.chatId) {
       fetch("/api/zalo/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chatId: touched.chatId, text: preview }),
+        body: JSON.stringify({ token: touched.token || "", chatId: touched.chatId, text: preview }),
       })
         .then((r) => r.json())
         .then((d) => {

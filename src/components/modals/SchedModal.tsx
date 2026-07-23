@@ -58,8 +58,26 @@ export default function SchedModal() {
           options={dayMeta[lang].map((d, di) => ({
             label: d.day,
             on: form.day === di,
-            onPick: () => setForm({ day: di }),
+            onPick: () => setForm({ day: di, date: "" }), // chọn thứ = lặp hằng tuần, bỏ ngày cụ thể
           }))}
+        />
+      </Field>
+      <Field label={vi ? "Ngày cụ thể (tùy chọn — để trống = lặp hằng tuần)" : "Specific date (optional — empty = weekly)"}>
+        <input
+          type="date"
+          className="input"
+          value={form.date || ""}
+          onChange={(e) => {
+            const v = e.target.value;
+            // Nếu chọn ngày → tự set thứ trong tuần cho khớp lưới hiển thị
+            const patch: { date: string; day?: number } = { date: v };
+            if (v) {
+              const dow = new Date(v + "T00:00:00").getDay(); // 0=CN..6=T7
+              const idx = dow === 0 ? 0 : dow - 1; // map về 0=T2..4=T6 (CN/T7 gộp tạm)
+              patch.day = Math.min(4, Math.max(0, idx));
+            }
+            setForm(patch);
+          }}
         />
       </Field>
       <Field label={t.fTime}>

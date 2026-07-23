@@ -49,7 +49,14 @@ create table if not exists schedule_sessions (
   subject text not null default 'CS',
   student_ids bigint[] not null default '{}',
   attendance jsonb not null default '{}'::jsonb,            -- { "studentId": true }
+  date date,                                                -- NULL = lặp hằng tuần theo "day"; có giá trị = buổi 1 lần đúng ngày
   created_at timestamptz not null default now()
+);
+
+-- Nhật ký đã nhắc lịch — chống gửi trùng khi cron chạy nhiều lần
+create table if not exists reminder_sent (
+  id text primary key,                                      -- "<session_id>:<YYYYMMDD>:<student_id>"
+  sent_at timestamptz not null default now()
 );
 
 create table if not exists zalo_links (
@@ -90,6 +97,7 @@ alter table schedule_sessions enable row level security;
 alter table zalo_links enable row level security;
 alter table threads enable row level security;
 alter table app_settings enable row level security;
+alter table reminder_sent enable row level security;
 
 drop policy if exists "anon full access" on students;
 create policy "anon full access" on students for all to anon using (true) with check (true);
@@ -105,6 +113,8 @@ drop policy if exists "anon full access" on threads;
 create policy "anon full access" on threads for all to anon using (true) with check (true);
 drop policy if exists "anon full access" on app_settings;
 create policy "anon full access" on app_settings for all to anon using (true) with check (true);
+drop policy if exists "anon full access" on reminder_sent;
+create policy "anon full access" on reminder_sent for all to anon using (true) with check (true);
 
 -- ---------- Seed data (giống hệt prototype) ----------
 insert into students (id, name, email, phone, grade, homeroom, attendance, gpa, status, cycle, fee) values

@@ -37,13 +37,14 @@ export interface Course {
 
 export interface Session {
   id: number;
-  day: number; // 0-4 (Mon-Fri)
+  day: number; // 0-4 (Mon-Fri) — dùng khi lặp hằng tuần
   t: string; // slot time, e.g. "07:30–09:00"
   n: string; // class/course name
   r: string; // room
   s: Subject;
   studentIds: number[];
   att: Record<number, boolean>;
+  date?: string; // "YYYY-MM-DD" — nếu có: buổi 1 lần đúng ngày; nếu trống: lặp hằng tuần theo `day`
 }
 
 export interface ZaloLink {

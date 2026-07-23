@@ -30,7 +30,7 @@ export default function SchedulePage() {
     openModal(
       { mode: "edit", kind: "sched", id: b.id },
       {
-        name: b.n, room: b.r, time: b.t, day: b.day, subject: b.s,
+        name: b.n, room: b.r, time: b.t, day: b.day, date: b.date || "", subject: b.s,
         studentIds: (b.studentIds || []).slice(), att: { ...(b.att || {}) },
       }
     );
@@ -140,7 +140,14 @@ export default function SchedulePage() {
                   style={{ borderLeft: "3px solid currentColor" }}
                   onClick={() => openEdit(b)}
                 >
-                  <div style={{ fontSize: 10.5, opacity: 0.75, marginBottom: 2 }}>{b.r}</div>
+                  <div style={{ fontSize: 10.5, opacity: 0.75, marginBottom: 2, display: "flex", gap: 4, alignItems: "center" }}>
+                    {b.r}
+                    {b.date && (
+                      <span style={{ fontWeight: 700 }}>
+                        · {b.date.slice(8, 10) + "/" + b.date.slice(5, 7)}
+                      </span>
+                    )}
+                  </div>
                   {b.n}
                   {ids.length > 0 && (
                     <div

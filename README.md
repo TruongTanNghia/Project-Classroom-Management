@@ -29,6 +29,34 @@ duyệt) → gửi qua **Zapps Bot API** (`bot-api.zapps.me`). Cần:
 
 Học viên **chưa có Chat ID** → nút Nhắc chỉ ghi nhận trong app (không gửi ra ngoài), không lỗi.
 
+Trong modal sửa liên kết Zalo có nút **"Lấy Chat ID"**: bấm → nhờ phụ huynh nhắn 1 tin cho bot
+→ Chat ID tự điền vào; và nút **"Gửi tin thử"** để kiểm tra kết nối ngay.
+
+## Tự động nhắc lịch học (trước giờ ~20 phút)
+
+Mỗi học viên có **bot Zalo riêng** (token + Chat ID trong trang Zalo Bot). Một dịch vụ cron
+ngoài gọi định kỳ vào route `/api/cron/reminders`; route tìm các buổi sắp bắt đầu trong ~20
+phút tới rồi gửi tin lịch học tới từng học viên (bằng bot riêng của học viên), có **chống gửi
+trùng**.
+
+**Lịch học 2 kiểu**: để trống ô "Ngày cụ thể" = **lặp hằng tuần** theo thứ; điền ngày = buổi
+**một lần** đúng ngày đó. Cron canh giờ theo **múi giờ VN (UTC+7)**.
+
+**Cài cron miễn phí (không cần Vercel Pro):**
+1. Chạy `supabase/migration_reminders.sql` trong SQL Editor (thêm cột `date` + bảng
+   `reminder_sent`). Project mới chạy `schema.sql` thì đã có sẵn.
+2. Đặt `CRON_SECRET` trong `.env.local` / Vercel env (chuỗi bí mật tự đặt).
+3. Tạo tài khoản [cron-job.org](https://cron-job.org) (miễn phí) → tạo job:
+   - URL: `https://<app>.vercel.app/api/cron/reminders?key=<CRON_SECRET>`
+   - Lịch: **mỗi 5 phút**.
+
+**Test nhanh** (không cần chờ tới giờ):
+- Xem trước sẽ gửi gì: `GET /api/cron/reminders?key=<secret>&dry=1`
+- Ép gửi ngay 1 buổi: `GET /api/cron/reminders?key=<secret>&force=<sessionId>`
+
+> Nếu dùng **Vercel Pro**: có thể thay cron ngoài bằng `vercel.json` với `crons` chạy mỗi vài
+> phút. Gói Free của Vercel chỉ chạy cron 1 lần/ngày nên không đủ — dùng cron ngoài.
+
 ## Chạy local
 
 ```bash
@@ -70,6 +98,7 @@ Restart `npm run dev` → mọi thao tác thêm/sửa/xoá/điểm danh/thu họ
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (hoặc `NEXT_PUBLIC_SUPABASE_ANON_KEY`)
    - `ZALO_BOT_TOKEN` (nếu muốn gửi Zalo thật — **không** có `NEXT_PUBLIC_`)
+   - `CRON_SECRET` (nếu bật tự động nhắc lịch — **không** có `NEXT_PUBLIC_`)
 
    (Bỏ hết nếu chỉ muốn chạy demo mode.) → **Deploy**.
 
