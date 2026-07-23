@@ -162,6 +162,11 @@ input::placeholder {
     background-position: -200% 0;
   }
 }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 @keyframes pulseDot {
   0%,
   100% {

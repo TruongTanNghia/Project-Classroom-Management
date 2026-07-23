@@ -10,22 +10,23 @@ interface SendBody {
   chatId?: string;
   text?: string;
   photoUrl?: string;
+  token?: string; // tuỳ chọn: token nhập từ modal; mặc định dùng ZALO_BOT_TOKEN
 }
 
 export async function POST(request: Request) {
-  const token = process.env.ZALO_BOT_TOKEN;
-  if (!token) {
-    return NextResponse.json(
-      { ok: false, error: "Chưa cấu hình ZALO_BOT_TOKEN trên server" },
-      { status: 503 }
-    );
-  }
-
   let body: SendBody;
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ ok: false, error: "Body không hợp lệ" }, { status: 400 });
+  }
+
+  const token = (body.token || "").trim() || process.env.ZALO_BOT_TOKEN;
+  if (!token) {
+    return NextResponse.json(
+      { ok: false, error: "Chưa có bot token (nhập token hoặc cấu hình ZALO_BOT_TOKEN)" },
+      { status: 503 }
+    );
   }
 
   const chatId = (body.chatId || "").trim();
