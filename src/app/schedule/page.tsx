@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Clock, Plus, Users } from "lucide-react";
+import { Clock, Plus, Users } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { dayMeta, dicts } from "@/lib/i18n";
 import { attendanceTally, slotTimes } from "@/lib/derived";
@@ -8,7 +8,7 @@ import { subjectTintClass } from "@/lib/subjects";
 import type { Session } from "@/lib/types";
 import { Page, PageHeader } from "@/components/ui/bits";
 
-const GRID = "96px repeat(5, 1fr)";
+const GRID = "80px repeat(7, 1fr)";
 
 export default function SchedulePage() {
   const lang = useApp((s) => s.lang);
@@ -23,7 +23,7 @@ export default function SchedulePage() {
   const openAdd = (day = 0, time = "07:30–09:00") =>
     openModal(
       { mode: "add", kind: "sched" },
-      { name: "", room: "", time, day, subject: "CS", studentIds: [], att: {} }
+      { name: "", room: "", time, day, date: "", subject: "CS", studentIds: [], att: {} }
     );
 
   const openEdit = (b: Session) =>
@@ -46,7 +46,7 @@ export default function SchedulePage() {
       return { session: b, day: di };
     }),
   }));
-  const freeCells = slots.length * 5 - filled;
+  const freeCells = slots.length * 7 - filled;
   const tally = attendanceTally(sessions);
   const attSummary = tally.marks
     ? (vi ? " · Điểm danh: " : " · Attendance: ") + tally.present + "/" + tally.marks + (vi ? " lượt có mặt" : " present")
@@ -59,40 +59,28 @@ export default function SchedulePage() {
     <Page>
       <PageHeader
         title={t.scheduleTitle}
-        subtitle={t.scheduleSub}
+        subtitle={vi ? "Lịch học theo tuần · đủ 7 ngày" : "Weekly schedule · all 7 days"}
         actions={
-          <>
-            <button className="icon-btn" style={{ width: 34, height: 34 }}>
-              <ChevronLeft size={14} strokeWidth={2} color="var(--text-2)" />
-            </button>
-            <button className="btn" style={{ padding: "7px 14px", fontSize: 12.5 }}>{t.today}</button>
-            <button className="icon-btn" style={{ width: 34, height: 34 }}>
-              <ChevronRight size={14} strokeWidth={2} color="var(--text-2)" />
-            </button>
-            <button className="btn-primary" onClick={() => openAdd()}>
-              <Plus size={14} strokeWidth={2.2} />
-              {t.addSchedCta}
-            </button>
-          </>
+          <button className="btn-primary" onClick={() => openAdd()}>
+            <Plus size={14} strokeWidth={2.2} />
+            {t.addSchedCta}
+          </button>
         }
       />
 
       <div className="card tblc fade-up" style={{ padding: 16 }}>
-        <div className="trow" style={{ display: "grid", gridTemplateColumns: GRID, gap: 8 }}>
+        <div className="trow" style={{ display: "grid", gridTemplateColumns: GRID, gap: 8, minWidth: 900 }}>
           <div />
           {days.map((d) => (
             <div
               key={d.day}
               style={{
-                padding: "10px 12px", borderRadius: 10,
-                background: d.today ? "var(--accent-tint)" : "var(--sidebar)",
-                border: "1px solid " + (d.today ? "var(--accent-border)" : "var(--subtle)"),
+                padding: "10px 8px", borderRadius: 10, textAlign: "center",
+                background: "var(--sidebar)", border: "1px solid var(--subtle)",
               }}
             >
-              <div style={{ fontSize: 13, fontWeight: 600, color: d.today ? "var(--accent)" : "var(--text)" }}>
-                {d.day}
-              </div>
-              <div style={{ fontSize: 11.5, color: "var(--text-2)" }}>{d.date}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{d.short}</div>
+              <div style={{ fontSize: 11, color: "var(--text-2)" }}>{d.day}</div>
             </div>
           ))}
         </div>
@@ -101,11 +89,11 @@ export default function SchedulePage() {
           <div
             key={row.time}
             className="trow"
-            style={{ display: "grid", gridTemplateColumns: GRID, gap: 8, marginTop: 8 }}
+            style={{ display: "grid", gridTemplateColumns: GRID, gap: 8, marginTop: 8, minWidth: 900 }}
           >
             <div style={{ textAlign: "right", padding: "8px 6px 0 0" }}>
               <div style={{ fontSize: 12, color: "var(--body-c)", fontWeight: 600 }}>{row.caName}</div>
-              <div className="tnum" style={{ fontSize: 10.5, color: "var(--text-3)", whiteSpace: "nowrap" }}>
+              <div className="tnum" style={{ fontSize: 10, color: "var(--text-3)", whiteSpace: "nowrap" }}>
                 {row.time}
               </div>
             </div>
@@ -133,21 +121,19 @@ export default function SchedulePage() {
                 ? names.slice(0, 2).join(", ") + (names.length > 2 ? " +" + (names.length - 2) : "")
                 : "";
               const attCount = ids.filter((id) => b.att && b.att[id]).length;
+              const dateBadge = b.date ? b.date.slice(8, 10) + "/" + b.date.slice(5, 7) : "";
               return (
                 <div
                   key={cell.day}
-                  className={"sched-block " + subjectTintClass[b.s]}
+                  className={"sched-block " + (subjectTintClass[b.s] || "tint-0")}
                   style={{ borderLeft: "3px solid currentColor" }}
                   onClick={() => openEdit(b)}
                 >
-                  <div style={{ fontSize: 10.5, opacity: 0.75, marginBottom: 2, display: "flex", gap: 4, alignItems: "center" }}>
-                    {b.r}
-                    {b.date && (
-                      <span style={{ fontWeight: 700 }}>
-                        · {b.date.slice(8, 10) + "/" + b.date.slice(5, 7)}
-                      </span>
-                    )}
-                  </div>
+                  {dateBadge && (
+                    <div style={{ fontSize: 10, opacity: 0.75, marginBottom: 2, fontWeight: 700 }}>
+                      {dateBadge}
+                    </div>
+                  )}
                   {b.n}
                   {ids.length > 0 && (
                     <div

@@ -478,19 +478,23 @@ export const subjectLabels: Record<Lang, Record<string, string>> = {
   en: { Math: "Math", Science: "Science", English: "English", History: "History", Arts: "Arts", CS: "CS" },
 };
 
-export const dayMeta: Record<Lang, { day: string; date: string; today?: boolean }[]> = {
+export const dayMeta: Record<Lang, { day: string; short: string }[]> = {
   vi: [
-    { day: "Thứ Hai", date: "20/07" },
-    { day: "Thứ Ba", date: "21/07", today: true },
-    { day: "Thứ Tư", date: "22/07" },
-    { day: "Thứ Năm", date: "23/07" },
-    { day: "Thứ Sáu", date: "24/07" },
+    { day: "Thứ Hai", short: "T2" },
+    { day: "Thứ Ba", short: "T3" },
+    { day: "Thứ Tư", short: "T4" },
+    { day: "Thứ Năm", short: "T5" },
+    { day: "Thứ Sáu", short: "T6" },
+    { day: "Thứ Bảy", short: "T7" },
+    { day: "Chủ Nhật", short: "CN" },
   ],
   en: [
-    { day: "Monday", date: "Jul 20" },
-    { day: "Tuesday", date: "Jul 21", today: true },
-    { day: "Wednesday", date: "Jul 22" },
-    { day: "Thursday", date: "Jul 23" },
-    { day: "Friday", date: "Jul 24" },
+    { day: "Monday", short: "Mon" },
+    { day: "Tuesday", short: "Tue" },
+    { day: "Wednesday", short: "Wed" },
+    { day: "Thursday", short: "Thu" },
+    { day: "Friday", short: "Fri" },
+    { day: "Saturday", short: "Sat" },
+    { day: "Sunday", short: "Sun" },
   ],
 };

@@ -2,9 +2,8 @@
 
 import { Calendar } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { dayMeta, dicts, subjectLabels } from "@/lib/i18n";
+import { dayMeta, dicts } from "@/lib/i18n";
 import { CA_SLOTS } from "@/lib/derived";
-import { SUBJECTS } from "@/lib/subjects";
 import ModalShell, { Choices, Field } from "./ModalShell";
 
 export default function SchedModal() {
@@ -14,6 +13,7 @@ export default function SchedModal() {
   const setForm = useApp((s) => s.setForm);
   const saveSched = useApp((s) => s.saveSched);
   const students = useApp((s) => s.students);
+  const courses = useApp((s) => s.courses);
   const t = dicts[lang];
   const vi = lang !== "en";
 
@@ -23,6 +23,8 @@ export default function SchedModal() {
   const att = form.att || {};
   const presentCount = ids.filter((id) => att[id]).length;
 
+  const pickCourse = (name: string, subject: string) => setForm({ name, subject });
+
   const toggleStudent = (id: number) => {
     const cur = ids.slice();
     const ix = cur.indexOf(id);
@@ -31,9 +33,7 @@ export default function SchedModal() {
     setForm({ studentIds: cur });
   };
 
-  const toggleAtt = (id: number) => {
-    setForm({ att: { ...att, [id]: !att[id] } });
-  };
+  const toggleAtt = (id: number) => setForm({ att: { ...att, [id]: !att[id] } });
 
   return (
     <ModalShell
@@ -45,42 +45,77 @@ export default function SchedModal() {
       showDelete={isEdit}
       onSave={saveSched}
     >
-      <Field label={t.fClass}>
-        <input
-          className="input"
-          value={form.name || ""}
-          onChange={(e) => setForm({ name: e.target.value })}
-          placeholder={t.fClassPh}
-        />
+      {/* Học khóa này */}
+      <Field label={vi ? "Học khóa nào?" : "Which course?"}>
+        {courses.length === 0 ? (
+          <div style={{ fontSize: 13, color: "var(--text-3)" }}>
+            {vi ? "Chưa có khóa học — hãy tạo khóa học trước." : "No courses yet — create one first."}
+          </div>
+        ) : (
+          <Choices
+            wrap
+            options={courses.map((c) => ({
+              label: c.name,
+              on: form.name === c.name,
+              onPick: () => pickCourse(c.name, c.subject),
+              noFlex: true,
+            }))}
+          />
+        )}
       </Field>
-      <Field label={t.fDay}>
+
+      {/* Ai đang học */}
+      <Field label={(vi ? "Ai đang học?" : "Who's studying?") + " (" + ids.length + ")"}>
+        {students.length === 0 ? (
+          <div style={{ fontSize: 13, color: "var(--text-3)" }}>
+            {vi ? "Chưa có học viên." : "No students yet."}
+          </div>
+        ) : (
+          <Choices
+            wrap
+            options={students.map((st) => ({
+              label: st.name,
+              on: ids.includes(st.id),
+              onPick: () => toggleStudent(st.id),
+              noFlex: true,
+            }))}
+          />
+        )}
+      </Field>
+
+      {/* Ngày trong tuần (7 ngày) */}
+      <Field label={vi ? "Học vào thứ mấy?" : "Which day?"}>
         <Choices
+          wrap
           options={dayMeta[lang].map((d, di) => ({
-            label: d.day,
+            label: d.short,
             on: form.day === di,
-            onPick: () => setForm({ day: di, date: "" }), // chọn thứ = lặp hằng tuần, bỏ ngày cụ thể
+            onPick: () => setForm({ day: di, date: "" }),
+            noFlex: true,
           }))}
         />
       </Field>
-      <Field label={vi ? "Ngày cụ thể (tùy chọn — để trống = lặp hằng tuần)" : "Specific date (optional — empty = weekly)"}>
+
+      {/* Ngày cụ thể (tùy chọn) */}
+      <Field label={vi ? "Ngày cụ thể (tùy chọn — để trống = lặp hằng tuần)" : "Specific date (optional)"}>
         <input
           type="date"
           className="input"
           value={form.date || ""}
           onChange={(e) => {
             const v = e.target.value;
-            // Nếu chọn ngày → tự set thứ trong tuần cho khớp lưới hiển thị
             const patch: { date: string; day?: number } = { date: v };
             if (v) {
               const dow = new Date(v + "T00:00:00").getDay(); // 0=CN..6=T7
-              const idx = dow === 0 ? 0 : dow - 1; // map về 0=T2..4=T6 (CN/T7 gộp tạm)
-              patch.day = Math.min(4, Math.max(0, idx));
+              patch.day = dow === 0 ? 6 : dow - 1; // 0=T2..6=CN
             }
             setForm(patch);
           }}
         />
       </Field>
-      <Field label={t.fTime}>
+
+      {/* Ca học */}
+      <Field label={vi ? "Học ca nào?" : "Which slot?"}>
         <Choices
           wrap
           options={CA_SLOTS.map((slot, ci) => ({
@@ -91,35 +126,8 @@ export default function SchedModal() {
           }))}
         />
       </Field>
-      <Field label={t.fRoom}>
-        <input
-          className="input"
-          value={form.room || ""}
-          onChange={(e) => setForm({ room: e.target.value })}
-          placeholder={t.fRoomPh}
-        />
-      </Field>
-      <Field label={t.fStudents + " (" + ids.length + ")"}>
-        <Choices
-          wrap
-          options={students.map((st) => ({
-            label: st.name,
-            on: ids.includes(st.id),
-            onPick: () => toggleStudent(st.id),
-            noFlex: true,
-          }))}
-        />
-      </Field>
-      <Field label={t.fSubject}>
-        <Choices
-          wrap
-          options={SUBJECTS.map((k) => ({
-            label: subjectLabels[lang][k],
-            on: form.subject === k,
-            onPick: () => setForm({ subject: k }),
-          }))}
-        />
-      </Field>
+
+      {/* Điểm danh (khi sửa) */}
       {isEdit && ids.length > 0 && (
         <Field label={t.fAttSess + " (" + presentCount + "/" + ids.length + ")"}>
           <Choices
