@@ -8,6 +8,7 @@ import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import PageSkeleton from "./PageSkeleton";
 import ModalRoot from "@/components/modals/ModalRoot";
+import AttendanceModal from "@/components/modals/AttendanceModal";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const hydrate = useApp((s) => s.hydrate);
@@ -39,6 +40,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
       <ModalRoot />
+      <AttendanceModal />
       {toast && (
         <div
           style={{

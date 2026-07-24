@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, Plus, Users } from "lucide-react";
+import { CircleCheck, Clock, Plus, Users } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { dayMeta, dicts } from "@/lib/i18n";
 import { attendanceTally, slotTimes } from "@/lib/derived";
@@ -15,6 +15,7 @@ export default function SchedulePage() {
   const sessions = useApp((s) => s.sessions);
   const students = useApp((s) => s.students);
   const openModal = useApp((s) => s.openModal);
+  const openAttend = useApp((s) => s.openAttend);
   const t = dicts[lang];
   const vi = lang !== "en";
   const days = dayMeta[lang];
@@ -147,9 +148,23 @@ export default function SchedulePage() {
                     >
                       <Users size={10} strokeWidth={2.4} />
                       {ids.length} · {stu}
-                      <span style={{ marginLeft: "auto", fontWeight: 600, whiteSpace: "nowrap" }}>
-                        ✓ {attCount}/{ids.length}
-                      </span>
+                      {/* Bấm badge để mở popup điểm danh */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openAttend(b.id);
+                        }}
+                        title={vi ? "Điểm danh" : "Attendance"}
+                        style={{
+                          marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 3,
+                          fontWeight: 700, whiteSpace: "nowrap", cursor: "pointer",
+                          border: "1px solid currentColor", borderRadius: 99, padding: "1px 7px",
+                          background: "rgba(255,255,255,0.35)", color: "inherit", fontSize: 10,
+                        }}
+                      >
+                        <CircleCheck size={11} strokeWidth={2.4} />
+                        {attCount}/{ids.length}
+                      </button>
                     </div>
                   )}
                 </div>

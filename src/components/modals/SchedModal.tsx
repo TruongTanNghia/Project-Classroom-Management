@@ -20,8 +20,6 @@ export default function SchedModal() {
   if (!modal) return null;
   const isEdit = modal.mode === "edit";
   const ids = form.studentIds || [];
-  const att = form.att || {};
-  const presentCount = ids.filter((id) => att[id]).length;
   const dayCa = form.dayCa || {};
   const caLabel = (slot: string) => (vi ? "Ca " : "Slot ") + (CA_SLOTS.indexOf(slot) + 1) + " · " + slot;
 
@@ -34,7 +32,6 @@ export default function SchedModal() {
     else cur.push(id);
     setForm({ studentIds: cur });
   };
-  const toggleAtt = (id: number) => setForm({ att: { ...att, [id]: !att[id] } });
 
   // Bật/tắt 1 thứ trong tuần (mode add) — bật thì mặc định Ca 1
   const toggleDay = (di: number) => {
@@ -130,24 +127,11 @@ export default function SchedModal() {
               }))}
             />
           </Field>
-          {ids.length > 0 && (
-            <Field label={t.fAttSess + " (" + presentCount + "/" + ids.length + ")"}>
-              <Choices
-                wrap
-                options={ids.map((id) => {
-                  const st = students.find((x) => x.id === id);
-                  const on = Boolean(att[id]);
-                  return {
-                    label: (on ? "✓ " : "") + (st?.name || "?"),
-                    on,
-                    attStyle: true,
-                    onPick: () => toggleAtt(id),
-                    noFlex: true,
-                  };
-                })}
-              />
-            </Field>
-          )}
+          <div style={{ fontSize: 12, color: "var(--text-3)" }}>
+            {vi
+              ? "Điểm danh: bấm nút ✓ trên buổi học ngoài lịch để điểm danh nhanh."
+              : "Attendance: use the ✓ button on the session in the grid."}
+          </div>
         </>
       ) : (
         /* ---- Thêm mới: chọn nhiều thứ, mỗi thứ 1 ca ---- */

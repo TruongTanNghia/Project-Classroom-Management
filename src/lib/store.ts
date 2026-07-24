@@ -49,6 +49,8 @@ interface AppState {
   toast: string;
   modal: ModalState | null;
   form: FormState;
+  attendId: number | null; // id buổi đang điểm danh (popup riêng)
+  attendDraft: Record<number, boolean>;
   seq: number;
   students: Student[];
   courses: Course[];
@@ -72,6 +74,10 @@ interface AppState {
   saveZalo: () => void;
   saveThread: () => void;
   saveSched: () => void;
+  openAttend: (sessionId: number) => void;
+  toggleAttend: (studentId: number) => void;
+  saveAttend: () => void;
+  closeAttend: () => void;
   confirmDelete: () => void;
   recordPayment: (id: number) => void;
   toggleAuto: (key: keyof ZaloAuto) => void;
@@ -225,6 +231,8 @@ export const useApp = create<AppState>((set, get) => ({
   toast: "",
   modal: null,
   form: {},
+  attendId: null,
+  attendDraft: {},
   seq: 100,
   students: seedStudents,
   courses: seedCourses,
@@ -409,6 +417,29 @@ export const useApp = create<AppState>((set, get) => ({
       );
     }
   },
+
+  openAttend: (sessionId) => {
+    const s = get().sessions.find((x) => x.id === sessionId);
+    if (!s) return;
+    set({ attendId: sessionId, attendDraft: { ...(s.att || {}) } });
+  },
+  toggleAttend: (studentId) => {
+    const d = { ...get().attendDraft };
+    d[studentId] = !d[studentId];
+    set({ attendDraft: d });
+  },
+  saveAttend: () => {
+    const { attendId, attendDraft, sessions } = get();
+    if (attendId == null) return;
+    const next = sessions.map((x) => (x.id === attendId ? { ...x, att: { ...attendDraft } } : x));
+    set({ sessions: next, attendId: null, attendDraft: {} });
+    const updated = next.find((x) => x.id === attendId);
+    if (updated)
+      sb()?.from("schedule_sessions").update({ attendance: updated.att }).eq("id", attendId).then(({ error }) => reportSync(error));
+    const vi = get().lang !== "en";
+    get().showToast(vi ? "Đã lưu điểm danh ✓" : "Attendance saved ✓");
+  },
+  closeAttend: () => set({ attendId: null, attendDraft: {} }),
 
   confirmDelete: () => {
     const m = get().modal;
