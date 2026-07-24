@@ -41,22 +41,24 @@ function startUTCms(dateStrVN: string, hh: number, mm: number): number {
   return Date.UTC(y, mo - 1, da, hh - 7, mm, 0, 0);
 }
 
-/** Các mốc bắt đầu ứng viên của 1 buổi quanh thời điểm "now" (hôm nay & mai theo giờ VN). */
+/**
+ * Các mốc bắt đầu ứng viên của 1 buổi quanh "now" (hôm nay & mai theo giờ VN).
+ * Buổi lặp hằng tuần theo `day`; `session.date` (nếu có) = NGÀY BẮT ĐẦU HỌC —
+ * chỉ nhắc từ ngày đó trở đi.
+ */
 function candidateStarts(session: Session, nowMs: number, force = false): number[] {
   const { hh, mm } = slotStart(session.t);
-  if (session.date) {
-    return [startUTCms(session.date, hh, mm)];
-  }
-  // force (test): lấy luôn hôm nay, bỏ qua kiểm tra thứ
+  // force (test): lấy luôn hôm nay, bỏ qua kiểm tra thứ/ngày bắt đầu
   if (force) {
     return [startUTCms(vnDateStr(nowMs), hh, mm)];
   }
-  // Lặp hằng tuần: xét ngày VN của hôm nay và ngày mai, chọn ngày khớp thứ
   const out: number[] = [];
   for (const offset of [0, 24 * 60 * 60 * 1000]) {
     const ds = vnDateStr(nowMs + offset);
     const p = vnParts(nowMs + offset);
-    if (dayIndexFromDow(p.dow) === session.day) out.push(startUTCms(ds, hh, mm));
+    if (dayIndexFromDow(p.dow) !== session.day) continue;
+    if (session.date && ds < session.date) continue; // chưa tới ngày bắt đầu
+    out.push(startUTCms(ds, hh, mm));
   }
   return out;
 }
@@ -150,10 +152,16 @@ export function buildAttendanceAlerts(
   const after = opts.afterMin ?? 15;
   const win = opts.windowMin ?? 10;
   const out: DueReminder[] = [];
+  const todayStr = vnDateStr(nowMs);
+  const todayDow = dayIndexFromDow(vnParts(nowMs).dow);
   for (const s of sessions) {
     const { hh, mm } = slotStart(s.t);
-    // mốc bắt đầu hôm nay (VN); buổi có ngày cụ thể thì dùng đúng ngày đó
-    const startMs = startUTCms(s.date || vnDateStr(nowMs), hh, mm);
+    // chỉ xét buổi của HÔM NAY (đúng thứ) và đã tới ngày bắt đầu
+    if (!opts.force) {
+      if (s.day !== todayDow) continue;
+      if (s.date && todayStr < s.date) continue;
+    }
+    const startMs = startUTCms(todayStr, hh, mm);
     const minsSince = (nowMs - startMs) / 60000;
     const inWindow = minsSince >= after && minsSince < after + win;
     if (!opts.force && !inWindow) continue;

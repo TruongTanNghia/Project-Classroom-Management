@@ -20,10 +20,13 @@ export default function SchedulePage() {
   const days = dayMeta[lang];
   const slots = slotTimes(sessions);
 
-  const openAdd = (day = 0, time = "07:30–09:00") =>
+  const openAdd = (day?: number, time = "07:30–09:00") =>
     openModal(
       { mode: "add", kind: "sched" },
-      { name: "", room: "", time, day, date: "", subject: "CS", studentIds: [], att: {} }
+      {
+        name: "", room: "", date: "", subject: "CS", studentIds: [],
+        dayCa: day != null ? { [day]: time } : {},
+      }
     );
 
   const openEdit = (b: Session) =>
@@ -121,7 +124,7 @@ export default function SchedulePage() {
                 ? names.slice(0, 2).join(", ") + (names.length > 2 ? " +" + (names.length - 2) : "")
                 : "";
               const attCount = ids.filter((id) => b.att && b.att[id]).length;
-              const dateBadge = b.date ? b.date.slice(8, 10) + "/" + b.date.slice(5, 7) : "";
+              const dateBadge = b.date ? (vi ? "Từ " : "From ") + b.date.slice(8, 10) + "/" + b.date.slice(5, 7) : "";
               return (
                 <div
                   key={cell.day}

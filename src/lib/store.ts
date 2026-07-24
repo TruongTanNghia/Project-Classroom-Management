@@ -27,7 +27,8 @@ export interface FormState {
   room?: string;
   time?: string;
   day?: number;
-  date?: string;
+  date?: string; // ngày bắt đầu học
+  dayCa?: Record<number, string>; // {thứ: ca} — tạo nhiều buổi 1 lần (mode add)
   studentIds?: number[];
   att?: Record<number, boolean>;
 }
@@ -379,26 +380,33 @@ export const useApp = create<AppState>((set, get) => ({
   saveSched: () => {
     const { form: F, modal: m, sessions, seq } = get();
     if (!F.name || !F.name.trim() || !m) return;
-    const rec = {
+    const base = {
       n: F.name.trim(),
-      r: (F.room || "").trim() || "—",
-      t: (F.time || "").trim() || "07:30–09:00",
-      day: F.day ?? 0,
+      r: (F.room || "").trim(),
       date: (F.date || "").trim() || undefined,
       s: (F.subject || "CS") as Session["s"],
       studentIds: (F.studentIds || []).slice(),
-      att: { ...(F.att || {}) },
     };
     if (m.mode === "edit" && m.id != null) {
+      const rec = { ...base, t: (F.time || "").trim() || "07:30–09:00", day: F.day ?? 0, att: { ...(F.att || {}) } };
       const next = sessions.map((x) => (x.id === m.id ? { ...x, ...rec } : x));
       set({ sessions: next, modal: null, form: {} });
       const updated = next.find((x) => x.id === m.id);
       if (updated) sb()?.from("schedule_sessions").update(sessionToRow(updated)).eq("id", m.id).then(({ error }) => reportSync(error));
     } else {
-      const id = seq + 1;
-      const row: Session = { id, ...rec };
-      set({ sessions: [...sessions, row], seq: id, modal: null, form: {} });
-      sb()?.from("schedule_sessions").insert(sessionToRow(row)).then(({ error }) => reportSync(error));
+      // Tạo nhiều buổi 1 lần: mỗi cặp {thứ: ca} = 1 buổi
+      const dayCa = F.dayCa || {};
+      const entries = Object.entries(dayCa);
+      if (!entries.length) return;
+      let id = seq;
+      const rows: Session[] = entries.map(([dayStr, slot]) => {
+        id += 1;
+        return { id, ...base, day: Number(dayStr), t: slot, att: {} };
+      });
+      set({ sessions: [...sessions, ...rows], seq: id, modal: null, form: {} });
+      rows.forEach((row) =>
+        sb()?.from("schedule_sessions").insert(sessionToRow(row)).then(({ error }) => reportSync(error))
+      );
     }
   },
 
