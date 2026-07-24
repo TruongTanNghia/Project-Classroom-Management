@@ -19,6 +19,7 @@ export interface FormState {
   schedule?: string;
   subject?: string;
   price?: string;
+  totalSessions?: string;
   html?: string;
   token?: string;
   chatId?: string;
@@ -117,7 +118,8 @@ const threadToRow = (th: Thread) => ({
 });
 const courseToRow = (c: Course) => ({
   id: c.id, subject: c.subject, name: c.name, teacher: c.teacher,
-  schedule: c.schedule, price: c.price ?? "", html_content: c.html ?? "",
+  schedule: c.schedule ?? "", price: c.price ?? "", html_content: c.html ?? "",
+  total_sessions: c.totalSessions ?? 0,
   students: c.students, avg: c.avg, progress: c.progress,
 });
 
@@ -162,6 +164,7 @@ async function loadFromSupabase() {
     courses: (courses.data || []).map((r: any): Course => ({
       id: r.id, subject: r.subject, name: r.name, teacher: r.teacher,
       schedule: r.schedule, price: r.price || undefined, html: r.html_content || undefined,
+      totalSessions: r.total_sessions ?? undefined,
       students: r.students, avg: r.avg, progress: r.progress,
     })),
     sessions: (sessions.data || []).map((r: any): Session => ({
@@ -304,8 +307,8 @@ export const useApp = create<AppState>((set, get) => ({
     const rec = {
       name: F.name.trim(),
       teacher: (F.teacher || "").trim() || "—",
-      schedule: (F.schedule || "").trim() || "—",
       price: (F.price || "").trim(),
+      totalSessions: Math.max(0, parseInt(F.totalSessions || "0", 10) || 0),
       subject: (F.subject || "CS") as Course["subject"],
       // Giữ HTML cũ khi sửa mà không tải file mới (form.html === undefined)
       ...(F.html !== undefined ? { html: F.html } : {}),

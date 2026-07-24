@@ -36,6 +36,7 @@ create table if not exists courses (
   schedule text default '—',
   price text default '',                 -- giá khóa học (nhập tự do)
   html_content text default '',          -- tài liệu HTML của khóa học
+  total_sessions int not null default 0, -- số buổi của chương trình khóa học
   students int not null default 0,
   avg text not null default '—',
   progress int not null default 0,

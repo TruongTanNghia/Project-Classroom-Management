@@ -29,8 +29,9 @@ export interface Course {
   subject: Subject;
   name: string;
   teacher: string;
-  schedule: string;
+  schedule?: string; // (cũ) không còn dùng trong UI
   price?: string; // giá khóa học (nhập tự do)
+  totalSessions?: number; // số buổi của chương trình khóa học
   html?: string; // nội dung file HTML tài liệu khóa học
   students: number;
   avg: string;

@@ -75,12 +75,13 @@ export default function CourseModal() {
           />
         </Field>
       </div>
-      <Field label={t.fSchedule}>
+      <Field label={vi ? "Số buổi của khóa học" : "Total sessions"}>
         <input
           className="input"
-          value={form.schedule || ""}
-          onChange={(e) => setForm({ schedule: e.target.value })}
-          placeholder={t.fSchedulePh}
+          value={form.totalSessions || ""}
+          onChange={(e) => setForm({ totalSessions: e.target.value.replace(/[^0-9]/g, "") })}
+          placeholder={vi ? "VD: 24 buổi" : "e.g. 24"}
+          inputMode="numeric"
         />
       </Field>
 

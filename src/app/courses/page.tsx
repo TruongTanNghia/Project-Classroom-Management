@@ -16,13 +16,16 @@ export default function CoursesPage() {
   const openAdd = () =>
     openModal(
       { mode: "add", kind: "course" },
-      { name: "", teacher: "", schedule: "", price: "" }
+      { name: "", teacher: "", price: "", totalSessions: "" }
     );
 
   const openEdit = (c: Course) =>
     openModal(
       { mode: "edit", kind: "course", id: c.id },
-      { name: c.name, teacher: c.teacher, schedule: c.schedule, price: c.price || "" }
+      {
+        name: c.name, teacher: c.teacher, price: c.price || "",
+        totalSessions: c.totalSessions ? String(c.totalSessions) : "",
+      }
       // html KHÔNG đưa vào form → giữ nguyên tài liệu cũ nếu không tải file mới
     );
 
@@ -91,7 +94,7 @@ export default function CoursesPage() {
                 <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.01em" }}>{c.name}</div>
                 <div style={{ color: "var(--text-2)", fontSize: 13, marginTop: 3 }}>
                   {c.teacher}
-                  {c.schedule && c.schedule !== "—" ? " · " + c.schedule : ""}
+                  {c.totalSessions ? " · " + c.totalSessions + (vi ? " buổi" : " sessions") : ""}
                 </div>
               </div>
 
