@@ -30,7 +30,7 @@ export default function SettingsPage() {
     },
     {
       title: vi ? "Thông báo" : "Notifications",
-      desc: vi ? "Email tổng hợp, định tuyến cảnh báo, liên lạc phụ huynh" : "Email digests, alert routing, parent communication",
+      desc: vi ? "Email tổng hợp, định tuyến cảnh báo, liên lạc học viên" : "Email digests, alert routing, student communication",
       Icon: Mail,
     },
     {

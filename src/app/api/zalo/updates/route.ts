@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 // Lấy các cập nhật gần đây của bot (Zapps getUpdates) để tìm chat_id.
-// Cách onboard 1 phụ huynh: bảo họ nhắn 1 tin bất kỳ cho bot → gọi route này
+// Cách onboard 1 học viên: bảo em nhắn 1 tin bất kỳ cho bot → gọi route này
 // → lấy chat_id trong kết quả → dán vào Chat ID của học viên ở trang Zalo Bot.
 //
 // - GET  /api/zalo/updates          → dùng token server (ZALO_BOT_TOKEN)

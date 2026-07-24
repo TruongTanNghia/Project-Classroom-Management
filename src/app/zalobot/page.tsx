@@ -32,7 +32,7 @@ export default function ZaloBotPage() {
     n == null ? (vi ? "chờ chạy" : "pending") : n + (vi ? " tin tháng này" : " sent this month");
 
   const kpis = [
-    { label: vi ? "Gia đình đã liên kết" : "Linked families", value: String(linked), note: (vi ? "trên " : "of ") + total + (vi ? " học viên · " : " students · ") + rate + "%" },
+    { label: vi ? "Học viên đã liên kết" : "Linked students", value: String(linked), note: (vi ? "trên " : "of ") + total + (vi ? " học viên · " : " students · ") + rate + "%" },
     { label: vi ? "Tin nhắn tháng này" : "Messages this month", value: monthTotal == null ? "—" : String(monthTotal), note: vi ? "tự động + thủ công" : "automated + manual" },
     { label: vi ? "Tỷ lệ gửi thành công" : "Delivery rate", value: delivery == null ? "—" : delivery + "%", note: vi ? "gửi tới bot thành công" : "delivered to bot" },
     { label: vi ? "Hủy nhận tin" : "Opt-outs", value: String(optOut), note: vi ? "chưa liên kết Zalo" : "not linked" },
@@ -42,12 +42,12 @@ export default function ZaloBotPage() {
     {
       key: "attend", logKind: "attendance",
       title: vi ? "Cảnh báo chuyên cần" : "Attendance alerts",
-      desc: vi ? "Báo phụ huynh qua Zalo ~15 phút sau khi điểm danh vắng" : "Notify parents on Zalo ~15 min after an unmarked absence",
+      desc: vi ? "Nhắn học viên qua Zalo ~15 phút sau khi điểm danh vắng" : "Message students on Zalo ~15 min after an unmarked absence",
     },
     {
       key: "grades", logKind: "grades",
       title: vi ? "Báo cáo điểm hàng tuần" : "Weekly grade reports",
-      desc: vi ? "Gửi tóm tắt điểm cho từng gia đình thứ Sáu 17:00 hằng tuần" : "Send each family a grade summary every Friday at 5:00 PM",
+      desc: vi ? "Gửi tóm tắt điểm cho từng học viên thứ Sáu 17:00 hằng tuần" : "Send each student a grade summary every Friday at 5:00 PM",
     },
     {
       key: "tuition", logKind: "tuition",
@@ -57,7 +57,7 @@ export default function ZaloBotPage() {
     {
       key: "risk", logKind: "risk",
       title: vi ? "Cảnh báo rủi ro AI" : "AI risk escalation",
-      desc: vi ? "Báo phụ huynh khi học viên bị gắn cờ rủi ro cao" : "Alert parents when a student is flagged at risk",
+      desc: vi ? "Nhắn học viên khi bị gắn cờ rủi ro cao" : "Message students flagged at risk",
     },
   ];
 

@@ -448,8 +448,8 @@ export const useApp = create<AppState>((set, get) => ({
       ? "Nhắc học phí (" + (fee || "") + ") — " + dd
       : "Tuition reminder (" + (fee || "") + ") — " + dd;
     const preview = vi
-      ? "AIhoclaptrinh xin nhắc quý phụ huynh về khoản học phí " + (fee || "") + " đã đến kỳ thanh toán. Cảm ơn ạ!"
-      : "AIhoclaptrinh reminder: tuition of " + (fee || "") + " is now due. Thank you!";
+      ? "Chào em " + name + "! AIhoclaptrinh nhắc em khoản học phí " + (fee || "") + " đã đến kỳ. Em sắp xếp đóng giúp trung tâm nha!"
+      : "Hi " + name + "! AIhoclaptrinh reminder: your tuition " + (fee || "") + " is now due. Thank you!";
     const id = seq + 1;
     const thread: Thread = {
       id,

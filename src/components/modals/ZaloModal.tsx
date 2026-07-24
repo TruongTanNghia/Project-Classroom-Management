@@ -166,8 +166,8 @@ export default function ZaloModal() {
         {listening && found.length === 0 && (
           <div style={{ fontSize: 12, color: "var(--text-2)", marginTop: 2, lineHeight: 1.5 }}>
             {vi
-              ? "Nhờ phụ huynh nhắn 1 tin bất kỳ cho bot ngay bây giờ — Chat ID sẽ tự hiện ở đây."
-              : "Ask the parent to message the bot now — their Chat ID will appear here."}
+              ? "Nhờ học viên nhắn 1 tin bất kỳ cho bot ngay bây giờ — Chat ID sẽ tự hiện ở đây."
+              : "Ask the student to message the bot now — their Chat ID will appear here."}
           </div>
         )}
         {found.length > 0 && (

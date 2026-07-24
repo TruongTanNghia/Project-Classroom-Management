@@ -171,8 +171,8 @@ export function buildAttendanceAlerts(
         chatId: link.chatId, token: link.token || "",
         text:
           `⚠️ AIhoclaptrinh · Cảnh báo chuyên cần\n\n` +
-          `Em ${st.name} chưa có mặt tại lớp "${s.n}" (${s.t}) hôm nay. ` +
-          `Nhờ quý phụ huynh kiểm tra giúp ạ. Cảm ơn!`,
+          `Chào em ${st.name}! Hệ thống ghi nhận em chưa có mặt tại lớp "${s.n}" (${s.t}) hôm nay. ` +
+          `Nếu có nhầm lẫn, em báo lại trung tâm giúp nha. Cảm ơn em!`,
         dedupKey: `attendance:${s.id}:${todayKeyVN(nowMs)}:${sid}`,
       });
     }
@@ -197,8 +197,8 @@ export function buildTuitionReminders(
       chatId: link.chatId, token: link.token || "",
       text:
         `💰 AIhoclaptrinh · Nhắc học phí\n\n` +
-        `Em ${st.name} đã học đủ số buổi của kỳ. Học phí kỳ này${st.fee ? " (" + st.fee + ")" : ""} ` +
-        `đã đến hạn thanh toán. Nhờ quý phụ huynh sắp xếp giúp ạ. Xin cảm ơn!`,
+        `Chào em ${st.name}! Em đã học đủ số buổi của kỳ. Học phí kỳ này${st.fee ? " (" + st.fee + ")" : ""} ` +
+        `đã đến hạn. Em sắp xếp đóng học phí giúp trung tâm nha. Cảm ơn em!`,
       dedupKey: `tuition:${todayKeyVN(nowMs)}:${st.id}`,
     });
   }
@@ -229,11 +229,11 @@ export function buildGradeReports(
       chatId: link.chatId, token: link.token || "",
       text:
         `📊 AIhoclaptrinh · Báo cáo tuần\n\n` +
-        `Em ${st.name}\n` +
+        `Chào em ${st.name}, kết quả tuần này của em:\n` +
         `• GPA: ${st.gpa || "—"}\n` +
         `• Chuyên cần: ${att}\n` +
         `• Trạng thái: ${st.status}\n\n` +
-        `Chúc gia đình cuối tuần vui vẻ!`,
+        `Chúc em cuối tuần vui vẻ!`,
       dedupKey: `grades:${weekKey}:${st.id}`,
     });
   }
@@ -255,8 +255,8 @@ export function buildRiskAlerts(
       chatId: link.chatId, token: link.token || "",
       text:
         `🚨 AIhoclaptrinh · Cảnh báo rủi ro\n\n` +
-        `Hệ thống AI ghi nhận em ${st.name} đang có dấu hiệu cần quan tâm ` +
-        `(chuyên cần/điểm số giảm). Nhà trường sẽ liên hệ để cùng hỗ trợ em ạ.`,
+        `Chào em ${st.name}, hệ thống ghi nhận kết quả gần đây của em đang giảm ` +
+        `(chuyên cần/điểm số). Trung tâm sẽ đồng hành hỗ trợ em, cùng cố gắng nha!`,
       dedupKey: `risk:${todayKeyVN(nowMs)}:${st.id}`,
     });
   }

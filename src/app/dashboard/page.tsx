@@ -38,7 +38,7 @@ export default function DashboardPage() {
   ];
 
   const aiActions = [
-    { label: vi ? "Soạn tin cho gia đình có rủi ro" : "Draft outreach to at-risk families", Icon: Mail },
+    { label: vi ? "Soạn tin cho học viên có rủi ro" : "Draft outreach to at-risk students", Icon: Mail },
     { label: vi ? "Tạo kế hoạch can thiệp học tập" : "Generate an intervention plan", Icon: FileText },
     { label: vi ? "Xem bất thường chuyên cần" : "Review attendance anomalies", Icon: TriangleAlert },
   ];
