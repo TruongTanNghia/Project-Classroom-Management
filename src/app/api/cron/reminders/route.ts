@@ -4,7 +4,7 @@ import {
   dueReminders, buildAttendanceAlerts, buildTuitionReminders, buildGradeReports, buildRiskAlerts,
   type DueReminder,
 } from "@/lib/reminders";
-import type { Session, Student, ZaloAuto, ZaloLink } from "@/lib/types";
+import type { AttRecord, Session, Student, ZaloAuto, ZaloLink } from "@/lib/types";
 
 // Cron chạy MỌI tự động Zalo: một dịch vụ cron ngoài (VD cron-job.org) gọi route
 // này mỗi ~5 phút. Route đọc trạng thái công tắc (app_settings.zaloAuto) rồi:
@@ -82,12 +82,18 @@ export async function GET(request: Request) {
     attendance: r.attendance ?? undefined, gpa: r.gpa || undefined,
     status: r.status, cycle: r.cycle || 10, fee: r.fee || undefined, payments: [],
   }));
-  // payments cho tính học phí đến kỳ
-  const payRes = await supa.from("payments").select("*");
+  // payments + attendance cho tính học phí đến kỳ
+  const [payRes, attRes] = await Promise.all([
+    supa.from("payments").select("*"),
+    supa.from("attendance_records").select("*"),
+  ]);
   (payRes.data || []).forEach((p: any) => {
     const st = students.find((s) => s.id === p.student_id);
     if (st) st.payments.push({ id: p.id, date: p.date, sessions: p.sessions, amount: p.amount });
   });
+  const attRecords: AttRecord[] = (attRes.data || []).map((r: any) => ({
+    id: r.id, sessionId: r.session_id, studentId: r.student_id, date: r.date, present: r.present,
+  }));
   const zalo = (zRes.data || []).map((r: any): ZaloLink => ({
     id: r.id, code: r.code, name: r.student_name, token: r.token || "",
     chatId: r.chat_id || "", status: r.status, lastMsg: r.last_msg || "",
@@ -104,9 +110,9 @@ export async function GET(request: Request) {
 
   items.push(...dueReminders(sessions, students, zalo, now, { leadMin: lead, windowMin, force: isForced("schedule") }));
   if (on("attend") || isForced("attendance"))
-    items.push(...buildAttendanceAlerts(sessions, students, zalo, now, { force: isForced("attendance") }));
+    items.push(...buildAttendanceAlerts(sessions, students, zalo, attRecords, now, { force: isForced("attendance") }));
   if (on("tuition") || isForced("tuition"))
-    items.push(...buildTuitionReminders(students, sessions, zalo, now, { force: isForced("tuition") }));
+    items.push(...buildTuitionReminders(students, zalo, attRecords, now, { force: isForced("tuition") }));
   if (on("grades") || isForced("grades"))
     items.push(...buildGradeReports(students, sessions, zalo, now, { force: isForced("grades") }));
   if (on("risk") || isForced("risk"))

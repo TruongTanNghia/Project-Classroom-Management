@@ -15,13 +15,14 @@ export default function TuitionPage() {
   const lang = useApp((s) => s.lang);
   const students = useApp((s) => s.students);
   const sessions = useApp((s) => s.sessions);
+  const attRecords = useApp((s) => s.attRecords);
   const remindFee = useApp((s) => s.remindFee);
   const remindAll = useApp((s) => s.remindAll);
   const t = dicts[lang];
   const vi = lang !== "en";
 
   const { revAll, revMonth, revCount, revMonthCount } = revenueTotals(students);
-  const due = dueStudents(students, sessions);
+  const due = dueStudents(students, attRecords);
   const recent = recentPayments(students);
   const byCourse = revenueByCourse(students, sessions);
   const maxCourse = byCourse.reduce((m, c) => Math.max(m, c.amount), 1);

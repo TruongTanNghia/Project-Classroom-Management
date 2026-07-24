@@ -3,7 +3,7 @@
 import { CircleCheck, Clock, Plus, Users } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { dayMeta, dicts } from "@/lib/i18n";
-import { attendanceTally, slotTimes } from "@/lib/derived";
+import { attendanceTally, sessionDayPresent, slotTimes } from "@/lib/derived";
 import { subjectTintClass } from "@/lib/subjects";
 import type { Session } from "@/lib/types";
 import { Page, PageHeader } from "@/components/ui/bits";
@@ -14,12 +14,18 @@ export default function SchedulePage() {
   const lang = useApp((s) => s.lang);
   const sessions = useApp((s) => s.sessions);
   const students = useApp((s) => s.students);
+  const attRecords = useApp((s) => s.attRecords);
   const openModal = useApp((s) => s.openModal);
   const openAttend = useApp((s) => s.openAttend);
   const t = dicts[lang];
   const vi = lang !== "en";
   const days = dayMeta[lang];
   const slots = slotTimes(sessions);
+  const todayISO = (() => {
+    const d = new Date();
+    const p = (n: number) => String(n).padStart(2, "0");
+    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+  })();
 
   const openAdd = (day?: number, time = "07:30–09:00") =>
     openModal(
@@ -51,7 +57,7 @@ export default function SchedulePage() {
     }),
   }));
   const freeCells = slots.length * 7 - filled;
-  const tally = attendanceTally(sessions);
+  const tally = attendanceTally(attRecords);
   const attSummary = tally.marks
     ? (vi ? " · Điểm danh: " : " · Attendance: ") + tally.present + "/" + tally.marks + (vi ? " lượt có mặt" : " present")
     : "";
@@ -124,7 +130,7 @@ export default function SchedulePage() {
               const stu = names.length
                 ? names.slice(0, 2).join(", ") + (names.length > 2 ? " +" + (names.length - 2) : "")
                 : "";
-              const attCount = ids.filter((id) => b.att && b.att[id]).length;
+              const attCount = sessionDayPresent(b.id, todayISO, attRecords); // có mặt hôm nay
               const dateBadge = b.date ? (vi ? "Từ " : "From ") + b.date.slice(8, 10) + "/" + b.date.slice(5, 7) : "";
               return (
                 <div

@@ -14,7 +14,7 @@ const ATT_DATA = [91.2, 92.4, 93.1, 92.8, 94.0, 93.6, 92.1, 90.4, 91.8, 92.9, 93
 export default function DashboardPage() {
   const lang = useApp((s) => s.lang);
   const students = useApp((s) => s.students);
-  const sessions = useApp((s) => s.sessions);
+  const attRecords = useApp((s) => s.attRecords);
   const t = dicts[lang];
   const vi = lang !== "en";
 
@@ -27,7 +27,7 @@ export default function DashboardPage() {
     .filter((s) => s.status !== "Inactive")
     .reduce((sum, s) => sum + parseAmt(s.fee), 0);
   const attPcts = students
-    .map((s) => attendanceStat(s, sessions).pct)
+    .map((s) => attendanceStat(s, attRecords).pct)
     .filter((p): p is number => p != null);
 
   const kpis = [
@@ -45,7 +45,7 @@ export default function DashboardPage() {
 
   // Bảng "cần chú ý" = học viên rủi ro thật
   const atRisk = atRiskStudents.slice(0, 6).map((s) => {
-    const att = attendanceStat(s, sessions);
+    const att = attendanceStat(s, attRecords);
     return {
       name: s.name,
       id: s.email || "",

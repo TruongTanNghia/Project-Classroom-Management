@@ -1,6 +1,6 @@
 // Logic nhắc lịch học tự động — dùng ở API route /api/cron/reminders.
 // Múi giờ Việt Nam cố định UTC+7 (không DST).
-import type { Session, Student, ZaloLink } from "./types";
+import type { AttRecord, Session, Student, ZaloLink } from "./types";
 import { presentCount, paidSessions } from "./derived";
 
 export type ReminderKind = "schedule" | "attendance" | "grades" | "tuition" | "risk";
@@ -144,9 +144,9 @@ export function dueReminders(
 
 const todayKeyVN = (nowMs: number) => vnDateStr(nowMs).replace(/-/g, "");
 
-/** Cảnh báo chuyên cần: buổi đã bắt đầu ~15p mà học viên chưa được điểm danh có mặt. */
+/** Cảnh báo chuyên cần: buổi đã bắt đầu ~15p mà học viên bị điểm danh vắng. */
 export function buildAttendanceAlerts(
-  sessions: Session[], students: Student[], zalo: ZaloLink[], nowMs: number,
+  sessions: Session[], students: Student[], zalo: ZaloLink[], records: AttRecord[], nowMs: number,
   opts: { afterMin?: number; windowMin?: number; force?: boolean } = {}
 ): DueReminder[] {
   const after = opts.afterMin ?? 15;
@@ -165,11 +165,12 @@ export function buildAttendanceAlerts(
     const minsSince = (nowMs - startMs) / 60000;
     const inWindow = minsSince >= after && minsSince < after + win;
     if (!opts.force && !inWindow) continue;
-    // Chỉ cảnh báo khi GV đã điểm danh (att có dữ liệu) và học viên KHÔNG có mặt
-    const taken = s.att && Object.keys(s.att).length > 0;
+    // Chỉ cảnh báo khi GV đã điểm danh buổi này hôm nay (có record) — và HV vắng
+    const taken = records.some((r) => r.sessionId === s.id && r.date === todayStr);
     if (!opts.force && !taken) continue;
     for (const sid of s.studentIds || []) {
-      if (s.att && s.att[sid]) continue; // có mặt → bỏ
+      const present = records.some((r) => r.sessionId === s.id && r.date === todayStr && r.studentId === sid && r.present);
+      if (present) continue; // có mặt → bỏ
       const st = students.find((x) => x.id === sid);
       if (!st) continue;
       const link = linkFor(st, zalo);
@@ -190,12 +191,12 @@ export function buildAttendanceAlerts(
 
 /** Nhắc học phí: học viên đã đến kỳ thu (owed ≥ cycle). Tối đa 1 lần/ngày. */
 export function buildTuitionReminders(
-  students: Student[], sessions: Session[], zalo: ZaloLink[], nowMs: number,
+  students: Student[], zalo: ZaloLink[], records: AttRecord[], nowMs: number,
   opts: { force?: boolean } = {}
 ): DueReminder[] {
   const out: DueReminder[] = [];
   for (const st of students) {
-    const owed = presentCount(st, sessions) - paidSessions(st);
+    const owed = presentCount(st, records) - paidSessions(st);
     const due = owed >= (st.cycle || 10);
     if (!opts.force && !due) continue;
     const link = linkFor(st, zalo);

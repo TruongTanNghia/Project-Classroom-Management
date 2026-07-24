@@ -1,7 +1,8 @@
-// Derived business logic ported from the prototype:
-// present = sessions where att[studentId] is true; paid = Σ payments.sessions;
-// owed = present − paid; owed ≥ cycle → student is due for payment.
-import type { Session, Student } from "./types";
+// Derived business logic:
+// present = số lượt điểm danh CÓ MẶT (attendance_records.present) — chỉ có điểm
+// danh mới tính là đã học; paid = Σ payments.sessions; owed = present − paid;
+// owed ≥ cycle → học viên đến kỳ thu.
+import type { AttRecord, Session, Student } from "./types";
 
 export const parseAmt = (a: string | undefined) =>
   parseInt(String(a ?? "").replace(/[^0-9]/g, ""), 10) || 0;
@@ -21,37 +22,36 @@ export function initials(name: string, max = 2) {
     .slice(0, max);
 }
 
-/** Attendance derived from real schedule check-ins for one student. */
-export function attendanceStat(student: Student, sessions: Session[]) {
-  const sess = sessions.filter((r) => (r.studentIds || []).includes(student.id));
-  const taken = sess.filter((r) => r.att && Object.keys(r.att).length);
-  const present = taken.filter((r) => r.att[student.id]).length;
-  const pct = taken.length ? Math.round((present / taken.length) * 100) : null;
-  return { taken: taken.length, present, pct };
+/** Chuyên cần từ nhật ký điểm danh: taken = số lượt đã điểm danh, present = có mặt. */
+export function attendanceStat(student: Student, records: AttRecord[]) {
+  const mine = records.filter((r) => r.studentId === student.id);
+  const present = mine.filter((r) => r.present).length;
+  const pct = mine.length ? Math.round((present / mine.length) * 100) : null;
+  return { taken: mine.length, present, pct };
 }
 
-/** Number of sessions the student was marked present in (all sessions). */
-export function presentCount(student: Student, sessions: Session[]) {
-  return sessions.filter((r) => (r.studentIds || []).includes(student.id) && r.att && r.att[student.id]).length;
+/** Số buổi ĐÃ HỌC = số lượt điểm danh có mặt. */
+export function presentCount(student: Student, records: AttRecord[]) {
+  return records.filter((r) => r.studentId === student.id && r.present).length;
 }
 
 export function paidSessions(student: Student) {
   return (student.payments || []).reduce((a, p) => a + (p.sessions || 0), 0);
 }
 
-/** Tuition cycle progress for the Students table. */
-export function tuitionProgress(student: Student, sessions: Session[]) {
+/** Tiến độ chu kỳ học phí. */
+export function tuitionProgress(student: Student, records: AttRecord[]) {
   const cyc = student.cycle || 10;
-  const present = presentCount(student, sessions);
+  const present = presentCount(student, records);
   const owed = Math.max(0, present - paidSessions(student));
   const due = owed >= cyc;
   const shown = due ? cyc : owed;
   return { cycle: cyc, shown, remain: cyc - shown, due };
 }
 
-export function dueStudents(students: Student[], sessions: Session[]) {
+export function dueStudents(students: Student[], records: AttRecord[]) {
   return students.filter((st) => {
-    const present = presentCount(st, sessions);
+    const present = presentCount(st, records);
     return present - paidSessions(st) >= (st.cycle || 10);
   });
 }
@@ -115,16 +115,22 @@ export function revenueByCourse(students: Student[], sessions: Session[]) {
     .sort((a, b) => b.amount - a.amount);
 }
 
-/** Week-wide attendance tally for the schedule footer. */
-export function attendanceTally(sessions: Session[]) {
-  let marks = 0, present = 0;
-  sessions.forEach((r) => {
-    if (r.att && Object.keys(r.att).length) {
-      marks += (r.studentIds || []).length;
-      present += (r.studentIds || []).filter((id) => r.att[id]).length;
-    }
-  });
-  return { marks, present };
+/** Tổng lượt điểm danh (footer lịch). */
+export function attendanceTally(records: AttRecord[]) {
+  return { marks: records.length, present: records.filter((r) => r.present).length };
+}
+
+/** Số lượt có mặt của 1 buổi vào 1 ngày cụ thể (badge trên lưới). */
+export function sessionDayPresent(sessionId: number, date: string, records: AttRecord[]) {
+  return records.filter((r) => r.sessionId === sessionId && r.date === date && r.present).length;
+}
+
+/** Lịch sử điểm danh của 1 học viên (mới nhất trước). */
+export function studentHistory(student: Student, records: AttRecord[]) {
+  return records
+    .filter((r) => r.studentId === student.id)
+    .slice()
+    .sort((a, b) => b.date.localeCompare(a.date));
 }
 
 export const CA_SLOTS = [

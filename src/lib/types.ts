@@ -70,6 +70,14 @@ export interface Thread {
   unread: boolean;
 }
 
+export interface AttRecord {
+  id?: number;
+  sessionId: number;
+  studentId: number;
+  date: string; // YYYY-MM-DD
+  present: boolean;
+}
+
 export interface ZaloAuto {
   attend: boolean;
   grades: boolean;

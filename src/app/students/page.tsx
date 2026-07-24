@@ -12,10 +12,11 @@ const GRID = "32px 1fr 160px 160px 130px 40px";
 export default function StudentsPage() {
   const lang = useApp((s) => s.lang);
   const students = useApp((s) => s.students);
-  const sessions = useApp((s) => s.sessions);
+  const attRecords = useApp((s) => s.attRecords);
   const filter = useApp((s) => s.filter);
   const setFilter = useApp((s) => s.setFilter);
   const openModal = useApp((s) => s.openModal);
+  const openDetail = useApp((s) => s.openDetail);
   const t = dicts[lang];
   const vi = lang !== "en";
 
@@ -112,15 +113,20 @@ export default function StudentsPage() {
         </div>
 
         {filtered.map((s, i) => {
-          const att = attendanceStat(s, sessions);
-          const fee = tuitionProgress(s, sessions);
+          const att = attendanceStat(s, attRecords);
+          const fee = tuitionProgress(s, attRecords);
           return (
             <div
               key={s.id}
               className="list-row trow"
               style={{ gridTemplateColumns: GRID, padding: "11px 20px" }}
+              onClick={() => openDetail(s.id)}
             >
-              <input type="checkbox" style={{ width: 15, height: 15, accentColor: "#5E5CE6" }} />
+              <input
+                type="checkbox"
+                style={{ width: 15, height: 15, accentColor: "#5E5CE6" }}
+                onClick={(e) => e.stopPropagation()}
+              />
               <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
                 <Avatar name={s.name} index={i} />
                 <div>
@@ -177,7 +183,14 @@ export default function StudentsPage() {
               <span>
                 <span className={"pill " + statusClass(s.status)}>{statusLabels[lang][s.status]}</span>
               </span>
-              <button className="ghost-icon-btn" title={t.editAction} onClick={() => openEdit(s)}>
+              <button
+                className="ghost-icon-btn"
+                title={t.editAction}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openEdit(s);
+                }}
+              >
                 <Pencil size={15} strokeWidth={2} color="var(--text-3)" />
               </button>
             </div>

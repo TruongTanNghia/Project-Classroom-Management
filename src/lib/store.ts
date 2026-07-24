@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import type {
-  Course, EntityKind, ModalState, Payment, Session, Student, Thread, ZaloAuto, ZaloLink,
+  AttRecord, Course, EntityKind, ModalState, Payment, Session, Student, Thread, ZaloAuto, ZaloLink,
 } from "./types";
 import { seedCourses, seedSessions, seedStudents, seedThreads, seedZalo } from "./seed";
 import { getSupabase, isSupabaseConfigured } from "./supabase";
@@ -50,7 +50,10 @@ interface AppState {
   modal: ModalState | null;
   form: FormState;
   attendId: number | null; // id buổi đang điểm danh (popup riêng)
+  attendDate: string; // ngày đang điểm danh (YYYY-MM-DD)
   attendDraft: Record<number, boolean>;
+  detailId: number | null; // id học viên đang xem chi tiết
+  attRecords: AttRecord[]; // nhật ký điểm danh theo ngày
   seq: number;
   students: Student[];
   courses: Course[];
@@ -75,9 +78,12 @@ interface AppState {
   saveThread: () => void;
   saveSched: () => void;
   openAttend: (sessionId: number) => void;
+  setAttendDate: (date: string) => void;
   toggleAttend: (studentId: number) => void;
   saveAttend: () => void;
   closeAttend: () => void;
+  openDetail: (studentId: number) => void;
+  closeDetail: () => void;
   confirmDelete: () => void;
   recordPayment: (id: number) => void;
   toggleAuto: (key: keyof ZaloAuto) => void;
@@ -86,6 +92,13 @@ interface AppState {
 }
 
 let toastTimer: number | undefined;
+
+/** Ngày hôm nay theo lịch máy, định dạng YYYY-MM-DD. */
+function todayISO() {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+}
 
 function todayDDMMYYYY() {
   const now = new Date();
@@ -141,7 +154,7 @@ const TABLE: Record<EntityKind, string> = {
 async function loadFromSupabase() {
   const supa = sb();
   if (!supa) return null;
-  const [students, payments, courses, sessions, zalo, threads, settings] = await Promise.all([
+  const [students, payments, courses, sessions, zalo, threads, settings, attend] = await Promise.all([
     supa.from("students").select("*").order("id"),
     supa.from("payments").select("*").order("id"),
     supa.from("courses").select("*").order("id"),
@@ -149,6 +162,7 @@ async function loadFromSupabase() {
     supa.from("zalo_links").select("*").order("id"),
     supa.from("threads").select("*").order("id"),
     supa.from("app_settings").select("*"),
+    supa.from("attendance_records").select("*"),
   ]);
   const err = students.error || payments.error || courses.error || sessions.error || zalo.error || threads.error || settings.error;
   if (err) throw err;
@@ -188,6 +202,11 @@ async function loadFromSupabase() {
     })),
     zaloAuto: ((settings.data || []).find((r: any) => r.key === "zaloAuto")?.value as ZaloAuto) ||
       { attend: true, grades: true, tuition: true, risk: false },
+    attRecords: attend.error
+      ? []
+      : (attend.data || []).map((r: any): AttRecord => ({
+          id: r.id, sessionId: r.session_id, studentId: r.student_id, date: r.date, present: r.present,
+        })),
   };
   // Nối tiếp bộ đếm ID theo ID lớn nhất đã có → tránh trùng khi tạo mới
   const maxId = Math.max(
@@ -232,7 +251,10 @@ export const useApp = create<AppState>((set, get) => ({
   modal: null,
   form: {},
   attendId: null,
+  attendDate: todayISO(),
   attendDraft: {},
+  detailId: null,
+  attRecords: [],
   seq: 100,
   students: seedStudents,
   courses: seedCourses,
@@ -418,10 +440,25 @@ export const useApp = create<AppState>((set, get) => ({
     }
   },
 
+  // Dựng draft điểm danh của 1 buổi vào 1 ngày từ nhật ký đã có
   openAttend: (sessionId) => {
     const s = get().sessions.find((x) => x.id === sessionId);
     if (!s) return;
-    set({ attendId: sessionId, attendDraft: { ...(s.att || {}) } });
+    const date = todayISO();
+    const draft: Record<number, boolean> = {};
+    get().attRecords
+      .filter((r) => r.sessionId === sessionId && r.date === date)
+      .forEach((r) => (draft[r.studentId] = r.present));
+    set({ attendId: sessionId, attendDate: date, attendDraft: draft });
+  },
+  setAttendDate: (date) => {
+    const { attendId } = get();
+    const draft: Record<number, boolean> = {};
+    if (attendId != null)
+      get().attRecords
+        .filter((r) => r.sessionId === attendId && r.date === date)
+        .forEach((r) => (draft[r.studentId] = r.present));
+    set({ attendDate: date, attendDraft: draft });
   },
   toggleAttend: (studentId) => {
     const d = { ...get().attendDraft };
@@ -429,17 +466,31 @@ export const useApp = create<AppState>((set, get) => ({
     set({ attendDraft: d });
   },
   saveAttend: () => {
-    const { attendId, attendDraft, sessions } = get();
-    if (attendId == null) return;
-    const next = sessions.map((x) => (x.id === attendId ? { ...x, att: { ...attendDraft } } : x));
-    set({ sessions: next, attendId: null, attendDraft: {} });
-    const updated = next.find((x) => x.id === attendId);
-    if (updated)
-      sb()?.from("schedule_sessions").update({ attendance: updated.att }).eq("id", attendId).then(({ error }) => reportSync(error));
+    const { attendId, attendDate, attendDraft, sessions, attRecords } = get();
+    if (attendId == null || !attendDate) return;
+    const s = sessions.find((x) => x.id === attendId);
+    if (!s) return;
+    // Mỗi học viên của buổi → 1 dòng present true/false cho ngày này
+    const rows = (s.studentIds || []).map((sid) => ({
+      session_id: attendId, student_id: sid, date: attendDate, present: Boolean(attendDraft[sid]),
+    }));
+    // Cập nhật local: bỏ record cũ của (buổi, ngày) rồi thêm mới
+    const kept = attRecords.filter((r) => !(r.sessionId === attendId && r.date === attendDate));
+    const localNew: AttRecord[] = rows.map((r) => ({
+      sessionId: r.session_id, studentId: r.student_id, date: r.date, present: r.present,
+    }));
+    set({ attRecords: [...kept, ...localNew], attendId: null, attendDraft: {} });
+    if (rows.length)
+      sb()?.from("attendance_records")
+        .upsert(rows, { onConflict: "session_id,student_id,date" })
+        .then(({ error }) => reportSync(error));
     const vi = get().lang !== "en";
     get().showToast(vi ? "Đã lưu điểm danh ✓" : "Attendance saved ✓");
   },
   closeAttend: () => set({ attendId: null, attendDraft: {} }),
+
+  openDetail: (studentId) => set({ detailId: studentId }),
+  closeDetail: () => set({ detailId: null }),
 
   confirmDelete: () => {
     const m = get().modal;

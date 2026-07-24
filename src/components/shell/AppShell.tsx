@@ -9,6 +9,7 @@ import Topbar from "./Topbar";
 import PageSkeleton from "./PageSkeleton";
 import ModalRoot from "@/components/modals/ModalRoot";
 import AttendanceModal from "@/components/modals/AttendanceModal";
+import StudentDetailModal from "@/components/modals/StudentDetailModal";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const hydrate = useApp((s) => s.hydrate);
@@ -41,6 +42,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </div>
       <ModalRoot />
       <AttendanceModal />
+      <StudentDetailModal />
       {toast && (
         <div
           style={{

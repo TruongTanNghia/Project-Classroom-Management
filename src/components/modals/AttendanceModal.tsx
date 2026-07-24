@@ -9,9 +9,11 @@ import { CA_SLOTS } from "@/lib/derived";
 export default function AttendanceModal() {
   const lang = useApp((s) => s.lang);
   const attendId = useApp((s) => s.attendId);
+  const attendDate = useApp((s) => s.attendDate);
   const draft = useApp((s) => s.attendDraft);
   const sessions = useApp((s) => s.sessions);
   const students = useApp((s) => s.students);
+  const setAttendDate = useApp((s) => s.setAttendDate);
   const toggleAttend = useApp((s) => s.toggleAttend);
   const saveAttend = useApp((s) => s.saveAttend);
   const closeAttend = useApp((s) => s.closeAttend);
@@ -73,8 +75,22 @@ export default function AttendanceModal() {
           </button>
         </div>
 
+        {/* Ngày học */}
+        <div style={{ padding: "16px 24px 0", display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--body-c)", minWidth: 72 }}>
+            {vi ? "Ngày học" : "Class date"}
+          </span>
+          <input
+            type="date"
+            className="input"
+            value={attendDate}
+            onChange={(e) => setAttendDate(e.target.value)}
+            style={{ flex: 1 }}
+          />
+        </div>
+
         {/* Danh sách học viên */}
-        <div style={{ padding: "16px 24px", overflowY: "auto", minHeight: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ padding: "12px 24px 16px", overflowY: "auto", minHeight: 0, display: "flex", flexDirection: "column", gap: 8 }}>
           {ids.length === 0 && (
             <div style={{ fontSize: 13, color: "var(--text-3)" }}>
               {vi ? "Buổi này chưa có học viên." : "No students in this session."}
