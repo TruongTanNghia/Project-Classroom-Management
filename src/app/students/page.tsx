@@ -43,11 +43,19 @@ export default function StudentsPage() {
     ? { All: "Tất cả", Active: "Đang học", "At risk": "Rủi ro", Inactive: "Nghỉ học" }
     : { All: "All", Active: "Active", "At risk": "At risk", Inactive: "Inactive" };
 
+  const activeCount = students.filter((s) => s.status === "Active").length;
+  const subtitle = vi
+    ? `${students.length} học viên · ${activeCount} đang học`
+    : `${students.length} students · ${activeCount} active`;
+  const showing = vi
+    ? `Hiển thị ${filtered.length} / ${students.length} học viên`
+    : `Showing ${filtered.length} of ${students.length} students`;
+
   return (
     <Page>
       <PageHeader
         title={t.studentsTitle}
-        subtitle={t.studentsSub}
+        subtitle={subtitle}
         actions={
           <>
             <button className="btn">
@@ -177,7 +185,7 @@ export default function StudentsPage() {
         })}
 
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px" }}>
-          <span style={{ fontSize: 13, color: "var(--text-2)" }}>{t.showingStudents}</span>
+          <span style={{ fontSize: 13, color: "var(--text-2)" }}>{showing}</span>
           <div style={{ display: "flex", gap: 6 }}>
             <button
               style={{

@@ -13,8 +13,8 @@ import { dicts, navLabels } from "@/lib/i18n";
 const workspaceNav = [
   { key: "about", href: "/about", Icon: UserRound },
   { key: "dashboard", href: "/dashboard", Icon: House },
-  { key: "students", href: "/students", Icon: Users, badge: "1,284" },
-  { key: "courses", href: "/courses", Icon: BookOpen, badge: "42" },
+  { key: "students", href: "/students", Icon: Users, badgeKey: "students" as const },
+  { key: "courses", href: "/courses", Icon: BookOpen, badgeKey: "courses" as const },
   { key: "insights", href: "/insights", Icon: Sparkles },
   { key: "schedule", href: "/schedule", Icon: Calendar },
 ];
@@ -31,11 +31,16 @@ export default function Sidebar() {
   const lang = useApp((s) => s.lang);
   const menuOpen = useApp((s) => s.menuOpen);
   const setMenuOpen = useApp((s) => s.setMenuOpen);
+  const studentCount = useApp((s) => s.students.length);
+  const courseCount = useApp((s) => s.courses.length);
   const t = dicts[lang];
   const labels = navLabels[lang];
+  const badgeFor = (k?: "students" | "courses") =>
+    k === "students" ? studentCount : k === "courses" ? courseCount : 0;
 
-  const navItem = (n: { key: string; href: string; Icon: typeof House; badge?: string }) => {
+  const navItem = (n: { key: string; href: string; Icon: typeof House; badgeKey?: "students" | "courses" }) => {
     const active = pathname === n.href || (n.href === "/dashboard" && pathname === "/");
+    const badge = badgeFor(n.badgeKey);
     return (
       <Link
         key={n.key}
@@ -50,14 +55,14 @@ export default function Sidebar() {
         <span style={{ flex: 1, textAlign: "left", color: active ? "var(--accent)" : undefined }}>
           {labels[n.key]}
         </span>
-        {n.badge && (
+        {n.badgeKey && badge > 0 && (
           <span
             style={{
               background: "var(--badge)", color: "var(--text-2)", fontSize: 11,
               fontWeight: 600, padding: "1px 7px", borderRadius: 99,
             }}
           >
-            {n.badge}
+            {badge.toLocaleString("vi-VN")}
           </span>
         )}
       </Link>

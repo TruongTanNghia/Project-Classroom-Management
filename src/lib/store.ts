@@ -175,8 +175,17 @@ async function loadFromSupabase() {
     zaloAuto: ((settings.data || []).find((r: any) => r.key === "zaloAuto")?.value as ZaloAuto) ||
       { attend: true, grades: true, tuition: true, risk: false },
   };
+  // Nối tiếp bộ đếm ID theo ID lớn nhất đã có → tránh trùng khi tạo mới
+  const maxId = Math.max(
+    100,
+    ...mapped.students.map((r) => r.id),
+    ...mapped.courses.map((r) => r.id),
+    ...mapped.sessions.map((r) => r.id),
+    ...mapped.zalo.map((r) => r.id),
+    ...mapped.threads.map((r) => r.id)
+  );
   /* eslint-enable @typescript-eslint/no-explicit-any */
-  return mapped;
+  return { ...mapped, seq: maxId };
 }
 
 async function loadMsgStats(): Promise<MsgStats | null> {

@@ -33,7 +33,7 @@ export default function CoursesPage() {
     <Page>
       <PageHeader
         title={t.coursesTitle}
-        subtitle={t.coursesSub}
+        subtitle={vi ? `${courses.length} khóa học` : `${courses.length} courses`}
         actions={
           <button className="btn-primary" onClick={openAdd}>
             <Plus size={14} strokeWidth={2.2} />

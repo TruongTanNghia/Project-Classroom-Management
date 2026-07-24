@@ -6,34 +6,52 @@ import {
 } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { dicts, riskLabels } from "@/lib/i18n";
+import { attendanceStat } from "@/lib/derived";
 import { Avatar, Page, PageHeader } from "@/components/ui/bits";
 
 const ATT_DATA = [91.2, 92.4, 93.1, 92.8, 94.0, 93.6, 92.1, 90.4, 91.8, 92.9, 93.7, 93.4];
 
 export default function DashboardPage() {
   const lang = useApp((s) => s.lang);
+  const students = useApp((s) => s.students);
+  const sessions = useApp((s) => s.sessions);
   const t = dicts[lang];
   const vi = lang !== "en";
 
+  // KPI tính thật từ dữ liệu học viên
+  const atRiskStudents = students.filter((s) => s.status === "At risk");
+  const gpas = students.map((s) => parseFloat(s.gpa || "")).filter((n) => !isNaN(n));
+  const avgGpa = gpas.length ? (gpas.reduce((a, b) => a + b, 0) / gpas.length).toFixed(2) : "—";
+  const attPcts = students
+    .map((s) => attendanceStat(s, sessions).pct)
+    .filter((p): p is number => p != null);
+  const avgAtt = attPcts.length ? Math.round(attPcts.reduce((a, b) => a + b, 0) / attPcts.length) + "%" : "—";
+
   const kpis = [
-    { label: vi ? "Tổng học viên" : "Total students", value: "1,284", delta: "+3.2%", up: true, Icon: Users },
-    { label: vi ? "Tỷ lệ chuyên cần" : "Attendance rate", value: "93.4%", delta: "+1.1%", up: true, Icon: Check },
-    { label: vi ? "GPA trung bình" : "Average GPA", value: "3.28", delta: "-0.04", up: false, Icon: GraduationCap },
-    { label: vi ? "Học viên rủi ro" : "At-risk students", value: "14", delta: "-5", up: true, Icon: TriangleAlert },
+    { label: vi ? "Tổng học viên" : "Total students", value: students.length.toLocaleString("vi-VN"), Icon: Users },
+    { label: vi ? "Tỷ lệ chuyên cần" : "Attendance rate", value: avgAtt, Icon: Check },
+    { label: vi ? "GPA trung bình" : "Average GPA", value: avgGpa, Icon: GraduationCap },
+    { label: vi ? "Học viên rủi ro" : "At-risk students", value: String(atRiskStudents.length), Icon: TriangleAlert },
   ];
 
   const aiActions = [
-    { label: vi ? "Soạn tin cho 6 gia đình có rủi ro" : "Draft outreach to 6 at-risk families", Icon: Mail },
-    { label: vi ? "Tạo kế hoạch can thiệp Toán Khối 9" : "Generate Grade 9 Math intervention plan", Icon: FileText },
-    { label: vi ? "Xem 3 bất thường chuyên cần" : "Review attendance anomalies (3)", Icon: TriangleAlert },
+    { label: vi ? "Soạn tin cho gia đình có rủi ro" : "Draft outreach to at-risk families", Icon: Mail },
+    { label: vi ? "Tạo kế hoạch can thiệp học tập" : "Generate an intervention plan", Icon: FileText },
+    { label: vi ? "Xem bất thường chuyên cần" : "Review attendance anomalies", Icon: TriangleAlert },
   ];
 
-  const atRisk = [
-    { name: "Jordan Ellis", id: "STU-2041", grade: "Grade 9", attendance: "78%", signal: vi ? "Điểm Toán giảm 14% trong 3 tuần" : "Math score down 14% in 3 weeks", risk: "High" },
-    { name: "Priya Nair", id: "STU-1877", grade: "Grade 11", attendance: "84%", signal: vi ? "Vắng 4/10 buổi gần nhất" : "Missed 4 of last 10 sessions", risk: "High" },
-    { name: "Sam Whitfield", id: "STU-2210", grade: "Grade 9", attendance: "88%", signal: vi ? "Không nộp bài tuần này" : "No assignment submissions this week", risk: "Medium" },
-    { name: "Lena Okafor", id: "STU-1904", grade: "Grade 10", attendance: "90%", signal: vi ? "Giảm tương tác môn Khoa học" : "Engagement drop in Science", risk: "Medium" },
-  ];
+  // Bảng "cần chú ý" = học viên rủi ro thật
+  const atRisk = atRiskStudents.slice(0, 6).map((s) => {
+    const att = attendanceStat(s, sessions);
+    return {
+      name: s.name,
+      id: s.email || "",
+      grade: s.grade ? (vi ? "Khối " : "Grade ") + s.grade : "—",
+      attendance: att.pct != null ? att.pct + "%" : "—",
+      signal: s.homeroom || (vi ? "Cần theo dõi" : "Needs monitoring"),
+      risk: "High",
+    };
+  });
 
   const riskClass = (r: string) =>
     r === "High" ? "pill-danger" : r === "Medium" ? "pill-warn" : "pill-success";
@@ -59,15 +77,6 @@ export default function DashboardPage() {
               <k.Icon size={16} strokeWidth={2} color="var(--text-3)" />
             </div>
             <div style={{ fontSize: 26, fontWeight: 600, letterSpacing: "-0.02em" }}>{k.value}</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
-              <span
-                className={"pill " + (k.up ? "pill-success" : "pill-danger")}
-                style={{ fontSize: 12, fontWeight: 600, padding: "2px 8px" }}
-              >
-                {k.delta}
-              </span>
-              <span style={{ color: "var(--text-3)", fontSize: 12 }}>{t.vsLastTerm}</span>
-            </div>
           </div>
         ))}
       </div>
@@ -92,29 +101,40 @@ export default function DashboardPage() {
               <button style={{ ...rangeBtnStyle, color: "var(--text-2)" }}>{t.year}</button>
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 10, height: 180, marginTop: 20 }}>
-            {ATT_DATA.map((v, i) => (
-              <div
-                key={i}
-                style={{
-                  flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
-                  gap: 8, height: "100%", justifyContent: "flex-end",
-                }}
-              >
+          {attPcts.length === 0 ? (
+            <div
+              style={{
+                height: 180, marginTop: 20, display: "flex", alignItems: "center",
+                justifyContent: "center", color: "var(--text-3)", fontSize: 13,
+              }}
+            >
+              {vi ? "Chưa có dữ liệu điểm danh để thống kê." : "No attendance data yet."}
+            </div>
+          ) : (
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 10, height: 180, marginTop: 20 }}>
+              {ATT_DATA.map((v, i) => (
                 <div
-                  title={v + "%"}
+                  key={i}
                   style={{
-                    width: "100%", maxWidth: 34, borderRadius: "8px 8px 4px 4px",
-                    background: i === ATT_DATA.length - 1 ? "var(--accent-strong)" : "var(--accent-bar-dim)",
-                    height: ((v - 82) / 13) * 100 + "%",
-                    animation: "growUp 0.7s cubic-bezier(0.16,1,0.3,1) both",
-                    animationDelay: i * 0.05 + "s",
+                    flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
+                    gap: 8, height: "100%", justifyContent: "flex-end",
                   }}
-                />
-                <span style={{ fontSize: 11, color: "var(--text-3)" }}>W{i + 1}</span>
-              </div>
-            ))}
-          </div>
+                >
+                  <div
+                    title={v + "%"}
+                    style={{
+                      width: "100%", maxWidth: 34, borderRadius: "8px 8px 4px 4px",
+                      background: i === ATT_DATA.length - 1 ? "var(--accent-strong)" : "var(--accent-bar-dim)",
+                      height: ((v - 82) / 13) * 100 + "%",
+                      animation: "growUp 0.7s cubic-bezier(0.16,1,0.3,1) both",
+                      animationDelay: i * 0.05 + "s",
+                    }}
+                  />
+                  <span style={{ fontSize: 11, color: "var(--text-3)" }}>W{i + 1}</span>
+                </div>
+              ))}
+            </div>
+          )}
           <div
             style={{
               display: "flex", gap: 20, marginTop: 16, paddingTop: 16,
@@ -145,7 +165,13 @@ export default function DashboardPage() {
             <span style={{ fontSize: 14, fontWeight: 600 }}>{t.aiBrief}</span>
             <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--text-3)" }}>08:00 AM</span>
           </div>
-          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: "var(--body-c)" }}>{t.briefBody}</p>
+          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: "var(--body-c)" }}>
+            {students.length === 0
+              ? vi
+                ? "Chưa có dữ liệu học viên. Hãy thêm học viên, xếp lịch và điểm danh — AI sẽ tổng hợp tình hình mỗi ngày tại đây."
+                : "No student data yet. Add students, build the schedule and take attendance — the AI will summarize each day here."
+              : t.briefBody}
+          </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {aiActions.map((a) => (
               <button key={a.label} className="ai-action-btn">
@@ -164,7 +190,6 @@ export default function DashboardPage() {
             <div style={{ fontSize: 15, fontWeight: 600 }}>{t.needAttention}</div>
             <div style={{ color: "var(--text-2)", fontSize: 13, marginTop: 2 }}>{t.needAttentionSub}</div>
           </div>
-          <a href="#" style={{ fontSize: 13, fontWeight: 500 }}>{t.viewAll14}</a>
         </div>
         <div className="table-head trow" style={{ gridTemplateColumns: "2.2fr 1fr 1fr 1.4fr 1fr 40px" }}>
           <span>{t.colStudent}</span>
@@ -174,6 +199,11 @@ export default function DashboardPage() {
           <span>{t.colRisk}</span>
           <span />
         </div>
+        {atRisk.length === 0 && (
+          <div style={{ padding: "16px 24px", fontSize: 13, color: "var(--text-3)" }}>
+            {vi ? "Chưa có học viên rủi ro." : "No at-risk students."}
+          </div>
+        )}
         {atRisk.map((s, i) => (
           <div
             key={s.id}
@@ -187,9 +217,7 @@ export default function DashboardPage() {
                 <div style={{ fontSize: 12, color: "var(--text-2)" }}>{s.id}</div>
               </div>
             </div>
-            <span style={{ color: "var(--body-c)" }}>
-              {vi ? s.grade.replace("Grade", "Khối") : s.grade}
-            </span>
+            <span style={{ color: "var(--body-c)" }}>{s.grade}</span>
             <span style={{ color: "var(--body-c)" }}>{s.attendance}</span>
             <span style={{ color: "var(--text-2)", fontSize: 13 }}>{s.signal}</span>
             <span>
