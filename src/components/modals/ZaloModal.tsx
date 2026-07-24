@@ -19,6 +19,8 @@ export default function ZaloModal() {
   const setForm = useApp((s) => s.setForm);
   const saveZalo = useApp((s) => s.saveZalo);
   const showToast = useApp((s) => s.showToast);
+  const students = useApp((s) => s.students);
+  const zalo = useApp((s) => s.zalo);
   const t = dicts[lang];
   const vi = lang !== "en";
 
@@ -120,13 +122,28 @@ export default function ZaloModal() {
       showDelete={isEdit}
       onSave={saveZalo}
     >
-      <Field label={t.fName}>
-        <input
-          className="input"
-          value={form.name || ""}
-          onChange={(e) => setForm({ name: e.target.value })}
-          placeholder={t.fNamePh}
-        />
+      <Field label={vi ? "Học viên" : "Student"}>
+        {students.length === 0 ? (
+          <div style={{ fontSize: 13, color: "var(--text-3)" }}>
+            {vi ? "Chưa có học viên — hãy thêm học viên trước." : "No students yet — add students first."}
+          </div>
+        ) : (
+          <Choices
+            wrap
+            options={students.map((st) => {
+              // Học viên đã có liên kết Zalo khác (không tính bản ghi đang sửa)
+              const linkedElsewhere = zalo.some(
+                (z) => z.name === st.name && !(isEdit && z.id === modal.id)
+              );
+              return {
+                label: st.name + (linkedElsewhere ? " ✓" : ""),
+                on: form.name === st.name,
+                onPick: () => setForm({ name: st.name }),
+                noFlex: true,
+              };
+            })}
+          />
+        )}
       </Field>
       <Field label={t.fToken}>
         <input
