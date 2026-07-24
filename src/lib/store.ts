@@ -18,6 +18,8 @@ export interface FormState {
   teacher?: string;
   schedule?: string;
   subject?: string;
+  price?: string;
+  html?: string;
   token?: string;
   chatId?: string;
   content?: string;
@@ -115,7 +117,8 @@ const threadToRow = (th: Thread) => ({
 });
 const courseToRow = (c: Course) => ({
   id: c.id, subject: c.subject, name: c.name, teacher: c.teacher,
-  schedule: c.schedule, students: c.students, avg: c.avg, progress: c.progress,
+  schedule: c.schedule, price: c.price ?? "", html_content: c.html ?? "",
+  students: c.students, avg: c.avg, progress: c.progress,
 });
 
 const TABLE: Record<EntityKind, string> = {
@@ -158,7 +161,8 @@ async function loadFromSupabase() {
     })),
     courses: (courses.data || []).map((r: any): Course => ({
       id: r.id, subject: r.subject, name: r.name, teacher: r.teacher,
-      schedule: r.schedule, students: r.students, avg: r.avg, progress: r.progress,
+      schedule: r.schedule, price: r.price || undefined, html: r.html_content || undefined,
+      students: r.students, avg: r.avg, progress: r.progress,
     })),
     sessions: (sessions.data || []).map((r: any): Session => ({
       id: r.id, day: r.day, t: r.slot, n: r.name, r: r.room, s: r.subject,
@@ -301,7 +305,10 @@ export const useApp = create<AppState>((set, get) => ({
       name: F.name.trim(),
       teacher: (F.teacher || "").trim() || "—",
       schedule: (F.schedule || "").trim() || "—",
+      price: (F.price || "").trim(),
       subject: (F.subject || "CS") as Course["subject"],
+      // Giữ HTML cũ khi sửa mà không tải file mới (form.html === undefined)
+      ...(F.html !== undefined ? { html: F.html } : {}),
     };
     if (m.mode === "edit" && m.id != null) {
       const next = courses.map((r) => (r.id === m.id ? { ...r, ...rec } : r));

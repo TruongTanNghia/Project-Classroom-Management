@@ -30,6 +30,8 @@ export interface Course {
   name: string;
   teacher: string;
   schedule: string;
+  price?: string; // giá khóa học (nhập tự do)
+  html?: string; // nội dung file HTML tài liệu khóa học
   students: number;
   avg: string;
   progress: number;
