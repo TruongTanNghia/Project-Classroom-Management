@@ -1,12 +1,12 @@
 "use client";
 
 import {
-  ArrowUpRight, Check, Download, FileText, GraduationCap, Mail, MoreHorizontal, Sparkles,
-  TriangleAlert, Users,
+  ArrowUpRight, Download, FileText, Mail, MoreHorizontal, PauseCircle, Sparkles,
+  TriangleAlert, UserRoundCheck, Users, Wallet,
 } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { dicts, riskLabels } from "@/lib/i18n";
-import { attendanceStat } from "@/lib/derived";
+import { attendanceStat, fmtAmt, parseAmt } from "@/lib/derived";
 import { Avatar, Page, PageHeader } from "@/components/ui/bits";
 
 const ATT_DATA = [91.2, 92.4, 93.1, 92.8, 94.0, 93.6, 92.1, 90.4, 91.8, 92.9, 93.7, 93.4];
@@ -20,18 +20,21 @@ export default function DashboardPage() {
 
   // KPI tính thật từ dữ liệu học viên
   const atRiskStudents = students.filter((s) => s.status === "At risk");
-  const gpas = students.map((s) => parseFloat(s.gpa || "")).filter((n) => !isNaN(n));
-  const avgGpa = gpas.length ? (gpas.reduce((a, b) => a + b, 0) / gpas.length).toFixed(2) : "—";
+  const activeCount = students.filter((s) => s.status === "Active").length;
+  const onHoldCount = students.filter((s) => s.status === "Inactive").length; // "Inactive" hiển thị là Bảo lưu
+  // Thu nhập dự kiến = tổng học phí 1 kỳ của học viên chưa bảo lưu
+  const projectedIncome = students
+    .filter((s) => s.status !== "Inactive")
+    .reduce((sum, s) => sum + parseAmt(s.fee), 0);
   const attPcts = students
     .map((s) => attendanceStat(s, sessions).pct)
     .filter((p): p is number => p != null);
-  const avgAtt = attPcts.length ? Math.round(attPcts.reduce((a, b) => a + b, 0) / attPcts.length) + "%" : "—";
 
   const kpis = [
     { label: vi ? "Tổng học viên" : "Total students", value: students.length.toLocaleString("vi-VN"), Icon: Users },
-    { label: vi ? "Tỷ lệ chuyên cần" : "Attendance rate", value: avgAtt, Icon: Check },
-    { label: vi ? "GPA trung bình" : "Average GPA", value: avgGpa, Icon: GraduationCap },
-    { label: vi ? "Học viên rủi ro" : "At-risk students", value: String(atRiskStudents.length), Icon: TriangleAlert },
+    { label: vi ? "Học viên đang học" : "Active students", value: String(activeCount), Icon: UserRoundCheck },
+    { label: vi ? "Học viên bảo lưu" : "On hold", value: String(onHoldCount), Icon: PauseCircle },
+    { label: vi ? "Thu nhập dự kiến" : "Projected income", value: fmtAmt(projectedIncome), Icon: Wallet },
   ];
 
   const aiActions = [
@@ -76,7 +79,7 @@ export default function DashboardPage() {
               <span style={{ color: "var(--text-2)", fontSize: 13, fontWeight: 500 }}>{k.label}</span>
               <k.Icon size={16} strokeWidth={2} color="var(--text-3)" />
             </div>
-            <div style={{ fontSize: 26, fontWeight: 600, letterSpacing: "-0.02em" }}>{k.value}</div>
+            <div className="tnum" style={{ fontSize: 26, fontWeight: 600, letterSpacing: "-0.02em" }}>{k.value}</div>
           </div>
         ))}
       </div>

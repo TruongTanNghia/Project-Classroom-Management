@@ -134,7 +134,7 @@ const vi = {
   fStatus: "Trạng thái",
   sActive: "Đang học",
   sAtRisk: "Rủi ro",
-  sInactive: "Nghỉ học",
+  sInactive: "Bảo lưu",
   cancel: "Huỷ",
   saveCreate: "Tạo học viên",
   saveUpdate: "Lưu thay đổi",
@@ -334,7 +334,7 @@ const en: typeof vi = {
   fStatus: "Status",
   sActive: "Active",
   sAtRisk: "At risk",
-  sInactive: "Inactive",
+  sInactive: "On hold",
   cancel: "Cancel",
   saveCreate: "Create student",
   saveUpdate: "Save changes",
@@ -459,8 +459,8 @@ export const navLabels: Record<Lang, Record<string, string>> = {
 };
 
 export const statusLabels: Record<Lang, Record<string, string>> = {
-  vi: { Active: "Đang học", "At risk": "Rủi ro", Inactive: "Nghỉ học" },
-  en: { Active: "Active", "At risk": "At risk", Inactive: "Inactive" },
+  vi: { Active: "Đang học", "At risk": "Rủi ro", Inactive: "Bảo lưu" },
+  en: { Active: "Active", "At risk": "At risk", Inactive: "On hold" },
 };
 
 export const zaloStatusLabels: Record<Lang, Record<string, string>> = {
