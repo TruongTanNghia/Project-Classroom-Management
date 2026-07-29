@@ -1,10 +1,36 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { BookOpen, Check, FileCode, X } from "lucide-react";
+import { BookOpen, Check, FileCode, ImagePlus, X } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { dicts } from "@/lib/i18n";
 import ModalShell, { Field } from "./ModalShell";
+
+// Nén ảnh về tối đa 900px, JPEG chất lượng 0.82 → data URL nhẹ để lưu DB
+function resizeImage(file: File, maxW = 900): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxW / img.width);
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("no ctx"));
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+      img.onerror = reject;
+      img.src = String(reader.result || "");
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function CourseModal() {
   const lang = useApp((s) => s.lang);
@@ -16,6 +42,7 @@ export default function CourseModal() {
   const t = dicts[lang];
   const vi = lang !== "en";
   const fileRef = useRef<HTMLInputElement>(null);
+  const imgRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string>("");
 
   if (!modal) return null;
@@ -23,6 +50,8 @@ export default function CourseModal() {
   const existing = isEdit ? courses.find((c) => c.id === modal.id) : undefined;
   // Đã có tài liệu HTML? (từ file vừa tải hoặc từ dữ liệu cũ)
   const hasHtml = form.html !== undefined ? Boolean(form.html) : Boolean(existing?.html);
+  // Ảnh bìa đang hiển thị (từ ảnh vừa chọn hoặc dữ liệu cũ)
+  const coverImg = form.image !== undefined ? form.image : existing?.image || "";
 
   const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -39,6 +68,21 @@ export default function CourseModal() {
     if (fileRef.current) fileRef.current.value = "";
   };
 
+  const onPickImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    try {
+      const dataUrl = await resizeImage(f);
+      setForm({ image: dataUrl });
+    } catch {
+      /* bỏ qua nếu ảnh lỗi */
+    }
+  };
+  const clearImage = () => {
+    setForm({ image: "" });
+    if (imgRef.current) imgRef.current.value = "";
+  };
+
   return (
     <ModalShell
       icon={<BookOpen size={18} strokeWidth={2} color="var(--accent)" />}
@@ -49,6 +93,44 @@ export default function CourseModal() {
       showDelete={isEdit}
       onSave={saveCourse}
     >
+      {/* Ảnh bìa */}
+      <Field label={vi ? "Ảnh bìa khóa học" : "Cover image"}>
+        <input ref={imgRef} type="file" accept="image/*" onChange={onPickImage} style={{ display: "none" }} />
+        {coverImg ? (
+          <div style={{ position: "relative", borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={coverImg} alt="cover" style={{ width: "100%", height: 150, objectFit: "cover", display: "block" }} />
+            <div style={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 6 }}>
+              <button type="button" onClick={() => imgRef.current?.click()} className="btn" style={{ padding: "5px 10px", fontSize: 12 }}>
+                {vi ? "Đổi ảnh" : "Change"}
+              </button>
+              <button
+                type="button"
+                onClick={clearImage}
+                className="ghost-icon-btn"
+                title={vi ? "Xoá" : "Remove"}
+                style={{ background: "rgba(255,255,255,0.9)" }}
+              >
+                <X size={15} strokeWidth={2} color="#1C1917" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => imgRef.current?.click()}
+            className="btn"
+            style={{
+              justifyContent: "center", flexDirection: "column", gap: 6, height: 110,
+              width: "100%", borderStyle: "dashed",
+            }}
+          >
+            <ImagePlus size={22} strokeWidth={1.8} color="var(--accent)" />
+            <span style={{ fontSize: 12.5 }}>{vi ? "Chọn ảnh bìa" : "Choose a cover image"}</span>
+          </button>
+        )}
+      </Field>
+
       <Field label={t.fCourseName}>
         <input
           className="input"

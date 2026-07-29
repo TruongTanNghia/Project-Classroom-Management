@@ -10,3 +10,6 @@ alter table courses add column if not exists html_content text default '';
 
 -- Số buổi của chương trình khóa học
 alter table courses add column if not exists total_sessions int default 0;
+
+-- Ảnh bìa khóa học (data URL đã nén, hoặc link ảnh)
+alter table courses add column if not exists image text default '';

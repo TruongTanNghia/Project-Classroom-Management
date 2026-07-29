@@ -32,6 +32,7 @@ export interface Course {
   schedule?: string; // (cũ) không còn dùng trong UI
   price?: string; // giá khóa học (nhập tự do)
   totalSessions?: number; // số buổi của chương trình khóa học
+  image?: string; // ảnh bìa (data URL đã nén)
   html?: string; // nội dung file HTML tài liệu khóa học
   students: number;
   avg: string;
