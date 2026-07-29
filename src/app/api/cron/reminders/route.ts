@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import {
   dueReminders, buildAttendanceAlerts, buildTuitionReminders, buildGradeReports, buildRiskAlerts,
-  type DueReminder,
+  dueSessionAlerts, type DueReminder,
 } from "@/lib/reminders";
 import type { AttRecord, Session, Student, ZaloAuto, ZaloLink } from "@/lib/types";
 
@@ -100,6 +100,7 @@ export async function GET(request: Request) {
   }));
   const auto = ((setRes.data || []).find((r: any) => r.key === "zaloAuto")?.value as ZaloAuto) ||
     { attend: true, grades: true, tuition: true, risk: false };
+  const adminChatId = ((setRes.data || []).find((r: any) => r.key === "adminZalo")?.value?.chatId as string) || "";
 
   if (forceSessionId) sessions = sessions.filter((s) => String(s.id) === String(forceSessionId));
 
@@ -117,6 +118,17 @@ export async function GET(request: Request) {
     items.push(...buildGradeReports(students, sessions, zalo, now, { force: isForced("grades") }));
   if (on("risk") || isForced("risk"))
     items.push(...buildRiskAlerts(students, zalo, now, { force: isForced("risk") }));
+
+  // Thầy (admin): nhận thông báo MỌI buổi sắp tới (không cần học viên liên kết)
+  if (adminChatId) {
+    const forceAdmin = forcedAll || forceKind === "admin" || forceKind === "schedule" || !!forceSessionId;
+    items.push(
+      ...dueSessionAlerts(sessions, students, now, { leadMin: lead, windowMin, force: forceAdmin }).map((a) => ({
+        kind: "admin" as const, sessionId: a.sessionId, studentId: 0, studentName: "Thầy (Admin)",
+        chatId: adminChatId, token: "", text: a.text, dedupKey: a.dedupKey,
+      }))
+    );
+  }
 
   const anyForce = forcedAll || !!forceKind || !!forceSessionId;
 

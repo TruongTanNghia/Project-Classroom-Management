@@ -61,8 +61,10 @@ interface AppState {
   zalo: ZaloLink[];
   threads: Thread[];
   zaloAuto: ZaloAuto;
+  adminChatId: string; // Chat ID Zalo của Thầy (admin) — nhận thông báo mọi buổi
 
   hydrate: () => void;
+  setAdminChatId: (chatId: string) => void;
   setLang: (lang: Lang) => void;
   toggleDark: () => void;
   setMenuOpen: (open: boolean) => void;
@@ -202,6 +204,7 @@ async function loadFromSupabase() {
     })),
     zaloAuto: ((settings.data || []).find((r: any) => r.key === "zaloAuto")?.value as ZaloAuto) ||
       { attend: true, grades: true, tuition: true, risk: false },
+    adminChatId: ((settings.data || []).find((r: any) => r.key === "adminZalo")?.value?.chatId as string) || "",
     attRecords: attend.error
       ? []
       : (attend.data || []).map((r: any): AttRecord => ({
@@ -262,6 +265,12 @@ export const useApp = create<AppState>((set, get) => ({
   zalo: seedZalo,
   threads: seedThreads,
   zaloAuto: { attend: true, grades: true, tuition: true, risk: false },
+  adminChatId: "",
+
+  setAdminChatId: (chatId) => {
+    set({ adminChatId: chatId });
+    sb()?.from("app_settings").upsert({ key: "adminZalo", value: { chatId } }).then(({ error }) => reportSync(error));
+  },
 
   hydrate: () => {
     if (get().hydrated) return;

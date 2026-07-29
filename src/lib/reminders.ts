@@ -3,7 +3,7 @@
 import type { AttRecord, Session, Student, ZaloLink } from "./types";
 import { presentCount, paidSessions } from "./derived";
 
-export type ReminderKind = "schedule" | "attendance" | "grades" | "tuition" | "risk";
+export type ReminderKind = "schedule" | "attendance" | "grades" | "tuition" | "risk" | "admin";
 
 const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -268,6 +268,46 @@ export function buildRiskAlerts(
         `(chuyên cần/điểm số). Trung tâm sẽ đồng hành hỗ trợ em, cùng cố gắng nha!`,
       dedupKey: `risk:${todayKeyVN(nowMs)}:${st.id}`,
     });
+  }
+  return out;
+}
+
+/**
+ * Thông báo cho THẦY (admin): mỗi buổi sắp tới (trong ~20p) → 1 tin tóm tắt
+ * (không phụ thuộc học viên có liên kết Zalo hay không). Thầy nhận TẤT CẢ buổi.
+ */
+export interface AdminAlert {
+  sessionId: number;
+  dedupKey: string;
+  text: string;
+}
+export function dueSessionAlerts(
+  sessions: Session[], students: Student[], nowMs: number,
+  opts: { leadMin?: number; windowMin?: number; force?: boolean } = {}
+): AdminAlert[] {
+  const lead = opts.leadMin ?? 20;
+  const windowMin = opts.windowMin ?? 7;
+  const p2 = (n: number) => String(n).padStart(2, "0");
+  const out: AdminAlert[] = [];
+  for (const session of sessions) {
+    for (const startMs of candidateStarts(session, nowMs, opts.force)) {
+      const minutesUntil = (startMs - nowMs) / 60000;
+      if (!opts.force && !(minutesUntil >= lead && minutesUntil < lead + windowMin)) continue;
+      const p = vnParts(startMs);
+      const names = (session.studentIds || [])
+        .map((id) => students.find((s) => s.id === id)?.name)
+        .filter(Boolean) as string[];
+      out.push({
+        sessionId: session.id,
+        dedupKey: `admin:${session.id}:${p.y}${p2(p.mo)}${p2(p.da)}`,
+        text:
+          `👨‍🏫 AIhoclaptrinh · Sắp tới giờ dạy\n\n` +
+          `📚 ${session.n}\n` +
+          `🕒 ${p2(p.hh)}:${p2(p.mm)} · ${p2(p.da)}/${p2(p.mo)}/${p.y}\n` +
+          `👥 ${names.length} học viên${names.length ? ": " + names.join(", ") : ""}\n\n` +
+          `Buổi học bắt đầu sau khoảng 20 phút.`,
+      });
+    }
   }
   return out;
 }

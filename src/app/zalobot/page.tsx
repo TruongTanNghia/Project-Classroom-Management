@@ -5,6 +5,7 @@ import { useApp } from "@/lib/store";
 import { dicts, zaloStatusLabels } from "@/lib/i18n";
 import type { ZaloAuto, ZaloLink } from "@/lib/types";
 import { Avatar, Page, PageHeader } from "@/components/ui/bits";
+import AdminZaloCard from "@/components/screens/AdminZaloCard";
 
 const GRID = "2fr 1.5fr 1.1fr 1fr 1.6fr 40px";
 
@@ -101,6 +102,8 @@ export default function ZaloBotPage() {
           </div>
         ))}
       </div>
+
+      <AdminZaloCard />
 
       <div className="card tblc" style={{ overflow: "hidden" }}>
         <div style={{ padding: "18px 24px 14px" }}>
