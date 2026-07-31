@@ -47,8 +47,17 @@ async function handle(token: string | undefined) {
     );
   }
   try {
+    // 1) Kiểm tra token hợp lệ + xem bot có webhook không (getUpdates sẽ rỗng nếu có webhook)
+    const meRes = await fetch(`${ZAPPS_BASE}/bot${token}/getMe`, { cache: "no-store" });
+    const me = await meRes.json().catch(() => ({}));
+    if (!me.ok) {
+      return NextResponse.json({ ok: false, error: "Token không hợp lệ (bot không nhận diện được)" }, { status: 400 });
+    }
+    const botName = me.result?.display_name || me.result?.account_name || "";
+
+    // 2) Lấy các tin gần đây
     const { chats } = await fetchUpdates(token);
-    return NextResponse.json({ ok: true, chats });
+    return NextResponse.json({ ok: true, botName, chats });
   } catch (e) {
     return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 502 });
   }

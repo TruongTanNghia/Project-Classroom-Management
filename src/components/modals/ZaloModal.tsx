@@ -26,6 +26,7 @@ export default function ZaloModal() {
 
   const [listening, setListening] = useState(false);
   const [found, setFound] = useState<FoundChat[]>([]);
+  const [botName, setBotName] = useState("");
   const [sending, setSending] = useState(false);
   const timerRef = useRef<number | undefined>(undefined);
   const triesRef = useRef(0);
@@ -44,6 +45,7 @@ export default function ZaloModal() {
         body: JSON.stringify({ token: form.token || "" }),
       });
       const data = await res.json();
+      if (data.botName) setBotName(data.botName);
       if (data.ok && Array.isArray(data.chats) && data.chats.length) {
         setFound(data.chats);
         // Bắt được rồi thì dừng nghe (tránh getUpdates "nuốt" tin kế tiếp)
@@ -182,9 +184,14 @@ export default function ZaloModal() {
         {/* Hướng dẫn + kết quả chờ nghe */}
         {listening && found.length === 0 && (
           <div style={{ fontSize: 12, color: "var(--text-2)", marginTop: 2, lineHeight: 1.5 }}>
+            {botName && (
+              <span style={{ color: "var(--success)", fontWeight: 600 }}>
+                ✓ {vi ? "Token đúng — bot “" + botName + "”. " : "Token OK — bot “" + botName + "”. "}
+              </span>
+            )}
             {vi
-              ? "Nhờ học viên nhắn 1 tin bất kỳ cho bot ngay bây giờ — Chat ID sẽ tự hiện ở đây."
-              : "Ask the student to message the bot now — their Chat ID will appear here."}
+              ? "Bây giờ nhờ học viên nhắn 1 tin bất kỳ cho bot — Chat ID sẽ tự hiện ở đây."
+              : "Now ask the student to message the bot — their Chat ID will appear here."}
           </div>
         )}
         {found.length > 0 && (
