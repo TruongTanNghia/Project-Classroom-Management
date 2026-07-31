@@ -1,9 +1,16 @@
 "use client";
 
-import { Check, Pencil, X } from "lucide-react";
+import { useState } from "react";
+import { CalendarPlus, Check, Pencil, X } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { dayMeta, dicts, statusLabels } from "@/lib/i18n";
 import { CA_SLOTS, presentCount, paidSessions, studentHistory, tuitionProgress } from "@/lib/derived";
+
+function localTodayISO() {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+}
 
 export default function StudentDetailModal() {
   const lang = useApp((s) => s.lang);
@@ -13,8 +20,13 @@ export default function StudentDetailModal() {
   const students = useApp((s) => s.students);
   const sessions = useApp((s) => s.sessions);
   const attRecords = useApp((s) => s.attRecords);
+  const markAttendance = useApp((s) => s.markAttendance);
+  const removeAttendance = useApp((s) => s.removeAttendance);
   const vi = lang !== "en";
   const t = dicts[lang];
+
+  const [buSession, setBuSession] = useState<number | "">("");
+  const [buDate, setBuDate] = useState(localTodayISO());
 
   if (detailId == null) return null;
   const st = students.find((x) => x.id === detailId);
@@ -25,6 +37,8 @@ export default function StudentDetailModal() {
   const prog = tuitionProgress(st, attRecords);
   const history = studentHistory(st, attRecords);
   const mySessions = sessions.filter((s) => (s.studentIds || []).includes(st.id));
+  // buổi đang chọn để điểm danh bù (mặc định buổi đầu nếu chưa chọn hợp lệ)
+  const effBuSession = buSession && mySessions.some((s) => s.id === buSession) ? buSession : mySessions[0]?.id || "";
   const statusClass =
     st.status === "Active" ? "pill-success" : st.status === "At risk" ? "pill-danger" : "pill-neutral";
 
@@ -138,6 +152,69 @@ export default function StudentDetailModal() {
             )}
           </div>
 
+          {/* Điểm danh bù */}
+          {mySessions.length > 0 && (
+            <div
+              style={{
+                background: "var(--sidebar)", border: "1px solid var(--subtle)",
+                borderRadius: 10, padding: 14,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <CalendarPlus size={16} strokeWidth={2} color="var(--accent)" />
+                <span style={{ fontSize: 14, fontWeight: 600 }}>{vi ? "Điểm danh bù" : "Backfill attendance"}</span>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                <select
+                  className="input"
+                  value={effBuSession}
+                  onChange={(e) => setBuSession(Number(e.target.value))}
+                  style={{ flex: "1 1 160px", cursor: "pointer" }}
+                >
+                  {mySessions
+                    .slice()
+                    .sort((a, b) => a.day - b.day || CA_SLOTS.indexOf(a.t) - CA_SLOTS.indexOf(b.t))
+                    .map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {dayName(s.day)} · {caName(s.t)} · {s.n}
+                      </option>
+                    ))}
+                </select>
+                <input
+                  type="date"
+                  className="input"
+                  value={buDate}
+                  onChange={(e) => setBuDate(e.target.value)}
+                  style={{ flex: "0 1 150px" }}
+                />
+              </div>
+              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                <button
+                  className="btn-primary"
+                  style={{ flex: 1, background: "var(--success)", padding: "9px 14px" }}
+                  disabled={!effBuSession || !buDate}
+                  onClick={() => effBuSession && markAttendance(Number(effBuSession), st.id, buDate, true)}
+                >
+                  <Check size={14} strokeWidth={2.4} />
+                  {vi ? "Ghi nhận Có mặt" : "Mark present"}
+                </button>
+                <button
+                  className="btn"
+                  style={{ padding: "9px 14px" }}
+                  disabled={!effBuSession || !buDate}
+                  onClick={() => effBuSession && markAttendance(Number(effBuSession), st.id, buDate, false)}
+                >
+                  {vi ? "Vắng" : "Absent"}
+                </button>
+              </div>
+              <div style={{ fontSize: 11.5, color: "var(--text-3)", marginTop: 8 }}>
+                {vi
+                  ? "Chọn buổi + ngày rồi bấm — dùng để ghi nhận các buổi đã học trước khi có hệ thống."
+                  : "Pick a session + date to backfill past attendance."}
+              </div>
+            </div>
+          )}
+
           {/* Lịch sử điểm danh */}
           <div>
             <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
@@ -173,6 +250,14 @@ export default function StudentDetailModal() {
                     <span style={{ marginLeft: "auto", fontWeight: 600, color: r.present ? "var(--success)" : "var(--danger)" }}>
                       {r.present ? (vi ? "Đã học" : "Present") : (vi ? "Vắng" : "Absent")}
                     </span>
+                    <button
+                      className="ghost-icon-btn"
+                      title={vi ? "Xoá" : "Remove"}
+                      onClick={() => removeAttendance(r.sessionId, st.id, r.date)}
+                      style={{ padding: 4 }}
+                    >
+                      <X size={13} strokeWidth={2} color="var(--text-3)" />
+                    </button>
                   </div>
                 ))}
               </div>

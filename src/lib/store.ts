@@ -87,6 +87,8 @@ interface AppState {
   closeAttend: () => void;
   openDetail: (studentId: number) => void;
   closeDetail: () => void;
+  markAttendance: (sessionId: number, studentId: number, date: string, present: boolean) => void;
+  removeAttendance: (sessionId: number, studentId: number, date: string) => void;
   confirmDelete: () => void;
   recordPayment: (id: number) => void;
   toggleAuto: (key: keyof ZaloAuto) => void;
@@ -502,6 +504,30 @@ export const useApp = create<AppState>((set, get) => ({
 
   openDetail: (studentId) => set({ detailId: studentId }),
   closeDetail: () => set({ detailId: null }),
+
+  // Điểm danh bù cho 1 học viên vào 1 buổi + ngày (ghi đè nếu đã có)
+  markAttendance: (sessionId, studentId, date, present) => {
+    const kept = get().attRecords.filter(
+      (r) => !(r.sessionId === sessionId && r.studentId === studentId && r.date === date)
+    );
+    set({ attRecords: [...kept, { sessionId, studentId, date, present }] });
+    sb()?.from("attendance_records")
+      .upsert({ session_id: sessionId, student_id: studentId, date, present }, { onConflict: "session_id,student_id,date" })
+      .then(({ error }) => reportSync(error));
+    const vi = get().lang !== "en";
+    get().showToast(present ? (vi ? "Đã ghi nhận có mặt ✓" : "Marked present ✓") : (vi ? "Đã ghi nhận vắng" : "Marked absent"));
+  },
+  removeAttendance: (sessionId, studentId, date) => {
+    set({
+      attRecords: get().attRecords.filter(
+        (r) => !(r.sessionId === sessionId && r.studentId === studentId && r.date === date)
+      ),
+    });
+    sb()?.from("attendance_records")
+      .delete()
+      .eq("session_id", sessionId).eq("student_id", studentId).eq("date", date)
+      .then(({ error }) => reportSync(error));
+  },
 
   confirmDelete: () => {
     const m = get().modal;
