@@ -4,7 +4,6 @@ import { CircleCheck, Clock, Plus, Users } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { dayMeta, dicts } from "@/lib/i18n";
 import { attendanceTally, sessionDayPresent, slotTimes } from "@/lib/derived";
-import { subjectTintClass } from "@/lib/subjects";
 import type { Session } from "@/lib/types";
 import { Page, PageHeader } from "@/components/ui/bits";
 
@@ -14,9 +13,19 @@ export default function SchedulePage() {
   const lang = useApp((s) => s.lang);
   const sessions = useApp((s) => s.sessions);
   const students = useApp((s) => s.students);
+  const courses = useApp((s) => s.courses);
   const attRecords = useApp((s) => s.attRecords);
   const openModal = useApp((s) => s.openModal);
   const openAttend = useApp((s) => s.openAttend);
+
+  // Mỗi khóa học 1 màu riêng (theo thứ tự khóa; ổn định). Khóa không tìm thấy → theo tên.
+  const courseTint = (name: string) => {
+    const i = courses.findIndex((c) => c.name === name);
+    if (i >= 0) return "tint-" + (i % 10);
+    let h = 0;
+    for (let k = 0; k < name.length; k++) h = (h * 31 + name.charCodeAt(k)) >>> 0;
+    return "tint-" + (h % 10);
+  };
   const t = dicts[lang];
   const vi = lang !== "en";
   const days = dayMeta[lang];
@@ -135,7 +144,7 @@ export default function SchedulePage() {
               return (
                 <div
                   key={cell.day}
-                  className={"sched-block " + (subjectTintClass[b.s] || "tint-0")}
+                  className={"sched-block " + courseTint(b.n)}
                   style={{ borderLeft: "3px solid currentColor" }}
                   onClick={() => openEdit(b)}
                 >

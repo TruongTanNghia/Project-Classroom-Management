@@ -416,6 +416,10 @@ button:active {
 .tint-3 { background: var(--t-pink-bg, #FDF2F8); color: var(--t-pink-fg, #DB2777); }
 .tint-4 { background: var(--t-blue-bg, #F0F9FF); color: var(--t-blue-fg, #0284C7); }
 .tint-5 { background: var(--t-purple-bg, #F5F3FF); color: var(--t-purple-fg, #7C3AED); }
+.tint-6 { background: var(--t-teal-bg, #F0FDFA); color: var(--t-teal-fg, #0D9488); }
+.tint-7 { background: var(--t-red-bg, #FEF2F2); color: var(--t-red-fg, #DC2626); }
+.tint-8 { background: var(--t-amber-bg, #FEFCE8); color: var(--t-amber-fg, #CA8A04); }
+.tint-9 { background: var(--t-indigo-bg, #EEF2FF); color: var(--t-indigo-fg, #4F46E5); }
 html.dark {
   --t-green-bg: rgba(5, 150, 105, 0.16);
   --t-green-fg: #34D399;
@@ -427,6 +431,14 @@ html.dark {
   --t-blue-fg: #38BDF8;
   --t-purple-bg: rgba(124, 58, 237, 0.18);
   --t-purple-fg: #A78BFA;
+  --t-teal-bg: rgba(13, 148, 136, 0.18);
+  --t-teal-fg: #2DD4BF;
+  --t-red-bg: rgba(220, 38, 38, 0.16);
+  --t-red-fg: #F87171;
+  --t-amber-bg: rgba(202, 138, 4, 0.16);
+  --t-amber-fg: #FBBF24;
+  --t-indigo-bg: rgba(79, 70, 229, 0.18);
+  --t-indigo-fg: #818CF8;
 }
 
 .sched-block {
