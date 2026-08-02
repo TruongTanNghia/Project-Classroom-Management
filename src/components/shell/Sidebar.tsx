@@ -15,7 +15,7 @@ const workspaceNav = [
   { key: "dashboard", href: "/dashboard", Icon: House },
   { key: "students", href: "/students", Icon: Users, badgeKey: "students" as const },
   { key: "courses", href: "/courses", Icon: BookOpen, badgeKey: "courses" as const },
-  { key: "insights", href: "/insights", Icon: Sparkles },
+  // { key: "insights", href: "/insights", Icon: Sparkles }, // tạm ẩn Phân tích AI
   { key: "schedule", href: "/schedule", Icon: Calendar },
 ];
 
