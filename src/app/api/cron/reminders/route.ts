@@ -52,6 +52,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: false, error: "Chưa cấu hình Supabase" }, { status: 503 });
   }
   const supa = createClient(supaUrl, supaKey, { auth: { persistSession: false } });
+  const usingServiceRole = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
 
   const dry = url.searchParams.get("dry") === "1";
   const forceParam = url.searchParams.get("force"); // all|schedule|...|<sessionId>|null
@@ -106,6 +107,14 @@ export async function GET(request: Request) {
     { attend: true, grades: true, tuition: true, risk: false };
   const adminChatId = ((setRes.data || []).find((r: any) => r.key === "adminZalo")?.value?.chatId as string) || "";
 
+  // Bẫy hay gặp: đã khóa RLS nhưng cron chưa có service_role → đọc ra RỖNG (không lỗi).
+  // Đọc 0 buổi + 0 học viên mà không dùng service_role → gần như chắc chắn bị RLS chặn.
+  const looksBlocked = !usingServiceRole && sessions.length === 0 && students.length === 0;
+  const rlsWarning = looksBlocked
+    ? "⚠️ Đọc DB ra RỖNG và cron KHÔNG dùng service_role. Nhiều khả năng RLS đã khóa. Hãy thêm SUPABASE_SERVICE_ROLE_KEY vào Vercel rồi redeploy, nếu không sẽ KHÔNG gửi được thông báo nào."
+    : undefined;
+  if (looksBlocked) console.error("[cron]", rlsWarning);
+
   if (forceSessionId) sessions = sessions.filter((s) => String(s.id) === String(forceSessionId));
 
   const now = Date.now();
@@ -151,6 +160,8 @@ export async function GET(request: Request) {
   if (dry) {
     return NextResponse.json({
       ok: true, dry: true, nowUTC: new Date(now).toISOString(), auto, count: items.length,
+      usingServiceRole, loaded: { sessions: sessions.length, students: students.length, zalo: zalo.length },
+      warning: rlsWarning,
       preview: items.map((d) => ({ kind: d.kind, to: d.studentName, chatId: d.chatId, hasToken: Boolean(d.token || fallbackToken) })),
     });
   }
@@ -181,5 +192,9 @@ export async function GET(request: Request) {
   }
 
   const sentOk = results.filter((r) => r.ok).length;
-  return NextResponse.json({ ok: true, nowUTC: new Date(now).toISOString(), sent: sentOk, total: results.length, results });
+  return NextResponse.json({
+    ok: true, nowUTC: new Date(now).toISOString(), sent: sentOk, total: results.length,
+    usingServiceRole, loaded: { sessions: sessions.length, students: students.length, zalo: zalo.length },
+    warning: rlsWarning, results,
+  });
 }
