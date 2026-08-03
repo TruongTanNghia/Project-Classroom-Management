@@ -82,7 +82,9 @@ export async function GET(request: Request) {
   const dry = url.searchParams.get("dry") === "1";
   const forceParam = url.searchParams.get("force"); // all|schedule|...|<sessionId>|null
   const lead = Number(url.searchParams.get("lead")) || 20;
-  const windowMin = Number(url.searchParams.get("window")) || 7;
+  // Cửa sổ nhắc rộng 15' (thay vì 7') để cron ngoài dù chạy 5–15' vẫn không trượt.
+  // Chống trùng (reminder_sent) đảm bảo mỗi buổi chỉ nhắc 1 lần dù cửa sổ rộng.
+  const windowMin = Number(url.searchParams.get("window")) || 15;
   const fallbackToken = process.env.ZALO_BOT_TOKEN || "";
   const forceSessionId = forceParam && /^\d+$/.test(forceParam) ? forceParam : null;
   const forceKind = forceParam && !forceSessionId ? forceParam : null; // "all" hoặc tên loại
