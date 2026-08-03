@@ -70,7 +70,7 @@ interface AppState {
   toggleDark: () => void;
   setMenuOpen: (open: boolean) => void;
   setFilter: (f: string) => void;
-  showToast: (msg: string) => void;
+  showToast: (msg: string, ms?: number) => void;
   openModal: (modal: ModalState, form: FormState) => void;
   askDelete: () => void;
   closeModal: () => void;
@@ -119,8 +119,10 @@ const sb = () => getSupabase();
 
 function reportSync(err: { message?: string } | null) {
   if (err) {
-    // Surface sync failures without blocking the optimistic UI update
-    useApp.getState().showToast("Supabase: " + (err.message || "sync error"));
+    // Lưu Supabase THẤT BẠI: UI vẫn hiện (optimistic) nhưng DB chưa có → báo TO & lâu
+    // để không âm thầm mất dữ liệu như vụ thiếu cột courses.image.
+    console.error("[Supabase] ghi thất bại:", err);
+    useApp.getState().showToast("⚠️ CHƯA LƯU ĐƯỢC lên Supabase — " + (err.message || "sync error") + ". Kiểm tra lại rồi lưu lại!", 9000);
   }
 }
 
@@ -306,10 +308,10 @@ export const useApp = create<AppState>((set, get) => ({
   setMenuOpen: (menuOpen) => set({ menuOpen }),
   setFilter: (filter) => set({ filter }),
 
-  showToast: (msg) => {
+  showToast: (msg, ms) => {
     set({ toast: msg });
     window.clearTimeout(toastTimer);
-    toastTimer = window.setTimeout(() => set({ toast: "" }), 2600);
+    toastTimer = window.setTimeout(() => set({ toast: "" }), ms ?? 2600);
   },
 
   openModal: (modal, form) => set({ modal, form }),
