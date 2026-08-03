@@ -13,6 +13,9 @@ let client: SupabaseClient | null = null;
 /** Returns the shared Supabase client, or null when env vars are absent (demo mode). */
 export function getSupabase(): SupabaseClient | null {
   if (!isSupabaseConfigured) return null;
-  if (!client) client = createClient(url!, anonKey!);
+  if (!client)
+    client = createClient(url!, anonKey!, {
+      auth: { persistSession: true, autoRefreshToken: true, storageKey: "aihlt-auth" },
+    });
   return client;
 }

@@ -42,12 +42,16 @@ export async function GET(request: Request) {
   }
 
   const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  // Ưu tiên service_role (bỏ qua RLS) để cron vẫn đọc/ghi được sau khi khóa DB.
+  // Không có thì tạm dùng publishable key (chỉ chạy khi RLS còn mở).
   const supaKey =
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!supaUrl || !supaKey) {
     return NextResponse.json({ ok: false, error: "Chưa cấu hình Supabase" }, { status: 503 });
   }
-  const supa = createClient(supaUrl, supaKey);
+  const supa = createClient(supaUrl, supaKey, { auth: { persistSession: false } });
 
   const dry = url.searchParams.get("dry") === "1";
   const forceParam = url.searchParams.get("force"); // all|schedule|...|<sessionId>|null

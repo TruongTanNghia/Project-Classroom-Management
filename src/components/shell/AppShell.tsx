@@ -10,8 +10,19 @@ import PageSkeleton from "./PageSkeleton";
 import ModalRoot from "@/components/modals/ModalRoot";
 import AttendanceModal from "@/components/modals/AttendanceModal";
 import StudentDetailModal from "@/components/modals/StudentDetailModal";
+import AuthGate from "./AuthGate";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
+  // Cổng đăng nhập bọc ngoài: chỉ khi đã đăng nhập (hoặc chế độ demo) mới
+  // render ShellInner → hydrate()/nạp dữ liệu chỉ chạy sau khi có phiên.
+  return (
+    <AuthGate>
+      <ShellInner>{children}</ShellInner>
+    </AuthGate>
+  );
+}
+
+function ShellInner({ children }: { children: React.ReactNode }) {
   const hydrate = useApp((s) => s.hydrate);
   const toast = useApp((s) => s.toast);
   const pathname = usePathname();

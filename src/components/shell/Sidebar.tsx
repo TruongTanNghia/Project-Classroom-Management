@@ -4,10 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Bot, BookOpen, Calendar, ChevronsUpDown, CreditCard, House, Mail, Settings, Sparkles,
+  Bot, BookOpen, Calendar, CreditCard, House, LogOut, Mail, Settings, Sparkles,
   UserRound, Users,
 } from "lucide-react";
 import { useApp } from "@/lib/store";
+import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { dicts, navLabels } from "@/lib/i18n";
 
 const workspaceNav = [
@@ -155,7 +156,19 @@ export default function Sidebar() {
             <div style={{ color: "var(--text)", fontSize: 13, fontWeight: 500 }}>Trương Tấn Nghĩa</div>
             <div style={{ fontSize: 11.5, color: "var(--muted-ic)" }}>{t.adminRole}</div>
           </div>
-          <ChevronsUpDown size={15} strokeWidth={2} color="var(--muted-ic)" />
+          {isSupabaseConfigured && (
+            <button
+              onClick={() => getSupabase()?.auth.signOut()}
+              title={lang === "en" ? "Sign out" : "Đăng xuất"}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center",
+                width: 30, height: 30, borderRadius: 8, cursor: "pointer",
+                border: "1px solid var(--border)", background: "var(--surface)",
+              }}
+            >
+              <LogOut size={15} strokeWidth={2} color="var(--muted-ic)" />
+            </button>
+          )}
         </div>
       </aside>
     </>
