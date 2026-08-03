@@ -60,15 +60,21 @@ export async function GET(request: Request) {
     const vn = new Date(nowMs + 7 * 3600 * 1000);
     const dow = vn.getUTCDay();
     const todayIdx = dow === 0 ? 6 : dow - 1; // 0=T2..6=CN
-    const [s, z, log, rem] = await Promise.all([
+    const [s, z, log, rem, hb] = await Promise.all([
       supa.from("schedule_sessions").select("id,name,day,slot,date").order("day"),
       supa.from("zalo_links").select("student_name,chat_id,status"),
       supa.from("message_log").select("sent_at,kind,student_name,ok,error").order("sent_at", { ascending: false }).limit(15),
       supa.from("reminder_sent").select("id").order("id", { ascending: false }).limit(15),
+      supa.from("app_settings").select("value").eq("key", "cron_heartbeat").maybeSingle(),
     ]);
+    const hbVal = (hb.data as any)?.value || null;
+    const ageMin = hbVal?.at ? Math.round((nowMs - Date.parse(hbVal.at)) / 60000) : null;
     return NextResponse.json({
       ok: true, usingServiceRole,
       nowVN: `${vn.getUTCFullYear()}-${String(vn.getUTCMonth() + 1).padStart(2, "0")}-${String(vn.getUTCDate()).padStart(2, "0")} ${String(vn.getUTCHours()).padStart(2, "0")}:${String(vn.getUTCMinutes()).padStart(2, "0")} (VN)`,
+      cronHeartbeat: hbVal,
+      cronLastPingAgeMin: ageMin,
+      cronAlive: ageMin != null && ageMin <= 16,
       todayDayIndex: todayIdx,
       sessionsError: s.error?.message || null,
       sessions: s.data,
@@ -81,6 +87,18 @@ export async function GET(request: Request) {
 
   const dry = url.searchParams.get("dry") === "1";
   const forceParam = url.searchParams.get("force"); // all|schedule|...|<sessionId>|null
+
+  // NHỊP TIM: mỗi cú gọi "trần" (chỉ có key, không dry/force = đúng kiểu cron-job.org)
+  // ghi lại thời điểm để biết cron ngoài có còn sống & ping đều không.
+  if (!dry && !forceParam) {
+    const nowIso = new Date().toISOString();
+    const vn = new Date(Date.now() + 7 * 3600 * 1000);
+    const atVN = `${vn.getUTCFullYear()}-${String(vn.getUTCMonth() + 1).padStart(2, "0")}-${String(vn.getUTCDate()).padStart(2, "0")} ${String(vn.getUTCHours()).padStart(2, "0")}:${String(vn.getUTCMinutes()).padStart(2, "0")}`;
+    const prev = await supa.from("app_settings").select("value").eq("key", "cron_heartbeat").maybeSingle();
+    const count = (((prev.data as any)?.value?.count as number) || 0) + 1;
+    await supa.from("app_settings").upsert({ key: "cron_heartbeat", value: { at: nowIso, atVN, count } });
+  }
+
   const lead = Number(url.searchParams.get("lead")) || 20;
   // Cửa sổ nhắc rộng 15' (thay vì 7') để cron ngoài dù chạy 5–15' vẫn không trượt.
   // Chống trùng (reminder_sent) đảm bảo mỗi buổi chỉ nhắc 1 lần dù cửa sổ rộng.
