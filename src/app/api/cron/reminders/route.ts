@@ -54,6 +54,31 @@ export async function GET(request: Request) {
   const supa = createClient(supaUrl, supaKey, { auth: { persistSession: false } });
   const usingServiceRole = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
 
+  // Chẩn đoán (có khóa): soi lịch/zalo + lịch sử gửi để tìm vì sao không nhắc.
+  if (url.searchParams.get("inspect") === "1") {
+    const nowMs = Date.now();
+    const vn = new Date(nowMs + 7 * 3600 * 1000);
+    const dow = vn.getUTCDay();
+    const todayIdx = dow === 0 ? 6 : dow - 1; // 0=T2..6=CN
+    const [s, z, log, rem] = await Promise.all([
+      supa.from("schedule_sessions").select("id,name,day,slot,date").order("day"),
+      supa.from("zalo_links").select("student_name,chat_id,status"),
+      supa.from("message_log").select("sent_at,kind,student_name,ok,error").order("sent_at", { ascending: false }).limit(15),
+      supa.from("reminder_sent").select("id").order("id", { ascending: false }).limit(15),
+    ]);
+    return NextResponse.json({
+      ok: true, usingServiceRole,
+      nowVN: `${vn.getUTCFullYear()}-${String(vn.getUTCMonth() + 1).padStart(2, "0")}-${String(vn.getUTCDate()).padStart(2, "0")} ${String(vn.getUTCHours()).padStart(2, "0")}:${String(vn.getUTCMinutes()).padStart(2, "0")} (VN)`,
+      todayDayIndex: todayIdx,
+      sessionsError: s.error?.message || null,
+      sessions: s.data,
+      zalo: (z.data || []).map((r: any) => ({ name: r.student_name, hasChatId: Boolean(r.chat_id), status: r.status })),
+      recentSent: log.data,
+      recentSentError: log.error?.message || null,
+      reminderSentKeys: (rem.data || []).map((r: any) => r.id),
+    });
+  }
+
   const dry = url.searchParams.get("dry") === "1";
   const forceParam = url.searchParams.get("force"); // all|schedule|...|<sessionId>|null
   const lead = Number(url.searchParams.get("lead")) || 20;
