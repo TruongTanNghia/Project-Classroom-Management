@@ -1,0 +1,42 @@
+name: Nhắc lịch Zalo (cron 5 phút)
+
+# Bộ hẹn giờ tự động: mỗi 5 phút gọi endpoint nhắc lịch trên Vercel.
+# Endpoint tự lo: đúng giờ mới gửi, chống trùng, gửi bot học viên + bot Thầy.
+#
+# CẦN LÀM 1 LẦN: thêm secret CRON_SECRET vào repo
+#   GitHub repo → Settings → Secrets and variables → Actions →
+#   New repository secret → Name: CRON_SECRET, Value: <đúng CRON_SECRET trên Vercel>
+
+on:
+  schedule:
+    - cron: "*/5 * * * *" # mỗi 5 phút (giờ UTC — không ảnh hưởng, endpoint tự tính giờ VN)
+  workflow_dispatch: {} # cho phép bấm "Run workflow" để test tay
+
+# Không chạy chồng nếu lần trước chưa xong
+concurrency:
+  group: zalo-reminders
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Gọi endpoint nhắc lịch
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::Chưa có secret CRON_SECRET. Thêm trong Settings → Secrets → Actions."
+            exit 1
+          fi
+          code=$(curl -s -o /tmp/out.json -w "%{http_code}" \
+            "https://project-classroom-management.vercel.app/api/cron/reminders?key=${CRON_SECRET}")
+          echo "HTTP $code"
+          # In kết quả nhưng KHÔNG lộ key (body không chứa key)
+          cat /tmp/out.json || true
+          echo ""
+          if [ "$code" != "200" ]; then
+            echo "::error::Endpoint trả về $code"
+            exit 1
+          fi
