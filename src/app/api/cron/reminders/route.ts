@@ -85,6 +85,34 @@ export async function GET(request: Request) {
     });
   }
 
+  // Dò giao tin (có khóa): gửi 1 tin THẬT tới bot Thầy + trả về PHẢN HỒI THÔ của Zalo
+  // để biết có message_id (giao thật) hay lỗi (chat_id sai...). Kèm tình trạng zalo học viên.
+  if (url.searchParams.get("probe") === "1") {
+    const fb = process.env.ZALO_BOT_TOKEN || "";
+    const setRes = await supa.from("app_settings").select("value").eq("key", "adminZalo").maybeSingle();
+    const adminChatId = (((setRes.data as any)?.value?.chatId as string) || "").trim();
+    const zRes = await supa.from("zalo_links").select("student_name,token,chat_id,status");
+    const zalo = (zRes.data || []).map((r: any) => ({
+      name: r.student_name, hasToken: Boolean(r.token),
+      chatIdTail: r.chat_id ? String(r.chat_id).slice(-6) : null, status: r.status,
+    }));
+    let botGetMe: any = null, sendToAdminRaw: any = null;
+    if (fb) botGetMe = await fetch(`https://bot-api.zapps.me/bot${fb}/getMe`).then((r) => r.json()).catch((e) => ({ err: String(e) }));
+    if (fb && adminChatId) {
+      sendToAdminRaw = await fetch(`https://bot-api.zapps.me/bot${fb}/sendMessage`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: adminChatId, text: "🔧 EduFlow test giao tin — Thầy thấy tin này nghĩa là bot giao ĐƯỢC ✅" }),
+      }).then((r) => r.json()).catch((e) => ({ err: String(e) }));
+    }
+    return NextResponse.json({
+      ok: true,
+      adminChatId_present: Boolean(adminChatId),
+      adminChatId_tail: adminChatId ? adminChatId.slice(-6) : null,
+      fallbackToken_present: Boolean(fb),
+      botGetMe, sendToAdminRaw, zalo,
+    });
+  }
+
   const dry = url.searchParams.get("dry") === "1";
   const forceParam = url.searchParams.get("force"); // all|schedule|...|<sessionId>|null
 
