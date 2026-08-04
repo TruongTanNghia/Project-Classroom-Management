@@ -60,13 +60,17 @@ export async function GET(request: Request) {
     const vn = new Date(nowMs + 7 * 3600 * 1000);
     const dow = vn.getUTCDay();
     const todayIdx = dow === 0 ? 6 : dow - 1; // 0=T2..6=CN
-    const [s, z, log, rem, hb] = await Promise.all([
+    const [s, z, log, rem, hb, att, stu] = await Promise.all([
       supa.from("schedule_sessions").select("id,name,day,slot,date").order("day"),
       supa.from("zalo_links").select("student_name,chat_id,status"),
       supa.from("message_log").select("sent_at,kind,student_name,ok,error").order("sent_at", { ascending: false }).limit(15),
       supa.from("reminder_sent").select("id").order("id", { ascending: false }).limit(15),
       supa.from("app_settings").select("value").eq("key", "cron_heartbeat").maybeSingle(),
+      supa.from("attendance_records").select("*").order("date"),
+      supa.from("students").select("id,name"),
     ]);
+    const stuName = new Map((stu.data || []).map((r: any) => [r.id, r.name]));
+    const liveSessionIds = new Set((s.data || []).map((r: any) => r.id));
     const hbVal = (hb.data as any)?.value || null;
     const ageMin = hbVal?.at ? Math.round((nowMs - Date.parse(hbVal.at)) / 60000) : null;
     return NextResponse.json({
@@ -82,6 +86,13 @@ export async function GET(request: Request) {
       recentSent: log.data,
       recentSentError: log.error?.message || null,
       reminderSentKeys: (rem.data || []).map((r: any) => r.id),
+      attendanceError: att.error?.message || null,
+      attendanceCount: (att.data || []).length,
+      attendance: (att.data || []).map((r: any) => ({
+        student: stuName.get(r.student_id) || ("id:" + r.student_id),
+        session_id: r.session_id, date: r.date, present: r.present,
+        sessionAlive: liveSessionIds.has(r.session_id), // buổi này còn tồn tại không?
+      })),
     });
   }
 
