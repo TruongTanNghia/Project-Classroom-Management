@@ -226,7 +226,7 @@ export async function GET(request: Request) {
   let items: DueReminder[] = [];
   const on = (kind: keyof ZaloAuto) => auto[kind];
 
-  items.push(...dueReminders(sessions, students, zalo, now, { leadMin: lead, windowMin, force: isForced("schedule") }));
+  items.push(...dueReminders(sessions, students, zalo, now, { leadMin: lead, windowMin, force: isForced("schedule"), todayMode: forceToday }));
   // Nút "Nhắc thủ công" (today) chỉ gửi nhắc lịch cho Thầy + trò, KHÔNG kèm các
   // loại cảnh báo khác (chuyên cần/học phí/điểm/rủi ro).
   if (!forceToday) {
@@ -244,7 +244,7 @@ export async function GET(request: Request) {
   if (adminChatId) {
     const forceAdmin = forcedAll || forceKind === "admin" || forceKind === "schedule" || !!forceSessionId || forceToday;
     items.push(
-      ...dueSessionAlerts(sessions, students, now, { leadMin: lead, windowMin, force: forceAdmin }).map((a) => ({
+      ...dueSessionAlerts(sessions, students, now, { leadMin: lead, windowMin, force: forceAdmin, todayMode: forceToday }).map((a) => ({
         kind: "admin" as const, sessionId: a.sessionId, studentId: 0, studentName: "Thầy (Admin)",
         chatId: adminChatId, token: "", text: a.text, dedupKey: a.dedupKey,
       }))

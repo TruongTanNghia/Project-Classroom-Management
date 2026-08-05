@@ -80,17 +80,21 @@ function linkFor(student: Student, zalo: ZaloLink[]) {
   return zalo.find((z) => z.name === student.name && z.status !== "Not linked" && z.chatId);
 }
 
-function buildMessage(student: Student, session: Session, startMs: number): string {
+function buildMessage(student: Student, session: Session, startMs: number, todayMode = false): string {
   const p = vnParts(startMs);
   const time = `${pad(p.hh)}:${pad(p.mm)}`;
   const date = `${pad(p.da)}/${pad(p.mo)}/${p.y}`;
+  // todayMode (nhắc thủ công): chỉ báo "hôm nay có lịch học", không nói "sau 20 phút".
+  const footer = todayMode
+    ? `Hôm nay em có lịch học nha! Nhớ sắp xếp đi học đúng giờ 💪`
+    : `Buổi học bắt đầu sau khoảng 20 phút. Em nhớ chuẩn bị vào học đúng giờ nha! 💪`;
   return (
     `🔔 AIhoclaptrinh nhắc lịch học\n\n` +
     `👤 ${student.name}\n` +
     `📚 Lớp: ${session.n}\n` +
     `🏫 Phòng: ${session.r}\n` +
     `🕒 ${time} · ${date}\n\n` +
-    `Buổi học bắt đầu sau khoảng 20 phút. Em nhớ chuẩn bị vào học đúng giờ nha! 💪`
+    footer
   );
 }
 
@@ -103,7 +107,7 @@ export function dueReminders(
   students: Student[],
   zalo: ZaloLink[],
   nowMs: number,
-  opts: { leadMin?: number; windowMin?: number; force?: boolean } = {}
+  opts: { leadMin?: number; windowMin?: number; force?: boolean; todayMode?: boolean } = {}
 ): DueReminder[] {
   const lead = opts.leadMin ?? 20;
   const windowMin = opts.windowMin ?? 7;
@@ -130,7 +134,7 @@ export function dueReminders(
           studentName: student.name,
           chatId: link.chatId,
           token: link.token || "",
-          text: buildMessage(student, session, startMs),
+          text: buildMessage(student, session, startMs, opts.todayMode),
           dedupKey: `schedule:${session.id}:${dayKey}:${sid}`,
           startVN: `${pad(p.hh)}:${pad(p.mm)} ${pad(p.da)}/${pad(p.mo)}`,
         });
@@ -283,7 +287,7 @@ export interface AdminAlert {
 }
 export function dueSessionAlerts(
   sessions: Session[], students: Student[], nowMs: number,
-  opts: { leadMin?: number; windowMin?: number; force?: boolean } = {}
+  opts: { leadMin?: number; windowMin?: number; force?: boolean; todayMode?: boolean } = {}
 ): AdminAlert[] {
   const lead = opts.leadMin ?? 20;
   const windowMin = opts.windowMin ?? 7;
@@ -297,15 +301,18 @@ export function dueSessionAlerts(
       const names = (session.studentIds || [])
         .map((id) => students.find((s) => s.id === id)?.name)
         .filter(Boolean) as string[];
+      // todayMode (nhắc thủ công): "lịch dạy hôm nay", không nói "sau 20 phút".
+      const header = opts.todayMode ? `👨‍🏫 AIhoclaptrinh · Lịch dạy hôm nay` : `👨‍🏫 AIhoclaptrinh · Sắp tới giờ dạy`;
+      const footer = opts.todayMode ? `Hôm nay Thầy có buổi dạy này.` : `Buổi học bắt đầu sau khoảng 20 phút.`;
       out.push({
         sessionId: session.id,
         dedupKey: `admin:${session.id}:${p.y}${p2(p.mo)}${p2(p.da)}`,
         text:
-          `👨‍🏫 AIhoclaptrinh · Sắp tới giờ dạy\n\n` +
+          `${header}\n\n` +
           `📚 ${session.n}\n` +
           `🕒 ${p2(p.hh)}:${p2(p.mm)} · ${p2(p.da)}/${p2(p.mo)}/${p.y}\n` +
           `👥 ${names.length} học viên${names.length ? ": " + names.join(", ") : ""}\n\n` +
-          `Buổi học bắt đầu sau khoảng 20 phút.`,
+          footer,
       });
     }
   }
