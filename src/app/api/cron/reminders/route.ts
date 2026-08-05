@@ -135,6 +135,32 @@ export async function GET(request: Request) {
     });
   }
 
+  // Kiểm tra FK điểm danh (có khóa): tạo buổi + điểm danh GIẢ, xóa buổi, xem điểm
+  // danh còn không → biết đã chạy migration_attendance_keep.sql (SET NULL) chưa.
+  if (url.searchParams.get("checkfk") === "1") {
+    const SID = 990000001, STU = 990000002, DT = "2000-01-01";
+    await supa.from("attendance_records").delete().eq("session_id", SID);
+    await supa.from("schedule_sessions").delete().eq("id", SID);
+    await supa.from("students").delete().eq("id", STU);
+    const e1 = await supa.from("students").insert({ id: STU, name: "__fk_test__", email: "fktest@example.com", status: "Active", cycle: 10 });
+    const e2 = await supa.from("schedule_sessions").insert({ id: SID, day: 0, slot: "00:00", name: "__fk_test__", room: "", subject: "CS", student_ids: [], attendance: {} });
+    const e3 = await supa.from("attendance_records").insert({ session_id: SID, student_id: STU, date: DT, present: true });
+    await supa.from("schedule_sessions").delete().eq("id", SID); // xóa buổi → cascade?
+    const after = await supa.from("attendance_records").select("session_id").eq("student_id", STU).eq("date", DT);
+    const survived = (after.data || []).length > 0;
+    // dọn dữ liệu giả
+    await supa.from("attendance_records").delete().eq("student_id", STU);
+    await supa.from("students").delete().eq("id", STU);
+    return NextResponse.json({
+      ok: true,
+      fkFixed: survived,
+      detail: survived
+        ? "SET NULL — đã chạy SQL, điểm danh AN TOÀN khi xóa buổi"
+        : "CASCADE — CHƯA chạy SQL, điểm danh sẽ MẤT khi xóa buổi",
+      setupErrors: { stu: e1.error?.message || null, sess: e2.error?.message || null, att: e3.error?.message || null, read: after.error?.message || null },
+    });
+  }
+
   const dry = url.searchParams.get("dry") === "1";
   const forceParam = url.searchParams.get("force"); // all|schedule|...|<sessionId>|null
 
