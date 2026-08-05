@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleCheck, Clock, Plus, Users } from "lucide-react";
+import { BellRing, CircleCheck, Clock, Plus, Users } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { dayMeta, dicts } from "@/lib/i18n";
 import { attendanceTally, sessionDayPresent, slotTimes } from "@/lib/derived";
@@ -17,6 +17,7 @@ export default function SchedulePage() {
   const attRecords = useApp((s) => s.attRecords);
   const openModal = useApp((s) => s.openModal);
   const openAttend = useApp((s) => s.openAttend);
+  const remindToday = useApp((s) => s.remindToday);
 
   // Mỗi khóa học 1 màu riêng (theo thứ tự khóa; ổn định). Khóa không tìm thấy → theo tên.
   const courseTint = (name: string) => {
@@ -80,10 +81,25 @@ export default function SchedulePage() {
         title={t.scheduleTitle}
         subtitle={vi ? "Lịch học theo tuần · đủ 7 ngày" : "Weekly schedule · all 7 days"}
         actions={
-          <button className="btn-primary" onClick={() => openAdd()}>
-            <Plus size={14} strokeWidth={2.2} />
-            {t.addSchedCta}
-          </button>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button
+              className="btn-soft"
+              onClick={() => {
+                const msg = vi
+                  ? "Gửi nhắc lịch NGAY cho tất cả lớp HÔM NAY (cả Thầy + học viên đã kết nối Zalo)?"
+                  : "Send reminders now for all of today's classes (teacher + linked students)?";
+                if (window.confirm(msg)) remindToday();
+              }}
+              title={vi ? "Gửi nhắc thủ công các lớp hôm nay" : "Manually remind today's classes"}
+            >
+              <BellRing size={14} strokeWidth={2.2} />
+              {vi ? "Nhắc lịch hôm nay" : "Remind today"}
+            </button>
+            <button className="btn-primary" onClick={() => openAdd()}>
+              <Plus size={14} strokeWidth={2.2} />
+              {t.addSchedCta}
+            </button>
+          </div>
         }
       />
 

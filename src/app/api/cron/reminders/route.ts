@@ -36,10 +36,6 @@ async function sendZalo(token: string, chatId: string, text: string) {
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const secret = process.env.CRON_SECRET;
-  if (secret && url.searchParams.get("key") !== secret) {
-    return NextResponse.json({ ok: false, error: "Sai key" }, { status: 401 });
-  }
 
   const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   // Ưu tiên service_role (bỏ qua RLS) để cron vẫn đọc/ghi được sau khi khóa DB.
@@ -53,6 +49,21 @@ export async function GET(request: Request) {
   }
   const supa = createClient(supaUrl, supaKey, { auth: { persistSession: false } });
   const usingServiceRole = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
+
+  // Xác thực: chấp nhận (1) key cron NGOÀI (?key=), HOẶC (2) admin đã đăng nhập
+  // gửi Bearer token — dùng cho nút "Nhắc thủ công" trong app mà không lộ key.
+  const secret = process.env.CRON_SECRET;
+  let authOk = !secret || url.searchParams.get("key") === secret;
+  if (!authOk) {
+    const tok = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+    if (tok) {
+      const { data } = await supa.auth.getUser(tok);
+      if (data?.user) authOk = true;
+    }
+  }
+  if (!authOk) {
+    return NextResponse.json({ ok: false, error: "Không có quyền" }, { status: 401 });
+  }
 
   // Chẩn đoán (có khóa): soi lịch/zalo + lịch sử gửi để tìm vì sao không nhắc.
   if (url.searchParams.get("inspect") === "1") {
@@ -147,7 +158,10 @@ export async function GET(request: Request) {
   const forceSessionId = forceParam && /^\d+$/.test(forceParam) ? forceParam : null;
   const forceKind = forceParam && !forceSessionId ? forceParam : null; // "all" hoặc tên loại
   const forcedAll = forceKind === "all";
-  const isForced = (kind: string) => forcedAll || forceKind === kind || (kind === "schedule" && !!forceSessionId);
+  // Nút "Nhắc thủ công" trong app: force=today → chỉ lớp HÔM NAY, gửi Thầy + trò ngay.
+  const forceToday = forceKind === "today";
+  const isForced = (kind: string) =>
+    forcedAll || forceKind === kind || (kind === "schedule" && (!!forceSessionId || forceToday));
 
   // 1) Nạp dữ liệu
   const [sRes, stRes, zRes, setRes] = await Promise.all([
@@ -201,6 +215,11 @@ export async function GET(request: Request) {
   if (looksBlocked) console.error("[cron]", rlsWarning);
 
   if (forceSessionId) sessions = sessions.filter((s) => String(s.id) === String(forceSessionId));
+  if (forceToday) {
+    const vnT = new Date(Date.now() + 7 * 3600 * 1000);
+    const todayIdx = vnT.getUTCDay() === 0 ? 6 : vnT.getUTCDay() - 1; // 0=T2..6=CN
+    sessions = sessions.filter((s) => s.day === todayIdx);
+  }
 
   const now = Date.now();
   // 2) Gom tin từ mọi tự động đang bật (hoặc bị force)
@@ -208,18 +227,22 @@ export async function GET(request: Request) {
   const on = (kind: keyof ZaloAuto) => auto[kind];
 
   items.push(...dueReminders(sessions, students, zalo, now, { leadMin: lead, windowMin, force: isForced("schedule") }));
-  if (on("attend") || isForced("attendance"))
-    items.push(...buildAttendanceAlerts(sessions, students, zalo, attRecords, now, { force: isForced("attendance") }));
-  if (on("tuition") || isForced("tuition"))
-    items.push(...buildTuitionReminders(students, zalo, attRecords, now, { force: isForced("tuition") }));
-  if (on("grades") || isForced("grades"))
-    items.push(...buildGradeReports(students, sessions, zalo, now, { force: isForced("grades") }));
-  if (on("risk") || isForced("risk"))
-    items.push(...buildRiskAlerts(students, zalo, now, { force: isForced("risk") }));
+  // Nút "Nhắc thủ công" (today) chỉ gửi nhắc lịch cho Thầy + trò, KHÔNG kèm các
+  // loại cảnh báo khác (chuyên cần/học phí/điểm/rủi ro).
+  if (!forceToday) {
+    if (on("attend") || isForced("attendance"))
+      items.push(...buildAttendanceAlerts(sessions, students, zalo, attRecords, now, { force: isForced("attendance") }));
+    if (on("tuition") || isForced("tuition"))
+      items.push(...buildTuitionReminders(students, zalo, attRecords, now, { force: isForced("tuition") }));
+    if (on("grades") || isForced("grades"))
+      items.push(...buildGradeReports(students, sessions, zalo, now, { force: isForced("grades") }));
+    if (on("risk") || isForced("risk"))
+      items.push(...buildRiskAlerts(students, zalo, now, { force: isForced("risk") }));
+  }
 
   // Thầy (admin): nhận thông báo MỌI buổi sắp tới (không cần học viên liên kết)
   if (adminChatId) {
-    const forceAdmin = forcedAll || forceKind === "admin" || forceKind === "schedule" || !!forceSessionId;
+    const forceAdmin = forcedAll || forceKind === "admin" || forceKind === "schedule" || !!forceSessionId || forceToday;
     items.push(
       ...dueSessionAlerts(sessions, students, now, { leadMin: lead, windowMin, force: forceAdmin }).map((a) => ({
         kind: "admin" as const, sessionId: a.sessionId, studentId: 0, studentName: "Thầy (Admin)",

@@ -94,6 +94,7 @@ interface AppState {
   toggleAuto: (key: keyof ZaloAuto) => void;
   remindFee: (name: string, fee?: string) => void;
   remindAll: (list: { name: string; fee?: string }[]) => void;
+  remindToday: () => Promise<void>;
 }
 
 let toastTimer: number | undefined;
@@ -625,5 +626,37 @@ export const useApp = create<AppState>((set, get) => ({
     get().showToast(
       vi ? "Đã gửi nhắc học phí tới " + list.length + " học viên" : "Reminders sent to " + list.length + " students"
     );
+  },
+
+  // Nút "Nhắc thủ công": gọi endpoint gửi nhắc lịch NGAY cho mọi lớp hôm nay
+  // tới cả Thầy + học viên. Dùng token đăng nhập (không lộ khóa cron).
+  remindToday: async () => {
+    const vi = get().lang !== "en";
+    const supa = sb();
+    if (!supa) {
+      get().showToast(vi ? "Chỉ chạy khi đã kết nối Supabase" : "Requires Supabase");
+      return;
+    }
+    get().showToast(vi ? "Đang gửi nhắc hôm nay…" : "Sending today's reminders…", 8000);
+    try {
+      const { data } = await supa.auth.getSession();
+      const token = data.session?.access_token;
+      const res = await fetch("/api/cron/reminders?force=today", {
+        headers: token ? { Authorization: "Bearer " + token } : {},
+      });
+      const d = await res.json();
+      if (d.ok) {
+        get().showToast(
+          vi
+            ? `✅ Đã gửi ${d.sent}/${d.total} tin nhắc các lớp hôm nay (Thầy + học viên)`
+            : `Sent ${d.sent}/${d.total} reminders for today`,
+          6000
+        );
+      } else {
+        get().showToast((vi ? "Lỗi: " : "Error: ") + (d.error || "?"), 7000);
+      }
+    } catch {
+      get().showToast(vi ? "Không gọi được máy chủ" : "Server unreachable", 6000);
+    }
   },
 }));
