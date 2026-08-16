@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
-  ArrowRight, Award, BadgeCheck, Bot, Building2, GraduationCap, HeartHandshake,
-  Mail, MapPin, MessagesSquare, Phone, Quote, Rocket, Sparkles, Star, Workflow,
+  ArrowRight, Award, BadgeCheck, BarChart3, Bot, Building2, GraduationCap, HeartHandshake,
+  Mail, MapPin, Megaphone, MessagesSquare, Phone, Quote, Rocket, ShoppingBag, Sparkles,
+  Star, Workflow,
 } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { dicts } from "@/lib/i18n";
@@ -109,6 +110,81 @@ function Heading({ eyebrow, title, note }: { eyebrow: string; title: string; not
   );
 }
 
+/* Hoa văn trang trí cho ô ảnh (SVG, trắng mờ trên nền gradient) */
+function TileMotif({ idx }: { idx: number }) {
+  const p = { className: "abt-tile-motif", viewBox: "0 0 200 120", fill: "none" } as const;
+  if (idx === 0)
+    return (
+      <svg {...p} preserveAspectRatio="xMidYMid slice">
+        <g stroke="#fff" strokeWidth={1} opacity={0.4}>
+          <line x1="26" y1="28" x2="92" y2="60" /><line x1="26" y1="92" x2="92" y2="60" />
+          <line x1="92" y1="60" x2="152" y2="32" /><line x1="92" y1="60" x2="152" y2="88" />
+          <line x1="152" y1="32" x2="190" y2="60" /><line x1="152" y1="88" x2="190" y2="60" />
+        </g>
+        <g fill="#fff" opacity={0.6}>
+          <circle cx="26" cy="28" r="4" /><circle cx="26" cy="92" r="4" /><circle cx="92" cy="60" r="5.5" />
+          <circle cx="152" cy="32" r="4" /><circle cx="152" cy="88" r="4" /><circle cx="190" cy="60" r="3" />
+        </g>
+      </svg>
+    );
+  if (idx === 1)
+    return (
+      <svg {...p} preserveAspectRatio="xMidYMid slice">
+        <g stroke="#fff" opacity={0.3} strokeWidth={1.4}>
+          <circle cx="168" cy="16" r="22" /><circle cx="168" cy="16" r="46" /><circle cx="168" cy="16" r="70" /><circle cx="168" cy="16" r="94" />
+        </g>
+      </svg>
+    );
+  if (idx === 2)
+    return (
+      <svg {...p} preserveAspectRatio="none">
+        <g stroke="#fff" opacity={0.34} strokeWidth={1.6}>
+          <path d="M0 42 Q50 22 100 42 T200 42" /><path d="M0 66 Q50 46 100 66 T200 66" /><path d="M0 90 Q50 70 100 90 T200 90" />
+        </g>
+      </svg>
+    );
+  if (idx === 3)
+    return (
+      <svg {...p} preserveAspectRatio="xMidYMid slice">
+        <g fill="#fff" opacity={0.42}>
+          {Array.from({ length: 7 }).flatMap((_, r) =>
+            Array.from({ length: 12 }).map((__, c) => <circle key={`${r}-${c}`} cx={10 + c * 17} cy={10 + r * 17} r={1.7} />)
+          )}
+        </g>
+      </svg>
+    );
+  if (idx === 4)
+    return (
+      <svg {...p} preserveAspectRatio="none">
+        <g stroke="#fff" opacity={0.2} strokeWidth={11}>
+          <line x1="-30" y1="130" x2="70" y2="-10" /><line x1="20" y1="130" x2="120" y2="-10" />
+          <line x1="70" y1="130" x2="170" y2="-10" /><line x1="120" y1="130" x2="220" y2="-10" /><line x1="170" y1="130" x2="270" y2="-10" />
+        </g>
+      </svg>
+    );
+  return (
+    <svg {...p} preserveAspectRatio="xMidYMid slice">
+      <g stroke="#fff" opacity={0.26} strokeWidth={1.2}>
+        {Array.from({ length: 6 }).flatMap((_, r) =>
+          Array.from({ length: 9 }).map((__, c) => <rect key={`${r}-${c}`} x={8 + c * 22} y={8 + r * 19} width={12} height={12} rx={2.5} />)
+        )}
+      </g>
+    </svg>
+  );
+}
+
+function Tile({ from, to, Icon, label, motif, height = 128, iconSize = 46 }: {
+  from: string; to: string; Icon: typeof Bot; label?: string; motif: number; height?: number; iconSize?: number;
+}) {
+  return (
+    <div className="abt-tile" style={{ height, background: `linear-gradient(135deg, ${from}, ${to})` }}>
+      <TileMotif idx={motif} />
+      <Icon size={iconSize} strokeWidth={1.6} color="#fff" style={{ position: "relative", zIndex: 1, filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.3))" }} />
+      {label && <span className="abt-tile-label">{label}</span>}
+    </div>
+  );
+}
+
 export default function AboutPage() {
   const lang = useApp((s) => s.lang);
   const t = dicts[lang];
@@ -122,10 +198,18 @@ export default function AboutPage() {
     { num: 96, suffix: "%", label: t.stat3, Icon: HeartHandshake },
   ];
   const skills = [
-    { Icon: Bot, title: "AI Agents", desc: vi ? "Xây dựng agent tự vận hành, thay con người làm việc lặp lại." : "Autonomous agents that run the repetitive work for you." },
-    { Icon: Workflow, title: "Automation AI", desc: vi ? "Tự động hoá quy trình end-to-end, tiết kiệm hàng giờ mỗi ngày." : "End-to-end automation that saves hours every day." },
-    { Icon: MessagesSquare, title: "Chatbot & LLM", desc: vi ? "Chatbot thông minh, tích hợp mô hình ngôn ngữ lớn." : "Smart chatbots powered by large language models." },
-    { Icon: GraduationCap, title: vi ? "Đào tạo AI" : "AI Training", desc: vi ? "Kèm học viên ứng dụng AI thực chiến, học là làm được." : "Hands-on coaching that turns learners into builders." },
+    { Icon: Bot, from: "#6C6AF0", to: "#8B5CF6", motif: 0, title: "AI Agents", desc: vi ? "Xây dựng agent tự vận hành, thay con người làm việc lặp lại." : "Autonomous agents that run the repetitive work for you." },
+    { Icon: Workflow, from: "#1FB6B8", to: "#10A37F", motif: 4, title: "Automation AI", desc: vi ? "Tự động hoá quy trình end-to-end, tiết kiệm hàng giờ mỗi ngày." : "End-to-end automation that saves hours every day." },
+    { Icon: MessagesSquare, from: "#B06BFF", to: "#6C6AF0", motif: 2, title: "Chatbot & LLM", desc: vi ? "Chatbot thông minh, tích hợp mô hình ngôn ngữ lớn." : "Smart chatbots powered by large language models." },
+    { Icon: GraduationCap, from: "#FF8A5B", to: "#F5A623", motif: 1, title: vi ? "Đào tạo AI" : "AI Training", desc: vi ? "Kèm học viên ứng dụng AI thực chiến, học là làm được." : "Hands-on coaching that turns learners into builders." },
+  ];
+  const applications = [
+    { Icon: GraduationCap, from: "#6C6AF0", to: "#1FB6B8", motif: 3, title: vi ? "Giáo dục & Đào tạo" : "Education", desc: vi ? "Trợ giảng AI, chấm bài, cá nhân hoá lộ trình học." : "AI tutors, grading, personalized learning." },
+    { Icon: ShoppingBag, from: "#FF8A5B", to: "#EA4B71", motif: 2, title: vi ? "Bán hàng & Chốt đơn" : "Sales", desc: vi ? "Chatbot tư vấn, chốt đơn tự động 24/7." : "Advisor chatbots closing orders 24/7." },
+    { Icon: MessagesSquare, from: "#22C1C3", to: "#3ECF8E", motif: 0, title: vi ? "Chăm sóc khách hàng" : "Customer care", desc: vi ? "Trả lời tự động, phản hồi tức thì mọi lúc." : "Instant automated replies, anytime." },
+    { Icon: Megaphone, from: "#8B5CF6", to: "#E59BFF", motif: 4, title: "Marketing", desc: vi ? "Sinh nội dung, lên kế hoạch, phân tích chiến dịch." : "Content, planning, campaign analytics." },
+    { Icon: Workflow, from: "#3776AB", to: "#6C6AF0", motif: 5, title: vi ? "Vận hành & Văn phòng" : "Operations", desc: vi ? "Tự động hoá quy trình, báo cáo, nhập liệu." : "Automate workflows, reports, data entry." },
+    { Icon: BarChart3, from: "#10A37F", to: "#1FB6B8", motif: 1, title: vi ? "Phân tích dữ liệu" : "Data analytics", desc: vi ? "Bóc tách insight, dự báo từ dữ liệu thô." : "Extract insights & forecasts from raw data." },
   ];
   const timeline = [
     { year: "2017", text: vi ? "Bắt đầu hành trình lập trình & nghiên cứu AI." : "Started the coding & AI research journey." },
@@ -155,6 +239,7 @@ export default function AboutPage() {
     <Page maxWidth={1220} gap={22}>
       {/* ============ HERO ============ */}
       <section className="abt-hero fade-up" style={{ padding: "clamp(24px, 4vw, 48px)" }}>
+        <div className="abt-hero-grid" />
         <div className="abt-conic" style={{ top: "-30%", left: "-12%" }} />
         <div className="abt-aurora a1" />
         <div className="abt-aurora a2" />
@@ -254,10 +339,25 @@ export default function AboutPage() {
         <Heading eyebrow={vi ? "Chuyên môn" : "Expertise"} title={vi ? "Thế mạnh của tôi" : "What I do"} note={vi ? "làm mọi thứ về AI" : "everything AI"} />
         <div className="g4" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
           {skills.map((sk) => (
-            <div key={sk.title} className="abt-card3d" onMouseMove={spot3d(8)} onMouseLeave={reset3d} style={{ padding: 22 }}>
-              <span className="abt-iconbox"><sk.Icon size={20} strokeWidth={2} /></span>
-              <div className="abt-display" style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", marginTop: 14 }}>{sk.title}</div>
-              <div style={{ fontSize: 13, color: "var(--text-2)", marginTop: 6, lineHeight: 1.6 }}>{sk.desc}</div>
+            <div key={sk.title} className="abt-card3d" onMouseMove={spot3d(8)} onMouseLeave={reset3d} style={{ padding: 12, overflow: "hidden" }}>
+              <Tile from={sk.from} to={sk.to} Icon={sk.Icon} motif={sk.motif} height={116} />
+              <div style={{ padding: "14px 10px 8px" }}>
+                <div className="abt-display" style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}>{sk.title}</div>
+                <div style={{ fontSize: 13, color: "var(--text-2)", marginTop: 6, lineHeight: 1.6 }}>{sk.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Reveal>
+
+      {/* ============ ỨNG DỤNG THỰC TẾ ============ */}
+      <Reveal>
+        <Heading eyebrow={vi ? "Ứng dụng" : "Use cases"} title={vi ? "AI giúp được gì cho bạn" : "Where AI helps you"} note={vi ? "một giải pháp, nhiều lĩnh vực" : "one skillset, many fields"} />
+        <div className="g3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+          {applications.map((ap) => (
+            <div key={ap.title} className="abt-card3d" onMouseMove={spot3d(7)} onMouseLeave={reset3d} style={{ padding: 12, overflow: "hidden" }}>
+              <Tile from={ap.from} to={ap.to} Icon={ap.Icon} motif={ap.motif} label={ap.title} height={150} iconSize={42} />
+              <div style={{ padding: "13px 10px 7px", fontSize: 13.5, color: "var(--text-2)", lineHeight: 1.6 }}>{ap.desc}</div>
             </div>
           ))}
         </div>
