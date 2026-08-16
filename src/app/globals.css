@@ -777,3 +777,58 @@ html.dark .abt-portrait { box-shadow: 0 26px 64px rgba(0, 0, 0, 0.55); }
     linear-gradient(120deg, var(--accent-tint) 0%, transparent 55%),
     var(--surface);
 }
+.abt-eyebrow {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.abt-h2 {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  margin: 4px 0 0;
+  font-size: clamp(22px, 3vw, 28px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+/* Timeline */
+.abt-timeline { position: relative; padding-left: 38px; display: flex; flex-direction: column; gap: 22px; }
+.abt-timeline::before {
+  content: ""; position: absolute; left: 11px; top: 8px; bottom: 8px; width: 2px;
+  background: linear-gradient(var(--accent), var(--accent-border) 70%, transparent);
+}
+.abt-tl-dot {
+  position: absolute; left: -36px; top: 2px; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--surface); border: 2px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+}
+.abt-tl-dot::after { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.abt-tl-item { position: relative; }
+.abt-tl-year { font-family: var(--font-display), sans-serif; font-weight: 800; font-size: 14px; color: var(--accent); }
+/* Marquee công nghệ */
+@keyframes abtMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.abt-marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+}
+.abt-marquee-track { display: flex; gap: 12px; width: max-content; animation: abtMarquee 30s linear infinite; }
+.abt-marquee:hover .abt-marquee-track { animation-play-state: paused; }
+.abt-tech {
+  display: inline-flex; align-items: center; gap: 8px; padding: 10px 17px; border-radius: 99px;
+  border: 1px solid var(--border); background: var(--surface); font-size: 13.5px; font-weight: 600;
+  color: var(--body-c); white-space: nowrap;
+}
+.abt-tech-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+/* Bước quy trình */
+.abt-step-num {
+  font-family: var(--font-display), sans-serif; font-size: 15px; font-weight: 800;
+  width: 36px; height: 36px; border-radius: 11px; display: flex; align-items: center;
+  justify-content: center; background: var(--accent); color: #fff; flex-shrink: 0;
+}
+/* Avatar chữ cái */
+.abt-avatar {
+  width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; font-weight: 700; font-size: 15px; color: #fff; flex-shrink: 0;
+}
