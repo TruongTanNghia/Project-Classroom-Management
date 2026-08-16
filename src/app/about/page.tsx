@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
-  ArrowRight, Award, BadgeCheck, BarChart3, Bot, Building2, GraduationCap, HeartHandshake,
-  Mail, MapPin, Megaphone, MessagesSquare, Phone, Quote, Rocket, ShoppingBag, Sparkles,
-  Star, Workflow,
+  ArrowRight, Award, BadgeCheck, BarChart3, BookOpen, Bot, Building2, Camera, GraduationCap,
+  HeartHandshake, Mail, MapPin, Megaphone, MessagesSquare, Phone, PlayCircle, Quote, Rocket,
+  ShoppingBag, Sparkles, Star, Workflow,
 } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { dicts } from "@/lib/i18n";
@@ -187,9 +187,14 @@ function Tile({ from, to, Icon, label, motif, height = 128, iconSize = 46 }: {
 
 export default function AboutPage() {
   const lang = useApp((s) => s.lang);
+  const courses = useApp((s) => s.courses);
   const t = dicts[lang];
   const vi = lang !== "en";
   const portraitRef = useTilt(11);
+  const fmtPrice = (p?: string) => {
+    const n = Number(String(p ?? "").replace(/\D/g, ""));
+    return n > 0 ? n.toLocaleString("vi-VN") + "₫" : (vi ? "Liên hệ" : "Contact");
+  };
 
   const chips = ["AI Agents", "Automation AI", "Chatbot & LLM", t.chip4, t.chipNlp, t.chipCv, "Machine Learning", "Deep Learning", "Reinforcement Learning"];
   const stats = [
@@ -210,6 +215,17 @@ export default function AboutPage() {
     { Icon: Megaphone, from: "#8B5CF6", to: "#E59BFF", motif: 4, title: "Marketing", desc: vi ? "Sinh nội dung, lên kế hoạch, phân tích chiến dịch." : "Content, planning, campaign analytics." },
     { Icon: Workflow, from: "#3776AB", to: "#6C6AF0", motif: 5, title: vi ? "Vận hành & Văn phòng" : "Operations", desc: vi ? "Tự động hoá quy trình, báo cáo, nhập liệu." : "Automate workflows, reports, data entry." },
     { Icon: BarChart3, from: "#10A37F", to: "#1FB6B8", motif: 1, title: vi ? "Phân tích dữ liệu" : "Data analytics", desc: vi ? "Bóc tách insight, dự báo từ dữ liệu thô." : "Extract insights & forecasts from raw data." },
+  ];
+  const solutions = [
+    { Icon: MessagesSquare, from: "#6C6AF0", to: "#B06BFF", motif: 2, title: vi ? "Chatbot bán hàng & CSKH" : "Sales & support chatbot", desc: vi ? "Tư vấn, chốt đơn, chăm khách tự động trên Zalo & Website 24/7." : "Advise, close orders and support customers 24/7 on Zalo & Web.", tags: ["Zalo", "Website", "24/7"] },
+    { Icon: Bot, from: "#1FB6B8", to: "#10A37F", motif: 0, title: vi ? "AI Agent tự động hoá" : "Automation AI agent", desc: vi ? "Agent tự nối các app, xử lý quy trình từ đầu đến cuối không cần người." : "Agents that connect apps and run full workflows hands-free.", tags: ["n8n", "API", "Workflow"] },
+    { Icon: Camera, from: "#FF8A5B", to: "#EA4B71", motif: 4, title: vi ? "Thị giác máy tính" : "Computer vision", desc: vi ? "Nhận diện, đếm, cảnh báo qua camera bằng AI thời gian thực." : "Real-time detection, counting and alerts from camera feeds.", tags: ["YOLO", "OpenCV", "Realtime"] },
+    { Icon: GraduationCap, from: "#8B5CF6", to: "#E59BFF", motif: 1, title: vi ? "Trợ giảng & chấm bài AI" : "AI tutor & grading", desc: vi ? "Trợ giảng ảo, chấm bài, cá nhân hoá lộ trình cho từng học viên." : "Virtual tutor, auto-grading and personalized learning paths.", tags: ["LLM", "Education", "RAG"] },
+  ];
+  const topics = [
+    { Icon: Bot, from: "#6C6AF0", to: "#1FB6B8", motif: 0, title: vi ? "Bắt đầu với AI Agents" : "Getting started with AI Agents", tag: vi ? "Cơ bản" : "Basics" },
+    { Icon: Workflow, from: "#FF8A5B", to: "#F5A623", motif: 4, title: vi ? "Automation cho người mới" : "Automation for beginners", tag: vi ? "Thực hành" : "Hands-on" },
+    { Icon: Sparkles, from: "#B06BFF", to: "#6C6AF0", motif: 2, title: vi ? "LLM & nghệ thuật viết prompt" : "LLMs & the art of prompting", tag: vi ? "Nâng cao" : "Advanced" },
   ];
   const timeline = [
     { year: "2017", text: vi ? "Bắt đầu hành trình lập trình & nghiên cứu AI." : "Started the coding & AI research journey." },
@@ -363,6 +379,57 @@ export default function AboutPage() {
         </div>
       </Reveal>
 
+      {/* ============ GIẢI PHÁP (PORTFOLIO) ============ */}
+      <Reveal>
+        <Heading eyebrow={vi ? "Sản phẩm" : "Portfolio"} title={vi ? "Giải pháp tôi xây dựng" : "Solutions I build"} note={vi ? "từ ý tưởng đến vận hành" : "from idea to production"} />
+        <div className="g2" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
+          {solutions.map((so) => (
+            <div key={so.title} className="abt-card3d" onMouseMove={spot3d(6)} onMouseLeave={reset3d} style={{ padding: 14, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+              <Tile from={so.from} to={so.to} Icon={so.Icon} motif={so.motif} height={168} iconSize={52} />
+              <div style={{ padding: "16px 8px 6px" }}>
+                <div className="abt-display" style={{ fontSize: 18, fontWeight: 700, color: "var(--text)" }}>{so.title}</div>
+                <div style={{ fontSize: 13.5, color: "var(--text-2)", marginTop: 7, lineHeight: 1.65 }}>{so.desc}</div>
+                <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginTop: 13 }}>
+                  {so.tags.map((tg) => (
+                    <span key={tg} style={{ fontSize: 11.5, fontWeight: 600, color: "var(--accent)", background: "var(--accent-tint)", border: "1px solid var(--accent-border)", borderRadius: 99, padding: "3px 10px" }}>{tg}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Reveal>
+
+      {/* ============ KHÓA HỌC NỔI BẬT ============ */}
+      {courses.length > 0 && (
+        <Reveal>
+          <Heading eyebrow={vi ? "Đào tạo" : "Courses"} title={vi ? "Khóa học nổi bật" : "Featured courses"} note={vi ? "học là làm được" : "learn by doing"} />
+          <div className="g3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+            {courses.slice(0, 6).map((c, i) => (
+              <div key={c.id} className="abt-card3d" onMouseMove={spot3d(6)} onMouseLeave={reset3d} style={{ padding: 12, overflow: "hidden" }}>
+                {c.image ? (
+                  <div style={{ height: 150, borderRadius: 14, backgroundImage: `url(${c.image})`, backgroundSize: "cover", backgroundPosition: "center" }} />
+                ) : (
+                  <Tile from={["#6C6AF0", "#1FB6B8", "#FF8A5B"][i % 3]} to={["#B06BFF", "#3ECF8E", "#EA4B71"][i % 3]} Icon={BookOpen} motif={i % 6} height={150} />
+                )}
+                <div style={{ padding: "14px 10px 8px" }}>
+                  <div className="abt-display" style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}>{c.name}</div>
+                  <div style={{ fontSize: 12.5, color: "var(--text-3)", marginTop: 4 }}>
+                    {c.teacher}{c.totalSessions ? ` · ${c.totalSessions} ${vi ? "buổi" : "sessions"}` : ""}
+                  </div>
+                  <div style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span className="abt-display abt-grad" style={{ fontSize: 17, fontWeight: 800 }}>{fmtPrice(c.price)}</span>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, fontWeight: 600, color: "var(--accent)" }}>
+                      <PlayCircle size={15} strokeWidth={2.2} /> {vi ? "Xem" : "View"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Reveal>
+      )}
+
       {/* ============ CÁCH ĐỒNG HÀNH ============ */}
       <Reveal>
         <Heading eyebrow={vi ? "Quy trình" : "Process"} title={vi ? "Cách tôi đồng hành cùng bạn" : "How I work with you"} note={vi ? "đơn giản, rõ ràng" : "simple & clear"} />
@@ -410,6 +477,25 @@ export default function AboutPage() {
                   <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{tm.name}</div>
                   <div style={{ fontSize: 12.5, color: "var(--text-3)" }}>{tm.role}</div>
                 </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Reveal>
+
+      {/* ============ CHỦ ĐỀ CHIA SẺ ============ */}
+      <Reveal>
+        <Heading eyebrow={vi ? "Kiến thức" : "Learn"} title={vi ? "Chủ đề tôi hay chia sẻ" : "Topics I share"} note={vi ? "miễn phí cho cộng đồng" : "free for the community"} />
+        <div className="g3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+          {topics.map((tp) => (
+            <div key={tp.title} className="abt-card3d" onMouseMove={spot3d(6)} onMouseLeave={reset3d} style={{ padding: 12, overflow: "hidden" }}>
+              <div style={{ position: "relative" }}>
+                <Tile from={tp.from} to={tp.to} Icon={tp.Icon} motif={tp.motif} height={140} iconSize={44} />
+                <span style={{ position: "absolute", top: 10, left: 10, zIndex: 2, fontSize: 11, fontWeight: 700, color: "#fff", background: "rgba(0,0,0,0.28)", backdropFilter: "blur(3px)", borderRadius: 99, padding: "3px 10px" }}>{tp.tag}</span>
+              </div>
+              <div style={{ padding: "14px 10px 8px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                <div className="abt-display" style={{ fontSize: 15.5, fontWeight: 700, color: "var(--text)", lineHeight: 1.35 }}>{tp.title}</div>
+                <ArrowRight size={17} strokeWidth={2.2} color="var(--accent)" style={{ flexShrink: 0 }} />
               </div>
             </div>
           ))}
