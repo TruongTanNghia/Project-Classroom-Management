@@ -654,3 +654,126 @@ html.dark {
     display: none;
   }
 }
+
+/* ============ Trang Giới thiệu (About) — bản cao cấp ============ */
+.abt-display {
+  font-family: var(--font-display), "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+}
+@keyframes abtAurora {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(5%, -4%, 0) scale(1.14); }
+  100% { transform: translate3d(-4%, 4%, 0) scale(1.06); }
+}
+@keyframes abtFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes abtShine {
+  0% { transform: translateX(-130%) skewX(-14deg); }
+  55%, 100% { transform: translateX(320%) skewX(-14deg); }
+}
+.abt-hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background:
+    radial-gradient(1100px 460px at 8% -25%, var(--accent-tint) 0%, transparent 55%),
+    var(--surface);
+}
+.abt-aurora {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  width: 52%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  filter: blur(72px);
+  animation: abtAurora 17s ease-in-out infinite alternate;
+}
+.abt-aurora.a1 { top: -20%; left: -10%; opacity: 0.5; background: radial-gradient(circle, var(--accent) 0%, transparent 66%); }
+.abt-aurora.a2 { bottom: -26%; right: -8%; opacity: 0.34; animation-duration: 22s; background: radial-gradient(circle, #1FB6B8 0%, transparent 66%); }
+.abt-aurora.a3 { top: 26%; right: 24%; opacity: 0.2; animation-duration: 26s; background: radial-gradient(circle, #E59BFF 0%, transparent 70%); }
+html.dark .abt-aurora.a1 { opacity: 0.46; }
+html.dark .abt-aurora.a2 { opacity: 0.3; }
+.abt-grad {
+  background: linear-gradient(100deg, var(--accent) 0%, #7C7AF0 42%, #1FB6B8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.abt-chip {
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  padding: 6px 13px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--body-c);
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+  transition: transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.abt-chip:hover { transform: translateY(-2px); border-color: var(--accent-border); color: var(--accent); }
+.abt-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.abt-card:hover { transform: translateY(-5px); box-shadow: 0 20px 44px rgba(28, 25, 23, 0.13); border-color: var(--accent-border); }
+html.dark .abt-card:hover { box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5); }
+.abt-portrait {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 26px 64px rgba(28, 25, 23, 0.3);
+}
+html.dark .abt-portrait { box-shadow: 0 26px 64px rgba(0, 0, 0, 0.55); }
+.abt-portrait::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: 18px;
+  padding: 1.5px;
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.55), transparent 38%, var(--accent) 125%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.abt-shine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 34%;
+  z-index: 3;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: abtShine 6.5s ease-in-out 1.3s infinite;
+  pointer-events: none;
+}
+.abt-float { animation: abtFloat 5.2s ease-in-out infinite; }
+.abt-iconbox {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-tint);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.abt-mission {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid var(--accent-border);
+  background:
+    radial-gradient(700px 300px at 90% 120%, var(--accent-tint) 0%, transparent 60%),
+    linear-gradient(120deg, var(--accent-tint) 0%, transparent 55%),
+    var(--surface);
+}

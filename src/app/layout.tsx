@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
 import AppShell from "@/components/shell/AppShell";
 
@@ -8,6 +8,13 @@ import AppShell from "@/components/shell/AppShell";
 const geist = Geist({
   subsets: ["latin", "latin-ext"],
   weight: ["400", "500", "600", "700"],
+});
+
+// Font hiển thị cao cấp cho trang Giới thiệu — hỗ trợ tiếng Việt đầy đủ.
+const beVietnam = Be_Vietnam_Pro({
+  subsets: ["latin", "vietnamese"],
+  weight: ["600", "700", "800"],
+  variable: "--font-display",
 });
 
 export const metadata: Metadata = {
@@ -22,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className={geist.className} suppressHydrationWarning>
+    <html lang="vi" className={`${geist.className} ${beVietnam.variable}`} suppressHydrationWarning>
       <body>
         <script
           dangerouslySetInnerHTML={{
