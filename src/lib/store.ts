@@ -285,11 +285,20 @@ export const useApp = create<AppState>((set, get) => ({
     document.documentElement.classList.toggle("dark", dark);
     set({ hydrated: true, lang, dark });
     if (isSupabaseConfigured) {
+      // Đã kết nối Supabase → KHÔNG hiện data mẫu (tránh hiểu lầm "mất data").
+      // Xoá seed về trống; chỉ hiện dữ liệu thật khi tải xong.
+      set({ students: [], courses: [], sessions: [], zalo: [], threads: [], attRecords: [] });
       loadFromSupabase()
         .then((data) => {
           if (data) set(data);
         })
-        .catch((e) => get().showToast("Supabase: " + (e?.message || "load error")));
+        .catch((e) =>
+          get().showToast(
+            "⚠️ Không tải được dữ liệu — phiên có thể đã hết hạn. Hãy ĐĂNG XUẤT rồi đăng nhập lại. (" +
+              (e?.message || "load error") + ")",
+            9000
+          )
+        );
       loadMsgStats().then((stats) => stats && set({ msgStats: stats }));
     }
   },
