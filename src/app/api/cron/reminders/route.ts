@@ -81,6 +81,8 @@ export async function GET(request: Request) {
       supa.from("attendance_records").select("*").order("date"),
       supa.from("students").select("id,name"),
     ]);
+    // Tin webhook Zalo gần nhất (soi khi bot không trả lời)
+    const hook = await supa.from("app_settings").select("value").eq("key", "zalo_webhook_last").maybeSingle();
     // Cột `paid` / `detail` đã tạo chưa (migration_tuition_cycle.sql)
     const paidCol = await supa.from("attendance_records").select("paid").limit(1);
     const detailCol = await supa.from("payments").select("detail").limit(1);
@@ -101,6 +103,7 @@ export async function GET(request: Request) {
       recentSent: log.data,
       recentSentError: log.error?.message || null,
       reminderSentKeys: (rem.data || []).map((r: any) => r.id),
+      zaloWebhookLast: (hook.data as any)?.value || null,
       migrationTuition: {
         attendance_paid: paidCol.error ? "THIẾU — chưa chạy SQL" : "CÓ",
         payments_detail: detailCol.error ? "THIẾU — chưa chạy SQL" : "CÓ",
