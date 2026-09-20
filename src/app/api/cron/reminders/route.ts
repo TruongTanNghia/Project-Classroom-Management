@@ -81,6 +81,9 @@ export async function GET(request: Request) {
       supa.from("attendance_records").select("*").order("date"),
       supa.from("students").select("id,name"),
     ]);
+    // Cột `paid` / `detail` đã tạo chưa (migration_tuition_cycle.sql)
+    const paidCol = await supa.from("attendance_records").select("paid").limit(1);
+    const detailCol = await supa.from("payments").select("detail").limit(1);
     const stuName = new Map((stu.data || []).map((r: any) => [r.id, r.name]));
     const liveSessionIds = new Set((s.data || []).map((r: any) => r.id));
     const hbVal = (hb.data as any)?.value || null;
@@ -98,6 +101,10 @@ export async function GET(request: Request) {
       recentSent: log.data,
       recentSentError: log.error?.message || null,
       reminderSentKeys: (rem.data || []).map((r: any) => r.id),
+      migrationTuition: {
+        attendance_paid: paidCol.error ? "THIẾU — chưa chạy SQL" : "CÓ",
+        payments_detail: detailCol.error ? "THIẾU — chưa chạy SQL" : "CÓ",
+      },
       attendanceError: att.error?.message || null,
       attendanceCount: (att.data || []).length,
       attendance: (att.data || []).map((r: any) => ({

@@ -27,10 +27,12 @@ export default function SchedulePage() {
     for (let k = 0; k < name.length; k++) h = (h * 31 + name.charCodeAt(k)) >>> 0;
     return "tint-" + (h % 10);
   };
-  // Mỗi HỌC VIÊN 1 màu riêng, ổn định theo thứ tự trong danh sách học viên.
-  const studentTint = (sid: number) => {
+  // Mỗi HỌC VIÊN một màu RIÊNG BIỆT: chia đều 360° vòng màu cho số học viên
+  // hiện có → khoảng cách màu lớn nhất có thể, KHÔNG em nào trùng màu em nào.
+  const studentHue = (sid: number) => {
     const i = students.findIndex((s) => s.id === sid);
-    return "tint-" + ((i >= 0 ? i : sid) % 10);
+    if (i < 0) return 0;
+    return Math.round((i * 360) / Math.max(1, students.length));
   };
   // Hiện TÊN GỌI, bỏ họ: "Lê Quang Nhân" → "Nhân".
   const givenName = (full: string) => {
@@ -158,20 +160,22 @@ export default function SchedulePage() {
                 );
               }
               const ids = b.studentIds || [];
-              const names = ids
-                .map((id) => students.find((x) => x.id === id)?.name)
-                .filter(Boolean)
-                .map((nm) => givenName(nm as string));
-              const stu = names.length
-                ? names.slice(0, 2).join(", ") + (names.length > 2 ? " +" + (names.length - 2) : "")
-                : "";
+              const roster = ids
+                .map((id) => ({ id, full: students.find((x) => x.id === id)?.name }))
+                .filter((x) => x.full)
+                .map((x) => ({ id: x.id, name: givenName(x.full as string) }));
               const attCount = sessionDayPresent(b.id, todayISO, attRecords); // có mặt hôm nay
               const dateBadge = b.date ? (vi ? "Từ " : "From ") + b.date.slice(8, 10) + "/" + b.date.slice(5, 7) : "";
               return (
                 <div
                   key={cell.day}
-                  className={"sched-block " + (ids.length ? studentTint(ids[0]) : courseTint(b.n))}
-                  style={{ borderLeft: "3px solid currentColor" }}
+                  className={"sched-block " + (roster.length ? "stu-hue" : courseTint(b.n))}
+                  style={
+                    {
+                      borderLeft: "3px solid currentColor",
+                      ...(roster.length ? { "--sh": studentHue(roster[0].id) } : {}),
+                    } as React.CSSProperties
+                  }
                   onClick={() => openEdit(b)}
                 >
                   {dateBadge && (
@@ -188,7 +192,13 @@ export default function SchedulePage() {
                       }}
                     >
                       <Users size={10} strokeWidth={2.4} />
-                      {ids.length} · {stu}
+                      {roster.slice(0, 2).map((s) => (
+                        <span key={s.id} style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                          <span className="stu-dot" style={{ "--sh": studentHue(s.id) } as React.CSSProperties} />
+                          {s.name}
+                        </span>
+                      ))}
+                      {roster.length > 2 && <span>+{roster.length - 2}</span>}
                       {/* Bấm badge để mở popup điểm danh */}
                       <button
                         onClick={(e) => {

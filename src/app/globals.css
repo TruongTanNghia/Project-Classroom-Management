@@ -475,6 +475,26 @@ html.dark {
   min-height: 52px;
 }
 
+/* Ô lịch tô màu theo TỪNG HỌC VIÊN: --sh là góc màu riêng của học viên đó,
+   chia đều vòng màu nên không học viên nào trùng màu học viên nào. */
+.sched-block.stu-hue {
+  background: hsl(var(--sh), 72%, 93%);
+  color: hsl(var(--sh), 58%, 30%);
+}
+html.dark .sched-block.stu-hue {
+  background: hsl(var(--sh), 44%, 19%);
+  color: hsl(var(--sh), 82%, 76%);
+}
+/* Chấm màu nhận diện học viên (khi 1 buổi có nhiều em) */
+.stu-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  background: hsl(var(--sh), 65%, 45%);
+}
+
 .free-slot {
   border: 1.5px dashed var(--border);
   background: transparent;
