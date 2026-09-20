@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarPlus, Check, Pencil, X } from "lucide-react";
+import { CalendarPlus, Check, Pencil, Send, ShieldCheck, X } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { dayMeta, dicts, statusLabels } from "@/lib/i18n";
 import { CA_SLOTS, presentCount, paidSessions, studentHistory, tuitionProgress } from "@/lib/derived";
@@ -22,6 +22,7 @@ export default function StudentDetailModal() {
   const attRecords = useApp((s) => s.attRecords);
   const markAttendance = useApp((s) => s.markAttendance);
   const removeAttendance = useApp((s) => s.removeAttendance);
+  const sendTuitionBill = useApp((s) => s.sendTuitionBill);
   const vi = lang !== "en";
   const t = dicts[lang];
 
@@ -120,6 +121,30 @@ export default function StudentDetailModal() {
                 ? `Nợ ${prog.unpaid} buổi — đã đến kỳ thu học phí`
                 : `Owes ${prog.unpaid} sessions — payment due`}
               {st.fee ? " · " + st.fee : ""}
+            </div>
+          )}
+
+          {/* Gửi thông báo học phí qua Zalo (kèm list từng buổi) */}
+          {prog.unpaid > 0 && (
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: -6 }}>
+              <button
+                className="btn-primary"
+                style={{ padding: "9px 15px", display: "inline-flex", alignItems: "center", gap: 7 }}
+                onClick={() => sendTuitionBill(st.id, false)}
+                title={vi ? "Gửi cho Zalo của học viên" : "Send to student's Zalo"}
+              >
+                <Send size={14} strokeWidth={2.2} />
+                {vi ? `Gửi học phí (${prog.unpaid} buổi)` : `Send tuition (${prog.unpaid})`}
+              </button>
+              <button
+                className="btn"
+                style={{ padding: "9px 15px", display: "inline-flex", alignItems: "center", gap: 7 }}
+                onClick={() => sendTuitionBill(st.id, true)}
+                title={vi ? "Gửi thử về bot của Thầy để xem trước" : "Send a test to the admin bot"}
+              >
+                <ShieldCheck size={14} strokeWidth={2.2} />
+                {vi ? "Gửi thử cho Thầy" : "Test to admin"}
+              </button>
             </div>
           )}
 

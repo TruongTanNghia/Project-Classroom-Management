@@ -6,6 +6,7 @@ import type {
 } from "./types";
 import { seedCourses, seedSessions, seedStudents, seedThreads, seedZalo } from "./seed";
 import { getSupabase, isSupabaseConfigured } from "./supabase";
+import { buildTuitionMessage, unpaidSessions } from "./derived";
 import type { Lang } from "./i18n";
 
 export interface FormState {
@@ -91,6 +92,8 @@ interface AppState {
   removeAttendance: (sessionId: number, studentId: number, date: string) => void;
   confirmDelete: () => void;
   recordPayment: (id: number) => void;
+  /** Gửi thông báo học phí (kèm list từng buổi) qua Zalo. toAdmin = gửi thử cho Thầy. */
+  sendTuitionBill: (studentId: number, toAdmin?: boolean) => Promise<void>;
   toggleAuto: (key: keyof ZaloAuto) => void;
   remindFee: (name: string, fee?: string) => void;
   remindAll: (list: { name: string; fee?: string }[]) => void;
@@ -616,6 +619,69 @@ export const useApp = create<AppState>((set, get) => ({
       vi ? `Đã thu ${pay.sessions} buổi · ${pay.amount}` : `Collected ${pay.sessions} sessions · ${pay.amount}`,
       4500
     );
+  },
+
+  // Gửi THÔNG BÁO HỌC PHÍ qua Zalo: liệt kê đủ từng buổi đã học chưa đóng + số tiền.
+  // toAdmin = true → gửi thử về bot của Thầy để duyệt trước khi gửi học viên.
+  sendTuitionBill: async (studentId, toAdmin = false) => {
+    const { students, attRecords, sessions, zalo, adminChatId, lang } = get();
+    const vi = lang !== "en";
+    const st = students.find((s) => s.id === studentId);
+    if (!st) return;
+
+    if (!unpaidSessions(st, attRecords)) {
+      get().showToast(
+        vi ? "Học viên này không có buổi nào chưa đóng." : "This student has no unpaid sessions.",
+        4000
+      );
+      return;
+    }
+    const text = buildTuitionMessage(st, attRecords, sessions, vi);
+
+    let chatId = "";
+    let token = "";
+    if (toAdmin) {
+      chatId = adminChatId;
+      if (!chatId) {
+        get().showToast(
+          vi ? "Chưa có Chat ID của Thầy — vào Zalo Bot cấu hình trước nha." : "Admin Chat ID missing.",
+          5000
+        );
+        return;
+      }
+    } else {
+      const link = zalo.find((z) => z.name === st.name && z.chatId);
+      if (!link) {
+        get().showToast(
+          vi ? `${st.name} chưa liên kết Zalo — chưa gửi được.` : `${st.name} has no Zalo link.`,
+          5000
+        );
+        return;
+      }
+      chatId = link.chatId;
+      token = link.token || "";
+    }
+
+    try {
+      const res = await fetch("/api/zalo/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, chatId, text }),
+      });
+      const d = await res.json();
+      if (d.ok) {
+        get().showToast(
+          toAdmin
+            ? vi ? "Đã gửi thử về bot của Thầy ✓" : "Test sent to admin bot ✓"
+            : vi ? `Đã gửi học phí cho ${st.name} ✓` : `Tuition notice sent to ${st.name} ✓`,
+          4000
+        );
+      } else {
+        get().showToast((vi ? "Zalo gửi lỗi: " : "Zalo error: ") + (d.error || "?"), 6000);
+      }
+    } catch {
+      get().showToast(vi ? "Không gọi được Zalo API" : "Zalo API unreachable", 5000);
+    }
   },
 
   toggleAuto: (key) => {

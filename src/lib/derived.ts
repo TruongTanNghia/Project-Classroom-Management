@@ -66,6 +66,50 @@ export function dueStudents(students: Student[], records: AttRecord[]) {
   return students.filter((st) => unpaidSessions(st, records) >= (st.cycle || 10));
 }
 
+const dmy = (iso: string) => iso.slice(8, 10) + "/" + iso.slice(5, 7) + "/" + iso.slice(0, 4);
+
+/**
+ * Soạn tin nhắn HỌC PHÍ gửi Zalo: liệt kê đầy đủ từng buổi đã học chưa đóng
+ * (tên lớp + ngày) kèm tổng số buổi và số tiền.
+ */
+export function buildTuitionMessage(
+  student: Student,
+  records: AttRecord[],
+  sessions: Session[],
+  vi = true
+): string {
+  const list = unpaidRecords(student, records)
+    .slice()
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const nameOf = (sid: number) =>
+    sessions.find((s) => s.id === sid)?.n || (vi ? "Buổi học" : "Session");
+  const amt = parseAmt(student.fee);
+  const feeText = amt > 0 ? fmtAmt(amt) : student.fee || (vi ? "liên hệ Thầy" : "contact");
+  const lines =
+    list.map((r, i) => `${i + 1}. ${nameOf(r.sessionId)} · ${dmy(r.date)}`).join("\n") || "—";
+  const range =
+    list.length > 1 ? ` (${dmy(list[0].date)} → ${dmy(list[list.length - 1].date)})` : "";
+
+  if (vi) {
+    return (
+      `💰 AIhoclaptrinh · THÔNG BÁO HỌC PHÍ\n\n` +
+      `👤 Học viên: ${student.name}\n` +
+      `📚 Số buổi đã học chưa đóng: ${list.length} buổi${range}\n\n` +
+      `📅 Chi tiết từng buổi:\n${lines}\n\n` +
+      `💵 Học phí cần đóng: ${feeText}\n\n` +
+      `Nhờ em sắp xếp đóng học phí giúp Thầy nha. Cảm ơn em nhiều! 💙`
+    );
+  }
+  return (
+    `💰 AIhoclaptrinh · TUITION NOTICE\n\n` +
+    `👤 Student: ${student.name}\n` +
+    `📚 Unpaid sessions: ${list.length}${range}\n\n` +
+    `📅 Session details:\n${lines}\n\n` +
+    `💵 Amount due: ${feeText}\n\n` +
+    `Please arrange the payment. Thank you! 💙`
+  );
+}
+
 export interface FlatPayment {
   id: number;
   date: string;

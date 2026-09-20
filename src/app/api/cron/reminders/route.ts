@@ -4,6 +4,7 @@ import {
   dueReminders, buildAttendanceAlerts, buildTuitionReminders, buildGradeReports, buildRiskAlerts,
   dueSessionAlerts, type DueReminder,
 } from "@/lib/reminders";
+import { buildTuitionMessage } from "@/lib/derived";
 import type { AttRecord, Session, Student, ZaloAuto, ZaloLink } from "@/lib/types";
 
 // Cron chạy MỌI tự động Zalo: một dịch vụ cron ngoài (VD cron-job.org) gọi route
@@ -222,7 +223,8 @@ export async function GET(request: Request) {
     if (st) st.payments.push({ id: p.id, date: p.date, sessions: p.sessions, amount: p.amount });
   });
   const attRecords: AttRecord[] = (attRes.data || []).map((r: any) => ({
-    id: r.id, sessionId: r.session_id, studentId: r.student_id, date: r.date, present: r.present,
+    id: r.id, sessionId: r.session_id, studentId: r.student_id, date: r.date,
+    present: r.present, paid: Boolean(r.paid),
   }));
   const zalo = (zRes.data || []).map((r: any): ZaloLink => ({
     id: r.id, code: r.code, name: r.student_name, token: r.token || "",
@@ -231,6 +233,32 @@ export async function GET(request: Request) {
   const auto = ((setRes.data || []).find((r: any) => r.key === "zaloAuto")?.value as ZaloAuto) ||
     { attend: true, grades: true, tuition: true, risk: false };
   const adminChatId = ((setRes.data || []).find((r: any) => r.key === "adminZalo")?.value?.chatId as string) || "";
+
+  // DEMO (có khóa): soạn THÔNG BÁO HỌC PHÍ của 1 học viên bằng ĐÚNG hàm của app
+  // rồi gửi về bot Thầy để duyệt trước khi gửi học viên thật.
+  //   ?demo=tuition[&student=<tên>][&dry=1]
+  if (url.searchParams.get("demo") === "tuition") {
+    const want = (url.searchParams.get("student") || "").toLowerCase().trim();
+    const ranked = students
+      .map((s) => ({ s, n: attRecords.filter((r) => r.studentId === s.id && r.present && !r.paid).length }))
+      .filter((x) => x.n > 0)
+      .sort((a, b) => b.n - a.n);
+    const pick = want ? ranked.find((x) => x.s.name.toLowerCase().includes(want)) : ranked[0];
+    if (!pick) {
+      return NextResponse.json({ ok: false, error: "Không có học viên nào còn buổi chưa đóng" });
+    }
+    const text = buildTuitionMessage(pick.s, attRecords, sessions, true);
+    if (dry) {
+      return NextResponse.json({ ok: true, dry: true, student: pick.s.name, unpaid: pick.n, preview: text });
+    }
+    if (!adminChatId || !fallbackToken) {
+      return NextResponse.json({ ok: false, error: "Thiếu adminChatId hoặc ZALO_BOT_TOKEN", preview: text });
+    }
+    const sent = await sendZalo(fallbackToken, adminChatId, text);
+    return NextResponse.json({
+      ok: sent.ok, student: pick.s.name, unpaid: pick.n, preview: text, raw: sent.data,
+    });
+  }
 
   // Bẫy hay gặp: đã khóa RLS nhưng cron chưa có service_role → đọc ra RỖNG (không lỗi).
   // Đọc 0 buổi + 0 học viên mà không dùng service_role → gần như chắc chắn bị RLS chặn.
