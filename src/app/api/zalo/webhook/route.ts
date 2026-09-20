@@ -44,11 +44,6 @@ const money = (v?: string) => {
   const n = parseInt(String(v ?? "").replace(/[^0-9]/g, ""), 10) || 0;
   return n > 0 ? n.toLocaleString("vi-VN") + "₫" : String(v || "—");
 };
-/** Tên gọi: "Lê Quang Nhân" → "Nhân" */
-const given = (full: string) => {
-  const w = String(full || "").trim().split(/\s+/);
-  return w[w.length - 1] || full;
-};
 const DAYS = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"];
 
 const MENU =
@@ -129,8 +124,17 @@ export async function POST(request: Request) {
   const nameById = new Map<number, string>(students.map((s: any) => [s.id, s.name]));
   const unpaidOf = (sid: number) =>
     att.filter((r: any) => r.student_id === sid && r.present && !r.paid).length;
+  // Họ tên ĐẦY ĐỦ của học viên trong buổi
   const rosterOf = (s: any) =>
-    (s.student_ids || []).map((id: number) => given(nameById.get(id) || "")).filter(Boolean);
+    (s.student_ids || []).map((id: number) => nameById.get(id) || "").filter(Boolean);
+  // "đã học N / chu kỳ buổi" — chu kỳ = số buổi quy định thì thu học phí
+  const progressOf = (id: number) => {
+    const st = students.find((x: any) => x.id === id);
+    if (!st) return null;
+    const n = unpaidOf(id);
+    const cyc = st.cycle || 10;
+    return { name: st.name, n, cyc, due: n >= cyc };
+  };
   // Buổi đã tới ngày bắt đầu chưa
   const started = (s: any) => !s.date || String(s.date) <= todayISO;
 
@@ -153,13 +157,13 @@ export async function POST(request: Request) {
       if (due.length) {
         reply += `\n⚠️ ĐẾN KỲ THU (${due.length}):\n`;
         due.forEach((x) => {
-          reply += `• ${x.s.name} — ${x.n} buổi · ${money(x.s.fee)}\n`;
+          reply += `• ${x.s.name}\n   đã học ${x.n}/${x.s.cycle || 10} buổi · ${money(x.s.fee)}\n`;
         });
       }
       if (soon.length) {
         reply += `\n🟡 Đang học dở (${soon.length}):\n`;
         soon.forEach((x) => {
-          reply += `• ${x.s.name} — ${x.n}/${x.s.cycle || 10} buổi\n`;
+          reply += `• ${x.s.name}\n   đã học ${x.n}/${x.s.cycle || 10} buổi\n`;
         });
       }
       reply += `\n📊 Tổng chưa thu: ${total} buổi / ${rows.length} học viên`;
@@ -191,12 +195,20 @@ export async function POST(request: Request) {
       reply += `\nHôm nay Thầy không có buổi dạy nào. Nghỉ ngơi thôi ạ 😌`;
     } else {
       list.forEach((s: any, i: number) => {
-        const r = rosterOf(s);
+        const ids: number[] = s.student_ids || [];
         const done = att.filter((a: any) => a.session_id === s.id && a.date === todayISO && a.present).length;
         reply += `\n${i + 1}) ${s.slot} · ${s.name}\n`;
         if (s.room) reply += `   🏫 ${s.room}\n`;
-        reply += `   👥 ${r.length ? r.join(", ") : "chưa xếp học viên"}`;
-        reply += `   ${done > 0 ? `· ✅ điểm danh ${done}/${r.length}` : ""}\n`;
+        if (!ids.length) {
+          reply += `   👥 (chưa xếp học viên)\n`;
+        } else {
+          ids.forEach((id) => {
+            const p = progressOf(id);
+            if (!p) return;
+            reply += `   👤 ${p.name}\n      đã học ${p.n}/${p.cyc} buổi${p.due ? " ⚠️ ĐẾN KỲ THU" : ""}\n`;
+          });
+        }
+        if (done > 0) reply += `   ✅ Đã điểm danh: ${done}/${ids.length}\n`;
       });
       reply += `\n📊 Tổng: ${list.length} buổi hôm nay`;
     }
