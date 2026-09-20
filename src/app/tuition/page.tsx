@@ -4,7 +4,7 @@ import { Download, Send } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { dicts } from "@/lib/i18n";
 import {
-  dueStudents, fmtAmt, recentPayments, revenueByCourse, revenueTotals,
+  dueStudents, fmtAmt, recentPayments, revenueByCourse, revenueTotals, unpaidSessions,
 } from "@/lib/derived";
 import { revBarPalette } from "@/lib/subjects";
 import { Avatar, Page, PageHeader } from "@/components/ui/bits";
@@ -16,8 +16,8 @@ export default function TuitionPage() {
   const students = useApp((s) => s.students);
   const sessions = useApp((s) => s.sessions);
   const attRecords = useApp((s) => s.attRecords);
-  const remindFee = useApp((s) => s.remindFee);
-  const remindAll = useApp((s) => s.remindAll);
+  const sendTuitionBill = useApp((s) => s.sendTuitionBill);
+  const sendTuitionBillAll = useApp((s) => s.sendTuitionBillAll);
   const t = dicts[lang];
   const vi = lang !== "en";
 
@@ -102,7 +102,18 @@ export default function TuitionPage() {
             <span style={{ fontSize: 14, fontWeight: 600 }}>{t.dueTitle}</span>
             {due.length > 0 && (
               <button
-                onClick={() => remindAll(due.map((s) => ({ name: s.name, fee: s.fee })))}
+                onClick={() => {
+                  const names = due.map((s) => s.name).join(", ");
+                  if (
+                    window.confirm(
+                      vi
+                        ? `Gửi bảng kê học phí qua Zalo cho ${due.length} học viên?\n\n${names}\n\nHọc viên sẽ nhận tin ngay.`
+                        : `Send tuition notices to ${due.length} students?\n\n${names}`
+                    )
+                  ) {
+                    sendTuitionBillAll(due.map((s) => s.id));
+                  }
+                }}
                 style={{
                   display: "flex", alignItems: "center", gap: 6, background: "var(--accent-tint)",
                   border: "1px solid var(--accent-border)", color: "var(--accent)", borderRadius: 8,
@@ -128,8 +139,13 @@ export default function TuitionPage() {
               }}
             >
               <Avatar name={s.name} index={i + 2} />
-              <div className="truncate-1" style={{ flex: 1, minWidth: 0, fontWeight: 500, fontSize: 13.5 }}>
-                {s.name}
+              <div className="truncate-1" style={{ flex: 1, minWidth: 0, fontSize: 13.5 }}>
+                <div style={{ fontWeight: 500 }}>{s.name}</div>
+                <div style={{ fontSize: 12, color: "var(--text-3)" }}>
+                  {vi
+                    ? `đã học ${unpaidSessions(s, attRecords)}/${s.cycle || 10} buổi`
+                    : `${unpaidSessions(s, attRecords)}/${s.cycle || 10} sessions`}
+                </div>
               </div>
               <span
                 className="pill pill-warn"
@@ -138,8 +154,8 @@ export default function TuitionPage() {
                 {s.fee || "—"}
               </span>
               <button
-                onClick={() => remindFee(s.name, s.fee)}
-                title={t.remindBtn}
+                onClick={() => sendTuitionBill(s.id)}
+                title={vi ? "Gửi bảng kê học phí qua Zalo" : "Send tuition notice"}
                 style={{
                   display: "flex", alignItems: "center", gap: 5, background: "var(--surface)",
                   border: "1px solid var(--border)", color: "var(--accent)", borderRadius: 8,

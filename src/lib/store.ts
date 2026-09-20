@@ -93,7 +93,9 @@ interface AppState {
   confirmDelete: () => void;
   recordPayment: (id: number) => void;
   /** Gửi thông báo học phí (kèm list từng buổi) qua Zalo. toAdmin = gửi thử cho Thầy. */
-  sendTuitionBill: (studentId: number, toAdmin?: boolean) => Promise<void>;
+  sendTuitionBill: (studentId: number, toAdmin?: boolean, silent?: boolean) => Promise<boolean>;
+  /** Gửi bảng kê học phí cho nhiều học viên, báo kết quả tổng hợp. */
+  sendTuitionBillAll: (studentIds: number[]) => Promise<void>;
   toggleAuto: (key: keyof ZaloAuto) => void;
   remindFee: (name: string, fee?: string) => void;
   remindAll: (list: { name: string; fee?: string }[]) => void;
@@ -623,18 +625,21 @@ export const useApp = create<AppState>((set, get) => ({
 
   // Gửi THÔNG BÁO HỌC PHÍ qua Zalo: liệt kê đủ từng buổi đã học chưa đóng + số tiền.
   // toAdmin = true → gửi thử về bot của Thầy để duyệt trước khi gửi học viên.
-  sendTuitionBill: async (studentId, toAdmin = false) => {
+  sendTuitionBill: async (studentId, toAdmin = false, silent = false) => {
     const { students, attRecords, sessions, zalo, adminChatId, lang } = get();
     const vi = lang !== "en";
+    const say = (msg: string, ms?: number) => {
+      if (!silent) get().showToast(msg, ms);
+    };
     const st = students.find((s) => s.id === studentId);
-    if (!st) return;
+    if (!st) return false;
 
     if (!unpaidSessions(st, attRecords)) {
-      get().showToast(
+      say(
         vi ? "Học viên này không có buổi nào chưa đóng." : "This student has no unpaid sessions.",
         4000
       );
-      return;
+      return false;
     }
     const text = buildTuitionMessage(st, attRecords, sessions, vi);
 
@@ -643,20 +648,20 @@ export const useApp = create<AppState>((set, get) => ({
     if (toAdmin) {
       chatId = adminChatId;
       if (!chatId) {
-        get().showToast(
+        say(
           vi ? "Chưa có Chat ID của Thầy — vào Zalo Bot cấu hình trước nha." : "Admin Chat ID missing.",
           5000
         );
-        return;
+        return false;
       }
     } else {
       const link = zalo.find((z) => z.name === st.name && z.chatId);
       if (!link) {
-        get().showToast(
+        say(
           vi ? `${st.name} chưa liên kết Zalo — chưa gửi được.` : `${st.name} has no Zalo link.`,
           5000
         );
-        return;
+        return false;
       }
       chatId = link.chatId;
       token = link.token || "";
@@ -670,18 +675,37 @@ export const useApp = create<AppState>((set, get) => ({
       });
       const d = await res.json();
       if (d.ok) {
-        get().showToast(
+        say(
           toAdmin
             ? vi ? "Đã gửi thử về bot của Thầy ✓" : "Test sent to admin bot ✓"
             : vi ? `Đã gửi học phí cho ${st.name} ✓` : `Tuition notice sent to ${st.name} ✓`,
           4000
         );
-      } else {
-        get().showToast((vi ? "Zalo gửi lỗi: " : "Zalo error: ") + (d.error || "?"), 6000);
+        return true;
       }
+      say((vi ? "Zalo gửi lỗi: " : "Zalo error: ") + (d.error || "?"), 6000);
+      return false;
     } catch {
-      get().showToast(vi ? "Không gọi được Zalo API" : "Zalo API unreachable", 5000);
+      say(vi ? "Không gọi được Zalo API" : "Zalo API unreachable", 5000);
+      return false;
     }
+  },
+
+  // Gửi bảng kê học phí cho nhiều em một lượt, chỉ báo 1 thông báo tổng kết.
+  sendTuitionBillAll: async (studentIds) => {
+    const vi = get().lang !== "en";
+    let ok = 0;
+    for (const id of studentIds) {
+      if (await get().sendTuitionBill(id, false, true)) ok++;
+    }
+    const fail = studentIds.length - ok;
+    get().showToast(
+      vi
+        ? `Đã gửi học phí cho ${ok}/${studentIds.length} học viên` +
+          (fail ? ` · ${fail} em chưa gửi được (chưa liên kết Zalo?)` : " ✓")
+        : `Sent to ${ok}/${studentIds.length} students`,
+      6000
+    );
   },
 
   toggleAuto: (key) => {
