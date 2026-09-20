@@ -179,7 +179,7 @@ async function loadFromSupabase() {
   const paysByStudent = new Map<number, Payment[]>();
   (payments.data || []).forEach((p: any) => {
     const list = paysByStudent.get(p.student_id) || [];
-    list.push({ id: p.id, date: p.date, sessions: p.sessions, amount: p.amount });
+    list.push({ id: p.id, date: p.date, sessions: p.sessions, amount: p.amount, detail: p.detail || undefined });
     paysByStudent.set(p.student_id, list);
   });
   const mapped = {
@@ -214,7 +214,8 @@ async function loadFromSupabase() {
     attRecords: attend.error
       ? []
       : (attend.data || []).map((r: any): AttRecord => ({
-          id: r.id, sessionId: r.session_id, studentId: r.student_id, date: r.date, present: r.present,
+          id: r.id, sessionId: r.session_id, studentId: r.student_id, date: r.date,
+          present: r.present, paid: Boolean(r.paid),
         })),
   };
   // Nối tiếp bộ đếm ID theo ID lớn nhất đã có → tránh trùng khi tạo mới
@@ -555,22 +556,66 @@ export const useApp = create<AppState>((set, get) => ({
     sb()?.from(TABLE[kind]).delete().eq("id", id).then(({ error }) => reportSync(error));
   },
 
+  // Thu học phí = GOM tất cả buổi đã học nhưng chưa thu vào 1 phiếu (kèm list buổi),
+  // rồi đánh dấu các buổi đó `paid` → bộ đếm nợ tự về 0 cho kỳ mới.
+  // KHÔNG cần xoá lịch sử điểm danh nữa.
   recordPayment: (id) => {
-    const { students } = get();
+    const { students, attRecords, sessions } = get();
     const student = students.find((r) => r.id === id);
     if (!student) return;
+    const vi = get().lang !== "en";
+
+    const unpaid = attRecords.filter((r) => r.studentId === id && r.present && !r.paid);
+    if (!unpaid.length) {
+      get().showToast(
+        vi ? "Chưa có buổi nào để thu — học viên chưa học buổi mới nào." : "No unpaid sessions to collect.",
+        4500
+      );
+      return;
+    }
+
+    const detail = unpaid
+      .slice()
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map((r) => ({
+        name: sessions.find((s) => s.id === r.sessionId)?.n || (vi ? "Buổi học" : "Session"),
+        date: r.date,
+      }));
+
     const pays = student.payments.slice();
     const pay: Payment = {
       id: pays.reduce((mx, p) => Math.max(mx, p.id), 0) + 1,
       date: todayDDMMYYYY(),
-      sessions: student.cycle || 10,
-      amount: student.fee || "—",
+      sessions: unpaid.length, // chốt ĐÚNG số buổi đã học chưa thu
+      amount: student.fee || "—", // tiền = học phí đã nhập lúc tạo học viên
+      detail,
     };
     pays.push(pay);
-    set({ students: students.map((r) => (r.id === id ? { ...r, payments: pays } : r)) });
-    sb()?.from("payments")
-      .insert({ student_id: id, date: pay.date, sessions: pay.sessions, amount: pay.amount })
-      .then(({ error }) => reportSync(error));
+
+    const mark = new Set(unpaid.map((r) => `${r.sessionId}|${r.date}`));
+    set({
+      students: students.map((r) => (r.id === id ? { ...r, payments: pays } : r)),
+      attRecords: attRecords.map((r) =>
+        r.studentId === id && r.present && !r.paid && mark.has(`${r.sessionId}|${r.date}`)
+          ? { ...r, paid: true }
+          : r
+      ),
+    });
+
+    const supa = sb();
+    if (supa) {
+      supa.from("payments")
+        .insert({ student_id: id, date: pay.date, sessions: pay.sessions, amount: pay.amount, detail })
+        .then(({ error }) => reportSync(error));
+      supa.from("attendance_records")
+        .update({ paid: true })
+        .eq("student_id", id).eq("present", true).eq("paid", false)
+        .then(({ error }) => reportSync(error));
+    }
+    get().showToast(
+      vi ? `Đã thu ${pay.sessions} buổi · ${pay.amount}` : `Collected ${pay.sessions} sessions · ${pay.amount}`,
+      4500
+    );
   },
 
   toggleAuto: (key) => {

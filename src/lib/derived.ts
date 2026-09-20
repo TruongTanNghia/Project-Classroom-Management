@@ -1,7 +1,10 @@
 // Derived business logic:
 // present = số lượt điểm danh CÓ MẶT (attendance_records.present) — chỉ có điểm
-// danh mới tính là đã học; paid = Σ payments.sessions; owed = present − paid;
-// owed ≥ cycle → học viên đến kỳ thu.
+// danh mới tính là đã học.
+// Mỗi bản ghi điểm danh có cờ `paid`: đã được GOM vào một phiếu thu hay chưa.
+// Buổi CHƯA thu (unpaid) = present && !paid → đây chính là số buổi đang nợ.
+// unpaid ≥ cycle → đến kỳ thu học phí. Thu tiền = gom hết buổi chưa thu vào 1
+// phiếu rồi đánh dấu paid → bộ đếm tự về 0 cho kỳ mới (không cần xoá điểm danh).
 import type { AttRecord, Session, Student } from "./types";
 
 export const parseAmt = (a: string | undefined) =>
@@ -39,21 +42,28 @@ export function paidSessions(student: Student) {
   return (student.payments || []).reduce((a, p) => a + (p.sessions || 0), 0);
 }
 
-/** Tiến độ chu kỳ học phí. */
+/** Các buổi ĐÃ HỌC nhưng CHƯA gom vào phiếu thu nào (= đang nợ). */
+export function unpaidRecords(student: Student, records: AttRecord[]) {
+  return records.filter((r) => r.studentId === student.id && r.present && !r.paid);
+}
+
+/** Số buổi đang nợ (đã học, chưa thu tiền). */
+export function unpaidSessions(student: Student, records: AttRecord[]) {
+  return unpaidRecords(student, records).length;
+}
+
+/** Tiến độ chu kỳ học phí — tính trên số buổi CHƯA thu. */
 export function tuitionProgress(student: Student, records: AttRecord[]) {
-  const cyc = student.cycle || 10;
-  const present = presentCount(student, records);
-  const owed = Math.max(0, present - paidSessions(student));
-  const due = owed >= cyc;
-  const shown = due ? cyc : owed;
-  return { cycle: cyc, shown, remain: cyc - shown, due };
+  const cycle = student.cycle || 10;
+  const unpaid = unpaidSessions(student, records);
+  const due = unpaid >= cycle; // đủ/quá chu kỳ → đến kỳ thu
+  const over = Math.max(0, unpaid - cycle); // học vượt chu kỳ mà chưa đóng
+  const shown = Math.min(unpaid, cycle);
+  return { cycle, unpaid, shown, remain: Math.max(0, cycle - unpaid), due, over };
 }
 
 export function dueStudents(students: Student[], records: AttRecord[]) {
-  return students.filter((st) => {
-    const present = presentCount(st, records);
-    return present - paidSessions(st) >= (st.cycle || 10);
-  });
+  return students.filter((st) => unpaidSessions(st, records) >= (st.cycle || 10));
 }
 
 export interface FlatPayment {

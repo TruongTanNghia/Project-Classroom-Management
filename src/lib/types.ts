@@ -2,11 +2,18 @@ export type StudentStatus = "Active" | "At risk" | "Inactive";
 export type ZaloStatus = "Connected" | "Pending" | "Not linked";
 export type Subject = "Math" | "Science" | "English" | "History" | "Arts" | "CS";
 
+/** Một buổi học được gom vào phiếu thu (ảnh chụp lúc thu, không đổi về sau). */
+export interface PaidSession {
+  name: string; // tên lớp/buổi
+  date: string; // YYYY-MM-DD
+}
+
 export interface Payment {
   id: number;
   date: string; // DD/MM/YYYY
   sessions: number;
   amount: string; // e.g. "1.200.000₫"
+  detail?: PaidSession[]; // danh sách buổi được gom vào lần thu này
 }
 
 export interface Student {
@@ -77,6 +84,7 @@ export interface AttRecord {
   studentId: number;
   date: string; // YYYY-MM-DD
   present: boolean;
+  paid?: boolean; // đã được gom vào một phiếu thu học phí chưa
 }
 
 export interface ZaloAuto {

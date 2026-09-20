@@ -176,8 +176,12 @@ export default function StudentsPage() {
                   }}
                 >
                   {fee.due
-                    ? vi ? "Đến kỳ thu học phí" : "Payment due"
-                    : vi ? "còn " + fee.remain + " buổi" : fee.remain + " left"}
+                    ? vi
+                      ? "Nợ " + fee.unpaid + " buổi · đến kỳ thu"
+                      : "Owes " + fee.unpaid + " sessions"
+                    : vi
+                      ? "còn " + fee.remain + " buổi"
+                      : fee.remain + " left"}
                 </div>
               </div>
               <span>

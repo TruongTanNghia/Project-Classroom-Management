@@ -107,16 +107,18 @@ export default function StudentDetailModal() {
           {/* Thống kê */}
           <div style={{ display: "flex", gap: 10 }}>
             {stat(vi ? "Đã học" : "Learned", learned + (vi ? " buổi" : ""), "var(--accent)")}
-            {stat(vi ? "Đã đóng" : "Paid", paid + (vi ? " buổi" : ""))}
+            {stat(vi ? "Đã thu" : "Collected", paid + (vi ? " buổi" : ""))}
             {stat(
-              vi ? "Còn nợ / chu kỳ" : "Owed / cycle",
-              Math.max(0, learned - paid) + "/" + prog.cycle,
+              vi ? "Đang nợ / chu kỳ" : "Owed / cycle",
+              prog.unpaid + "/" + prog.cycle,
               prog.due ? "var(--warn)" : "var(--text)"
             )}
           </div>
           {prog.due && (
             <div style={{ fontSize: 13, fontWeight: 600, color: "var(--warn)", marginTop: -8 }}>
-              ⚠️ {vi ? "Đã đến kỳ thu học phí" : "Payment due"}
+              ⚠️ {vi
+                ? `Nợ ${prog.unpaid} buổi — đã đến kỳ thu học phí`
+                : `Owes ${prog.unpaid} sessions — payment due`}
               {st.fee ? " · " + st.fee : ""}
             </div>
           )}
@@ -215,6 +217,56 @@ export default function StudentDetailModal() {
             </div>
           )}
 
+          {/* Lịch sử thu học phí — mỗi phiếu gom danh sách buổi đã thu */}
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
+              {vi ? `Lịch sử thu học phí (${st.payments.length})` : `Payment history (${st.payments.length})`}
+            </div>
+            {st.payments.length === 0 ? (
+              <div style={{ fontSize: 13, color: "var(--text-3)" }}>
+                {vi ? "Chưa thu lần nào." : "No payments yet."}
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {st.payments
+                  .slice()
+                  .reverse()
+                  .map((p) => (
+                    <div
+                      key={p.id}
+                      style={{
+                        border: "1px solid var(--subtle)", borderRadius: 10,
+                        background: "var(--sidebar)", padding: "10px 12px",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                        <span style={{ fontSize: 13, fontWeight: 600 }}>
+                          {vi ? `Thu ${p.sessions} buổi` : `${p.sessions} sessions`}
+                          <span style={{ color: "var(--text-3)", fontWeight: 400 }}> · {p.date}</span>
+                        </span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--success)" }}>{p.amount}</span>
+                      </div>
+                      {p.detail && p.detail.length > 0 && (
+                        <div style={{ marginTop: 7, display: "flex", flexWrap: "wrap", gap: 5 }}>
+                          {p.detail.map((d, k) => (
+                            <span
+                              key={k}
+                              style={{
+                                fontSize: 11.5, color: "var(--text-2)", background: "var(--surface)",
+                                border: "1px solid var(--border)", borderRadius: 99, padding: "2px 9px",
+                              }}
+                            >
+                              {d.name} · {fmtDate(d.date)}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+
           {/* Lịch sử điểm danh */}
           <div>
             <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
@@ -247,7 +299,20 @@ export default function StudentDetailModal() {
                     </span>
                     <span className="tnum" style={{ fontWeight: 600 }}>{fmtDate(r.date)}</span>
                     <span style={{ color: "var(--text-2)" }}>{sessName(r.sessionId)}</span>
-                    <span style={{ marginLeft: "auto", fontWeight: 600, color: r.present ? "var(--success)" : "var(--danger)" }}>
+                    {r.present && (
+                      <span
+                        style={{
+                          marginLeft: "auto", fontSize: 11, fontWeight: 700, borderRadius: 99,
+                          padding: "2px 9px", whiteSpace: "nowrap",
+                          background: r.paid ? "var(--surface)" : "var(--warn-tint)",
+                          color: r.paid ? "var(--text-3)" : "var(--warn)",
+                          border: "1px solid " + (r.paid ? "var(--border)" : "var(--warn)"),
+                        }}
+                      >
+                        {r.paid ? (vi ? "đã thu" : "collected") : (vi ? "chưa thu" : "unpaid")}
+                      </span>
+                    )}
+                    <span style={{ marginLeft: r.present ? 0 : "auto", fontWeight: 600, color: r.present ? "var(--success)" : "var(--danger)" }}>
                       {r.present ? (vi ? "Đã học" : "Present") : (vi ? "Vắng" : "Absent")}
                     </span>
                     <button

@@ -19,13 +19,23 @@ export default function SchedulePage() {
   const openAttend = useApp((s) => s.openAttend);
   const remindToday = useApp((s) => s.remindToday);
 
-  // Mỗi khóa học 1 màu riêng (theo thứ tự khóa; ổn định). Khóa không tìm thấy → theo tên.
+  // Mỗi khóa học 1 màu (dùng khi buổi chưa xếp học viên nào).
   const courseTint = (name: string) => {
     const i = courses.findIndex((c) => c.name === name);
     if (i >= 0) return "tint-" + (i % 10);
     let h = 0;
     for (let k = 0; k < name.length; k++) h = (h * 31 + name.charCodeAt(k)) >>> 0;
     return "tint-" + (h % 10);
+  };
+  // Mỗi HỌC VIÊN 1 màu riêng, ổn định theo thứ tự trong danh sách học viên.
+  const studentTint = (sid: number) => {
+    const i = students.findIndex((s) => s.id === sid);
+    return "tint-" + ((i >= 0 ? i : sid) % 10);
+  };
+  // Hiện TÊN GỌI, bỏ họ: "Lê Quang Nhân" → "Nhân".
+  const givenName = (full: string) => {
+    const parts = String(full).trim().split(/\s+/);
+    return parts[parts.length - 1] || full;
   };
   const t = dicts[lang];
   const vi = lang !== "en";
@@ -151,7 +161,7 @@ export default function SchedulePage() {
               const names = ids
                 .map((id) => students.find((x) => x.id === id)?.name)
                 .filter(Boolean)
-                .map((nm) => (nm as string).split(" ")[0]);
+                .map((nm) => givenName(nm as string));
               const stu = names.length
                 ? names.slice(0, 2).join(", ") + (names.length > 2 ? " +" + (names.length - 2) : "")
                 : "";
@@ -160,7 +170,7 @@ export default function SchedulePage() {
               return (
                 <div
                   key={cell.day}
-                  className={"sched-block " + courseTint(b.n)}
+                  className={"sched-block " + (ids.length ? studentTint(ids[0]) : courseTint(b.n))}
                   style={{ borderLeft: "3px solid currentColor" }}
                   onClick={() => openEdit(b)}
                 >
