@@ -1,7 +1,7 @@
 // Logic nhắc lịch học tự động — dùng ở API route /api/cron/reminders.
 // Múi giờ Việt Nam cố định UTC+7 (không DST).
 import type { AttRecord, Session, Student, ZaloLink } from "./types";
-import { presentCount, paidSessions } from "./derived";
+import { buildTuitionMessage, unpaidSessions } from "./derived";
 
 export type ReminderKind = "schedule" | "attendance" | "grades" | "tuition" | "risk" | "admin";
 
@@ -148,6 +148,15 @@ export function dueReminders(
 
 const todayKeyVN = (nowMs: number) => vnDateStr(nowMs).replace(/-/g, "");
 
+/** Khoá theo TUẦN (ngày Thứ Hai của tuần đó, giờ VN) — để nhắc tối đa 1 lần/tuần. */
+const weekKeyVN = (nowMs: number) => {
+  const p = vnParts(nowMs);
+  const d = new Date(Date.UTC(p.y, p.mo - 1, p.da));
+  const back = d.getUTCDay() === 0 ? 6 : d.getUTCDay() - 1; // lùi về Thứ Hai
+  d.setUTCDate(d.getUTCDate() - back);
+  return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}`;
+};
+
 /** Cảnh báo chuyên cần: buổi đã bắt đầu ~15p mà học viên bị điểm danh vắng. */
 export function buildAttendanceAlerts(
   sessions: Session[], students: Student[], zalo: ZaloLink[], records: AttRecord[], nowMs: number,
@@ -196,11 +205,12 @@ export function buildAttendanceAlerts(
 /** Nhắc học phí: học viên đã đến kỳ thu (owed ≥ cycle). Tối đa 1 lần/ngày. */
 export function buildTuitionReminders(
   students: Student[], zalo: ZaloLink[], records: AttRecord[], nowMs: number,
-  opts: { force?: boolean } = {}
+  opts: { force?: boolean; sessions?: Session[] } = {}
 ): DueReminder[] {
   const out: DueReminder[] = [];
   for (const st of students) {
-    const owed = presentCount(st, records) - paidSessions(st);
+    // Cùng cách tính với app: buổi đã học CHƯA gom vào phiếu thu nào.
+    const owed = unpaidSessions(st, records);
     const due = owed >= (st.cycle || 10);
     if (!opts.force && !due) continue;
     const link = linkFor(st, zalo);
@@ -208,11 +218,10 @@ export function buildTuitionReminders(
     out.push({
       kind: "tuition", studentId: st.id, studentName: st.name,
       chatId: link.chatId, token: link.token || "",
-      text:
-        `💰 AIhoclaptrinh · Nhắc học phí\n\n` +
-        `Chào em ${st.name}! Em đã học đủ số buổi của kỳ. Học phí kỳ này${st.fee ? " (" + st.fee + ")" : ""} ` +
-        `đã đến hạn. Em sắp xếp đóng học phí giúp trung tâm nha. Cảm ơn em!`,
-      dedupKey: `tuition:${todayKeyVN(nowMs)}:${st.id}`,
+      // Dùng đúng mẫu tin học phí của app (có liệt kê từng buổi + ngày).
+      text: buildTuitionMessage(st, records, opts.sessions || [], true),
+      // Chống trùng theo TUẦN → tối đa 1 lần nhắc/tuần/học viên (tránh ngày nào cũng đòi tiền).
+      dedupKey: `tuition:w${weekKeyVN(nowMs)}:${st.id}`,
     });
   }
   return out;
