@@ -297,7 +297,7 @@ export async function GET(request: Request) {
     if (on("attend") || isForced("attendance"))
       items.push(...buildAttendanceAlerts(sessions, students, zalo, attRecords, now, { force: isForced("attendance") }));
     if (on("tuition") || isForced("tuition"))
-      items.push(...buildTuitionReminders(students, zalo, attRecords, now, { force: isForced("tuition"), sessions }));
+      items.push(...buildTuitionReminders(students, attRecords, now, { force: isForced("tuition"), adminChatId }));
     if (on("grades") || isForced("grades"))
       items.push(...buildGradeReports(students, sessions, zalo, now, { force: isForced("grades") }));
     if (on("risk") || isForced("risk"))
