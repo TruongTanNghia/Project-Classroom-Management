@@ -146,6 +146,39 @@ export async function GET(request: Request) {
     });
   }
 
+  // Đăng ký webhook cho BOT RIÊNG của TỪNG HỌC VIÊN, để em đó nhắn bot là
+  // tra được lịch học của chính mình. Chạy lại bao nhiêu lần cũng được.
+  if (url.searchParams.get("setupbots") === "1") {
+    const origin = new URL(request.url).origin;
+    const sec = process.env.CRON_SECRET || "";
+    const hook = origin + "/api/zalo/webhook?key=" + encodeURIComponent(sec);
+    const zRes = await supa.from("zalo_links").select("student_name,token,chat_id");
+    const out: any[] = [];
+    for (const z of (zRes.data || []) as any[]) {
+      const tk = String(z.token || "").trim();
+      if (!tk) {
+        out.push({ name: z.student_name, ok: false, error: "chưa có bot token" });
+        continue;
+      }
+      try {
+        const r = await fetch(ZAPPS_BASE + "/bot" + tk + "/setWebhook", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: hook, secret_token: sec }),
+        });
+        const d: any = await r.json().catch(() => ({}));
+        out.push({
+          name: z.student_name,
+          ok: d?.ok !== false,
+          detail: d?.description || d?.result?.verification?.outcome || "ok",
+        });
+      } catch (e) {
+        out.push({ name: z.student_name, ok: false, error: String(e).slice(0, 120) });
+      }
+    }
+    return NextResponse.json({ ok: true, hook, count: out.length, bots: out });
+  }
+
   // Kiểm tra FK điểm danh (có khóa): tạo buổi + điểm danh GIẢ, xóa buổi, xem điểm
   // danh còn không → biết đã chạy migration_attendance_keep.sql (SET NULL) chưa.
   if (url.searchParams.get("checkfk") === "1") {

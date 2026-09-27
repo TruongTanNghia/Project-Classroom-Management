@@ -97,12 +97,28 @@ export async function POST(request: Request) {
   const token = process.env.ZALO_BOT_TOKEN || "";
   if (!token) return NextResponse.json({ ok: false, error: "no token" });
 
-  // Chỉ phục vụ chat của Thầy
-  const setRes = await supa.from("app_settings").select("value").eq("key", "adminZalo").maybeSingle();
+  // Ai đang nhắn? Thầy (admin) hay học viên — nhận diện bằng chat_id.
+  // Học viên chỉ xem được dữ liệu CỦA CHÍNH MÌNH, không thấy của ai khác.
+  const [setRes, linkRes] = await Promise.all([
+    supa.from("app_settings").select("value").eq("key", "adminZalo").maybeSingle(),
+    supa.from("zalo_links").select("student_name,token,chat_id,status"),
+  ]);
   const adminChatId = (((setRes.data as any)?.value?.chatId as string) || "").trim();
-  if (!adminChatId || chatId !== adminChatId) {
-    await send(token, chatId, "Xin chào! Đây là bot thông báo của AIhoclaptrinh 🤖");
-    return NextResponse.json({ ok: true, note: "not admin" });
+  const link = (linkRes.data || []).find(
+    (z: any) => String(z.chat_id || "").trim() === chatId && String(z.chat_id || "").trim() !== ""
+  );
+  const isAdmin = Boolean(adminChatId) && chatId === adminChatId;
+  // Trả lời bằng CHÍNH con bot đã nhận tin (bot riêng của từng học viên)
+  const replyToken = isAdmin ? token : String(link?.token || "").trim() || token;
+  if (!isAdmin && !link) {
+    await send(
+      replyToken,
+      chatId,
+      `Xin chào! Đây là bot của AIhoclaptrinh 🤖
+
+Bot chỉ phục vụ học viên đã được kết nối. Em liên hệ Thầy để được kết nối nha!`
+    );
+    return NextResponse.json({ ok: true, note: "unknown sender" });
   }
 
   // ---- Nạp dữ liệu ----
@@ -139,6 +155,133 @@ export async function POST(request: Request) {
   const started = (s: any) => !s.date || String(s.date) <= todayISO;
 
   const q = noAccent(text);
+
+  /* ================= HỌC VIÊN: chỉ dữ liệu CỦA CHÍNH MÌNH ================= */
+  if (!isAdmin) {
+    const me = students.find((s: any) => s.name === String((link as any)?.student_name || ""));
+    if (!me) {
+      await send(replyToken, chatId, "Bot chưa tìm thấy hồ sơ học viên của em. Em báo Thầy giúp nha 🙏");
+      return NextResponse.json({ ok: true, note: "student not found" });
+    }
+    // CHỈ lấy các buổi mà chính em này được xếp vào
+    const mine = sessions
+      .filter((s: any) => (s.student_ids || []).includes(me.id) && started(s))
+      .sort((a: any, b: any) => a.day - b.day || String(a.slot).localeCompare(String(b.slot)));
+    const myAtt = att.filter((r: any) => r.student_id === me.id);
+    const learned = myAtt.filter((r: any) => r.present).length;
+    const owe = unpaidOf(me.id);
+    const cyc = me.cycle || 10;
+    let r = "";
+
+    if (q === "tuan" || q.includes("lich tuan") || q.includes("ca tuan")) {
+      r = `🗓️ LỊCH HỌC CẢ TUẦN CỦA EM
+
+👤 ${me.name}
+`;
+      if (!mine.length) {
+        r += `
+Em chưa được xếp lịch học nào. Em hỏi Thầy giúp nha!`;
+      } else {
+        for (let d = 0; d < 7; d++) {
+          const list = mine.filter((s: any) => s.day === d);
+          if (!list.length) continue;
+          r += `
+${DAYS[d]}:
+`;
+          list.forEach((s: any) => {
+            r += `  • ${s.slot} · ${s.name}${s.room ? " · " + s.room : ""}
+`;
+          });
+        }
+        r += `
+📊 Tổng: ${mine.length} buổi/tuần`;
+      }
+    } else if (q === "hp" || q.includes("hoc phi")) {
+      r =
+        `💰 HỌC PHÍ CỦA EM
+
+👤 ${me.name}
+` +
+        `📚 Đã học chưa đóng: ${owe}/${cyc} buổi
+` +
+        `💵 Học phí: ${money(me.fee)}
+`;
+      r +=
+        owe >= cyc
+          ? `
+⚠️ Em đã học đủ ${cyc} buổi rồi, nhớ sắp xếp đóng học phí giúp Thầy nha!`
+          : `
+Em còn ${cyc - owe} buổi nữa là tới kỳ đóng học phí.`;
+    } else if (q === "bh" || q.includes("buoi") || q === "dd" || q.includes("diem danh")) {
+      r =
+        `✅ SỐ BUỔI ĐÃ HỌC CỦA EM
+
+👤 ${me.name}
+` +
+        `📚 Tổng đã học: ${learned} buổi
+` +
+        `📌 Chưa đóng học phí: ${owe}/${cyc} buổi
+`;
+      const last = myAtt
+        .filter((x: any) => x.present)
+        .sort((a: any, b: any) => String(b.date).localeCompare(String(a.date)))
+        .slice(0, 5);
+      if (last.length) {
+        r += `
+🕘 5 buổi gần nhất:
+`;
+        last.forEach((x: any) => {
+          const s = sessions.find((y: any) => y.id === x.session_id);
+          r += `• ${s?.name || "Buổi học"} · ${dmy(x.date)}
+`;
+        });
+      }
+    } else if (q === "lich" || q === "ld" || q.includes("lich hoc") || q.includes("hom nay")) {
+      const today = mine.filter((s: any) => s.day === todayIdx);
+      r = `📅 LỊCH HỌC HÔM NAY · ${DAYS[todayIdx]} ${dmy(todayISO)}
+
+👤 ${me.name}
+`;
+      if (!today.length) {
+        r += `
+Hôm nay em không có buổi học nào nha 😌`;
+      } else {
+        today.forEach((s: any, i: number) => {
+          r += `
+${i + 1}) ${s.slot} · ${s.name}
+`;
+          if (s.room) r += `   🏫 ${s.room}
+`;
+        });
+        r += `
+Chúc em học tốt! 💪`;
+      }
+    } else {
+      r =
+        `🤖 AIhoclaptrinh · Chào em ${me.name}!
+
+` +
+        `Em gõ một trong các lệnh sau:
+
+` +
+        `📅 lich — lịch học HÔM NAY
+` +
+        `🗓️ tuan — lịch học CẢ TUẦN
+` +
+        `✅ bh — số buổi em đã học
+` +
+        `💰 hp — học phí của em
+` +
+        `❓ menu — xem lại bảng lệnh này
+
+` +
+        `(Gõ có dấu hay không dấu đều được)`;
+    }
+    await send(replyToken, chatId, r);
+    return NextResponse.json({ ok: true, replied: true, as: "student" });
+  }
+
+  /* ===================== THẦY (ADMIN) ===================== */
   let reply = "";
 
   /* ---------- 💰 HỌC PHÍ ---------- */

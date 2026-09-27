@@ -123,6 +123,19 @@ function todayDDMMYYYY() {
 /* ---- Supabase row mapping (snake_case ⇄ camelCase) ---- */
 const sb = () => getSupabase();
 
+/** Đăng ký webhook cho bot riêng của các học viên (chạy nền, không chặn UI). */
+function registerStudentBots() {
+  const supa = getSupabase();
+  if (!supa) return;
+  supa.auth.getSession().then(({ data }) => {
+    const tok = data.session?.access_token;
+    if (!tok) return;
+    fetch("/api/cron/reminders?setupbots=1", { headers: { Authorization: "Bearer " + tok } }).catch(
+      () => {}
+    );
+  });
+}
+
 function reportSync(err: { message?: string } | null) {
   if (err) {
     // Lưu Supabase THẤT BẠI: UI vẫn hiện (optimistic) nhưng DB chưa có → báo TO & lâu
@@ -408,6 +421,9 @@ export const useApp = create<AppState>((set, get) => ({
       set({ zalo: [row, ...zalo], seq: id, modal: null, form: {} });
       sb()?.from("zalo_links").insert(zaloToRow(row)).then(({ error }) => reportSync(error));
     }
+    // Bot riêng của học viên vừa lưu → đăng ký webhook để em đó nhắn bot
+    // là tra được lịch học của chính mình (không cần thao tác thủ công).
+    if (rec.token) registerStudentBots();
   },
 
   saveThread: () => {
