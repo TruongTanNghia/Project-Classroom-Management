@@ -8,11 +8,6 @@ import { buildReceiptMessage, receiptUrl } from "@/lib/receipt";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-const money = (v?: string) => {
-  const n = parseInt(String(v ?? "").replace(/[^0-9]/g, ""), 10) || 0;
-  return n > 0 ? n.toLocaleString("vi-VN") + "₫" : String(v || "—");
-};
-
 export async function POST(request: Request) {
   const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supaKey =
