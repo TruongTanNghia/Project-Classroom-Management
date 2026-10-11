@@ -66,6 +66,13 @@ export function dueStudents(students: Student[], records: AttRecord[]) {
   return students.filter((st) => unpaidSessions(st, records) >= (st.cycle || 10));
 }
 
+/** Thông tin chuyển khoản của trung tâm — đổi ở đây là đổi mọi tin nhắn. */
+export const BANK_INFO = {
+  bank: "MBBank",
+  number: "0862554248",
+  holder: "", // để trống thì không hiện dòng chủ tài khoản
+};
+
 const dmyD = (iso: string) => iso.slice(8, 10) + "/" + iso.slice(5, 7) + "/" + iso.slice(0, 4);
 
 /**
@@ -106,6 +113,12 @@ export function buildTuitionMessage(
     out.push("");
     out.push("💵 Học phí kỳ tiếp theo (" + cycle + " buổi): " + feeText);
     out.push("");
+    out.push("🏦 Thông tin chuyển khoản:");
+    out.push("   • Ngân hàng: " + BANK_INFO.bank);
+    out.push("   • Số tài khoản: " + BANK_INFO.number);
+    if (BANK_INFO.holder) out.push("   • Chủ tài khoản: " + BANK_INFO.holder);
+    out.push("   • Nội dung: HP " + student.name);
+    out.push("");
     out.push(
       "Em sắp xếp đóng học phí trước buổi học kế tiếp giúp Thầy nha, để Thầy chuẩn bị tài liệu và giữ chỗ cho em. Có gì chưa tiện em cứ nhắn Thầy trao đổi thoải mái."
     );
@@ -123,6 +136,11 @@ export function buildTuitionMessage(
   list.forEach((r, i) => out.push("   " + (i + 1) + ". " + nameOf(r.sessionId) + " · " + dmyD(r.date)));
   out.push("");
   out.push("💵 Tuition for the next " + cycle + " sessions: " + feeText);
+  out.push("");
+  out.push("🏦 Bank transfer:");
+  out.push("   • Bank: " + BANK_INFO.bank);
+  out.push("   • Account: " + BANK_INFO.number);
+  out.push("   • Note: HP " + student.name);
   out.push("");
   out.push("Please arrange the payment before your next class so we can reserve your seat and prepare the materials.");
   out.push("");
