@@ -96,6 +96,8 @@ interface AppState {
   sendTuitionBill: (studentId: number, toAdmin?: boolean, silent?: boolean) => Promise<boolean>;
   /** Gửi bảng kê học phí cho nhiều học viên, báo kết quả tổng hợp. */
   sendTuitionBillAll: (studentIds: number[]) => Promise<void>;
+  /** Gửi LINK biên lai thu học phí cho học viên qua Zalo. */
+  sendReceipt: (paymentId: number) => Promise<void>;
   toggleAuto: (key: keyof ZaloAuto) => void;
   remindFee: (name: string, fee?: string) => void;
   remindAll: (list: { name: string; fee?: string }[]) => void;
@@ -641,7 +643,13 @@ export const useApp = create<AppState>((set, get) => ({
     (async () => {
       const ins = await supa
         .from("payments")
-        .insert({ student_id: id, date: pay.date, sessions: pay.sessions, amount: pay.amount, detail });
+        .insert({ student_id: id, date: pay.date, sessions: pay.sessions, amount: pay.amount, detail })
+        .select("id")
+        .maybeSingle();
+      // Dùng ID THẬT của DB cho phiếu thu, để nút "Gửi biên lai" trỏ đúng phiếu
+      if (!ins.error && ins.data && typeof (ins.data as { id?: number }).id === "number") {
+        pay.id = (ins.data as { id: number }).id;
+      }
       if (ins.error) {
         console.error("[payments] ghi phiếu thất bại:", ins.error);
         get().showToast(
@@ -762,6 +770,36 @@ export const useApp = create<AppState>((set, get) => ({
         : `Sent to ${ok}/${studentIds.length} students`,
       6000
     );
+  },
+
+  sendReceipt: async (paymentId) => {
+    const vi = get().lang !== "en";
+    const supa = sb();
+    if (!supa) return;
+    const { data } = await supa.auth.getSession();
+    const tok = data.session?.access_token;
+    if (!tok) {
+      get().showToast(vi ? "Cần đăng nhập lại để gửi biên lai." : "Please log in again.", 5000);
+      return;
+    }
+    try {
+      const res = await fetch("/api/zalo/receipt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok },
+        body: JSON.stringify({ paymentId }),
+      });
+      const d = await res.json();
+      if (d.ok) {
+        get().showToast(
+          vi ? "Đã gửi biên lai cho " + d.student + " ✓" : "Receipt sent to " + d.student,
+          4500
+        );
+      } else {
+        get().showToast((vi ? "Gửi biên lai lỗi: " : "Receipt error: ") + (d.error || "?"), 6500);
+      }
+    } catch {
+      get().showToast(vi ? "Không gọi được API gửi biên lai" : "Receipt API unreachable", 5000);
+    }
   },
 
   toggleAuto: (key) => {

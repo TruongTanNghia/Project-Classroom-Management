@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarPlus, Check, Pencil, Send, ShieldCheck, X } from "lucide-react";
+import { CalendarPlus, Check, Pencil, Receipt, Send, ShieldCheck, X } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { dayMeta, dicts, statusLabels } from "@/lib/i18n";
 import { CA_SLOTS, presentCount, paidSessions, studentHistory, tuitionProgress } from "@/lib/derived";
@@ -23,6 +23,7 @@ export default function StudentDetailModal() {
   const markAttendance = useApp((s) => s.markAttendance);
   const removeAttendance = useApp((s) => s.removeAttendance);
   const sendTuitionBill = useApp((s) => s.sendTuitionBill);
+  const sendReceipt = useApp((s) => s.sendReceipt);
   const vi = lang !== "en";
   const t = dicts[lang];
 
@@ -271,6 +272,15 @@ export default function StudentDetailModal() {
                         </span>
                         <span style={{ fontSize: 13, fontWeight: 700, color: "var(--success)" }}>{p.amount}</span>
                       </div>
+                      <button
+                        className="btn"
+                        onClick={() => sendReceipt(p.id)}
+                        title={vi ? "Gửi link biên lai cho học viên qua Zalo" : "Send receipt link"}
+                        style={{ marginTop: 9, padding: "6px 12px", fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 6 }}
+                      >
+                        <Receipt size={13} strokeWidth={2.2} />
+                        {vi ? "Gửi biên lai" : "Send receipt"}
+                      </button>
                       {p.detail && p.detail.length > 0 && (
                         <div style={{ marginTop: 7, display: "flex", flexWrap: "wrap", gap: 5 }}>
                           {p.detail.map((d, k) => (
