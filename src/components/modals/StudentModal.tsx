@@ -3,6 +3,7 @@
 import { Check, Plus, UserRoundPlus } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { dicts } from "@/lib/i18n";
+import { unpaidSessions } from "@/lib/derived";
 import ModalShell, { Choices, Field } from "./ModalShell";
 
 export default function StudentModal() {
@@ -13,6 +14,7 @@ export default function StudentModal() {
   const saveStudent = useApp((s) => s.saveStudent);
   const recordPayment = useApp((s) => s.recordPayment);
   const students = useApp((s) => s.students);
+  const attRecords = useApp((s) => s.attRecords);
   const t = dicts[lang];
   const vi = lang !== "en";
 
@@ -107,7 +109,31 @@ export default function StudentModal() {
               {t.payTitle} ({payHistory.length})
             </label>
             <button
-              onClick={() => modal.id != null && recordPayment(modal.id)}
+              onClick={() => {
+                if (modal.id == null) return;
+                const st = students.find((x) => x.id === modal.id);
+                if (!st) return;
+                const owe = unpaidSessions(st, attRecords);
+                if (!owe) {
+                  alert("Học viên này chưa có buổi nào chưa đóng.");
+                  return;
+                }
+                const cyc = st.cycle || 10;
+                const take = Math.min(owe, cyc);
+                const carry = owe - take;
+                const lines = [
+                  "Xác nhận THU HỌC PHÍ cho " + st.name + "?",
+                  "",
+                  "• Thu: " + take + " buổi",
+                  "• Số tiền: " + (st.fee || "—"),
+                ];
+                if (carry > 0) lines.push("• Còn " + carry + " buổi chuyển sang kỳ sau");
+                if (
+                  window.confirm(lines.join(String.fromCharCode(10)))
+                ) {
+                  recordPayment(modal.id);
+                }
+              }}
               style={{
                 display: "flex", alignItems: "center", gap: 6, background: "var(--success-tint)",
                 border: "1px solid var(--success-border)", color: "var(--success)", borderRadius: 8,
