@@ -5,6 +5,7 @@ import {
   dueSessionAlerts, type DueReminder,
 } from "@/lib/reminders";
 import { buildTuitionMessage } from "@/lib/derived";
+import { buildReceiptMessage, receiptUrl } from "@/lib/receipt";
 import type { AttRecord, Session, Student, ZaloAuto, ZaloLink } from "@/lib/types";
 
 // Cron chạy MỌI tự động Zalo: một dịch vụ cron ngoài (VD cron-job.org) gọi route
@@ -264,6 +265,27 @@ export async function GET(request: Request) {
       done.push({ step: "trả " + ids.length + " buổi về chưa thu", error: r.error?.message || null });
     }
     return NextResponse.json({ ok: true, applied: true, done });
+  }
+
+  // DEMO (có khóa): gửi BIÊN LAI của 1 phiếu thu về bot Thầy để duyệt.
+  //   ?demo=receipt[&id=<paymentId>]  — không có id thì lấy phiếu mới nhất
+  if (url.searchParams.get("demo") === "receipt") {
+    const want = Number(url.searchParams.get("id")) || 0;
+    const q = want
+      ? await supa.from("payments").select("*").eq("id", want).maybeSingle()
+      : await supa.from("payments").select("*").order("id", { ascending: false }).limit(1).maybeSingle();
+    const pay: any = q.data;
+    if (!pay) return NextResponse.json({ ok: false, error: "Không tìm thấy phiếu thu" });
+    const stq = await supa.from("students").select("name").eq("id", pay.student_id).maybeSingle();
+    const sname = (stq.data as any)?.name || "học viên";
+    const link = receiptUrl(new URL(request.url).origin, pay.id);
+    const text = buildReceiptMessage(sname, pay, link);
+    const setQ = await supa.from("app_settings").select("value").eq("key", "adminZalo").maybeSingle();
+    const adminId = (((setQ.data as any)?.value?.chatId as string) || "").trim();
+    const fb = process.env.ZALO_BOT_TOKEN || "";
+    if (!adminId || !fb) return NextResponse.json({ ok: false, error: "Thiếu adminChatId/token", preview: text, link });
+    const sent = await sendZalo(fb, adminId, text);
+    return NextResponse.json({ ok: sent.ok, paymentId: pay.id, student: sname, link, preview: text, raw: sent.data });
   }
 
   // Kiểm tra FK điểm danh (có khóa): tạo buổi + điểm danh GIẢ, xóa buổi, xem điểm

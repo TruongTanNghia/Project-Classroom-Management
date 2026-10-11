@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { createHash } from "node:crypto";
+import { receiptSig } from "@/lib/receipt";
 
 // BIÊN LAI THU HỌC PHÍ — trang HTML công khai, gửi link cho học viên xem.
 // Dùng Route Handler (không phải page) để KHÔNG dính cổng đăng nhập của app.
@@ -9,11 +9,6 @@ import { createHash } from "node:crypto";
 // thêm cột trong DB.
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
-export function receiptSig(id: number | string) {
-  const secret = process.env.CRON_SECRET || "aihlt";
-  return createHash("sha256").update(String(id) + "|" + secret).digest("hex").slice(0, 12);
-}
 
 const esc = (v: unknown) =>
   String(v ?? "").replace(/[&<>"']/g, (c) =>

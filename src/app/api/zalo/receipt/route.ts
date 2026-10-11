@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { receiptSig } from "@/app/bienlai/[code]/route";
+import { buildReceiptMessage, receiptUrl } from "@/lib/receipt";
 
 // Gửi LINK BIÊN LAI thu học phí cho học viên qua Zalo.
 // Chỉ admin đã đăng nhập mới gọi được (gửi Bearer token của phiên Supabase).
@@ -51,24 +51,8 @@ export async function POST(request: Request) {
   }
 
   const origin = new URL(request.url).origin;
-  const url = origin + "/bienlai/" + paymentId + "." + receiptSig(paymentId);
-  const BR = String.fromCharCode(10);
-  const text = [
-    "🧾 AIhoclaptrinh · BIÊN LAI THU HỌC PHÍ",
-    "",
-    "Chào em " + name + ",",
-    "",
-    "Thầy đã nhận học phí của em, cảm ơn em nhiều nha:",
-    "",
-    "   • Số buổi: " + (p as any).sessions + " buổi",
-    "   • Số tiền: " + money((p as any).amount),
-    "   • Ngày thu: " + (p as any).date,
-    "",
-    "Em xem biên lai chi tiết tại đây:",
-    url,
-    "",
-    "Chúc em học thật tốt! 💙",
-  ].join(BR);
+  const url = receiptUrl(origin, paymentId);
+  const text = buildReceiptMessage(name, p as any, url);
 
   const token = String((link as any).token || "").trim() || process.env.ZALO_BOT_TOKEN || "";
   if (!token) return NextResponse.json({ ok: false, error: "Chưa có bot token" }, { status: 503 });
