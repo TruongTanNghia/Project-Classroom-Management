@@ -66,7 +66,7 @@ export function dueStudents(students: Student[], records: AttRecord[]) {
   return students.filter((st) => unpaidSessions(st, records) >= (st.cycle || 10));
 }
 
-const dmy = (iso: string) => iso.slice(8, 10) + "/" + iso.slice(5, 7) + "/" + iso.slice(0, 4);
+const dmyD = (iso: string) => iso.slice(8, 10) + "/" + iso.slice(5, 7) + "/" + iso.slice(0, 4);
 
 /**
  * Soạn tin nhắn HỌC PHÍ gửi Zalo: liệt kê đầy đủ từng buổi đã học chưa đóng
@@ -78,6 +78,7 @@ export function buildTuitionMessage(
   sessions: Session[],
   vi = true
 ): string {
+  const BR = String.fromCharCode(10);
   const list = unpaidRecords(student, records)
     .slice()
     .sort((a, b) => a.date.localeCompare(b.date));
@@ -85,29 +86,48 @@ export function buildTuitionMessage(
     sessions.find((s) => s.id === sid)?.n || (vi ? "Buổi học" : "Session");
   const amt = parseAmt(student.fee);
   const feeText = amt > 0 ? fmtAmt(amt) : student.fee || (vi ? "liên hệ Thầy" : "contact");
-  const lines =
-    list.map((r, i) => `${i + 1}. ${nameOf(r.sessionId)} · ${dmy(r.date)}`).join("\n") || "—";
-  const range =
-    list.length > 1 ? ` (${dmy(list[0].date)} → ${dmy(list[list.length - 1].date)})` : "";
+  const cycle = student.cycle || 10;
+  const out: string[] = [];
 
   if (vi) {
-    return (
-      `💰 AIhoclaptrinh · THÔNG BÁO HỌC PHÍ\n\n` +
-      `👤 Học viên: ${student.name}\n` +
-      `📚 Số buổi đã học chưa đóng: ${list.length} buổi${range}\n\n` +
-      `📅 Chi tiết từng buổi:\n${lines}\n\n` +
-      `💵 Học phí cần đóng: ${feeText}\n\n` +
-      `Nhờ em sắp xếp đóng học phí giúp Thầy nha. Cảm ơn em nhiều! 💙`
+    out.push("💙 AIhoclaptrinh · PHIẾU BÁO HỌC PHÍ");
+    out.push("");
+    out.push("Chào em " + student.name + ",");
+    out.push("");
+    out.push(
+      "Cảm ơn em đã chăm chỉ đồng hành cùng lớp thời gian qua. Em đã hoàn thành " +
+        list.length +
+        " buổi học" +
+        (list.length > 1 ? " (" + dmyD(list[0].date) + " → " + dmyD(list[list.length - 1].date) + ")" : "") +
+        ":"
     );
+    out.push("");
+    list.forEach((r, i) => out.push("   " + (i + 1) + ". " + nameOf(r.sessionId) + " · " + dmyD(r.date)));
+    out.push("");
+    out.push("💵 Học phí kỳ tiếp theo (" + cycle + " buổi): " + feeText);
+    out.push("");
+    out.push(
+      "Em sắp xếp đóng học phí trước buổi học kế tiếp giúp Thầy nha, để Thầy chuẩn bị tài liệu và giữ chỗ cho em. Có gì chưa tiện em cứ nhắn Thầy trao đổi thoải mái."
+    );
+    out.push("");
+    out.push("Chúc em học thật tốt! 🌟");
+    return out.join(BR);
   }
-  return (
-    `💰 AIhoclaptrinh · TUITION NOTICE\n\n` +
-    `👤 Student: ${student.name}\n` +
-    `📚 Unpaid sessions: ${list.length}${range}\n\n` +
-    `📅 Session details:\n${lines}\n\n` +
-    `💵 Amount due: ${feeText}\n\n` +
-    `Please arrange the payment. Thank you! 💙`
-  );
+
+  out.push("💙 AIhoclaptrinh · TUITION NOTICE");
+  out.push("");
+  out.push("Hi " + student.name + ",");
+  out.push("");
+  out.push("Thank you for your dedication. You have completed " + list.length + " session(s):");
+  out.push("");
+  list.forEach((r, i) => out.push("   " + (i + 1) + ". " + nameOf(r.sessionId) + " · " + dmyD(r.date)));
+  out.push("");
+  out.push("💵 Tuition for the next " + cycle + " sessions: " + feeText);
+  out.push("");
+  out.push("Please arrange the payment before your next class so we can reserve your seat and prepare the materials.");
+  out.push("");
+  out.push("Happy learning! 🌟");
+  return out.join(BR);
 }
 
 export interface FlatPayment {
