@@ -585,39 +585,44 @@ export const useApp = create<AppState>((set, get) => ({
     const student = students.find((r) => r.id === id);
     if (!student) return;
     const vi = get().lang !== "en";
+    const cycle = student.cycle || 10;
 
-    const unpaid = attRecords.filter((r) => r.studentId === id && r.present && !r.paid);
-    if (!unpaid.length) {
+    // Các buổi đã học chưa thu, CŨ NHẤT TRƯỚC
+    const unpaidAll = attRecords
+      .filter((r) => r.studentId === id && r.present && !r.paid)
+      .slice()
+      .sort((a, b) => a.date.localeCompare(b.date));
+    if (!unpaidAll.length) {
       get().showToast(
         vi ? "Chưa có buổi nào để thu — học viên chưa học buổi mới nào." : "No unpaid sessions to collect.",
         4500
       );
       return;
     }
+    // CHỈ thu ĐÚNG 1 chu kỳ (VD 10 buổi). Dư ra bao nhiêu để dành kỳ sau.
+    const take = unpaidAll.slice(0, cycle);
+    const carry = unpaidAll.length - take.length;
 
-    const detail = unpaid
-      .slice()
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .map((r) => ({
-        name: sessions.find((s) => s.id === r.sessionId)?.n || (vi ? "Buổi học" : "Session"),
-        date: r.date,
-      }));
+    const detail = take.map((r) => ({
+      name: sessions.find((s) => s.id === r.sessionId)?.n || (vi ? "Buổi học" : "Session"),
+      date: r.date,
+    }));
 
     const pays = student.payments.slice();
     const pay: Payment = {
       id: pays.reduce((mx, p) => Math.max(mx, p.id), 0) + 1,
       date: todayDDMMYYYY(),
-      sessions: unpaid.length, // chốt ĐÚNG số buổi đã học chưa thu
-      amount: student.fee || "—", // tiền = học phí đã nhập lúc tạo học viên
+      sessions: take.length,
+      amount: student.fee || "—", // tiền = học phí đã nhập của học viên
       detail,
     };
     pays.push(pay);
 
-    const mark = new Set(unpaid.map((r) => `${r.sessionId}|${r.date}`));
+    const mark = new Set(take.map((r) => r.sessionId + "|" + r.date));
     set({
       students: students.map((r) => (r.id === id ? { ...r, payments: pays } : r)),
       attRecords: attRecords.map((r) =>
-        r.studentId === id && r.present && !r.paid && mark.has(`${r.sessionId}|${r.date}`)
+        r.studentId === id && r.present && !r.paid && mark.has(r.sessionId + "|" + r.date)
           ? { ...r, paid: true }
           : r
       ),
@@ -628,14 +633,26 @@ export const useApp = create<AppState>((set, get) => ({
       supa.from("payments")
         .insert({ student_id: id, date: pay.date, sessions: pay.sessions, amount: pay.amount, detail })
         .then(({ error }) => reportSync(error));
-      supa.from("attendance_records")
-        .update({ paid: true })
-        .eq("student_id", id).eq("present", true).eq("paid", false)
-        .then(({ error }) => reportSync(error));
+      // Chỉ đánh dấu ĐÚNG những buổi vừa thu (không đụng buổi để dành kỳ sau)
+      const rowIds = take.map((r) => r.id).filter((x): x is number => typeof x === "number");
+      if (rowIds.length) {
+        supa.from("attendance_records").update({ paid: true }).in("id", rowIds)
+          .then(({ error }) => reportSync(error));
+      }
+      take
+        .filter((r) => typeof r.id !== "number")
+        .forEach((r) => {
+          supa.from("attendance_records").update({ paid: true })
+            .eq("session_id", r.sessionId).eq("student_id", id).eq("date", r.date)
+            .then(({ error }) => reportSync(error));
+        });
     }
     get().showToast(
-      vi ? `Đã thu ${pay.sessions} buổi · ${pay.amount}` : `Collected ${pay.sessions} sessions · ${pay.amount}`,
-      4500
+      vi
+        ? "Đã thu " + take.length + " buổi · " + pay.amount +
+          (carry > 0 ? " · còn " + carry + " buổi chuyển sang kỳ sau" : "")
+        : "Collected " + take.length + " sessions" + (carry > 0 ? " · " + carry + " carried over" : ""),
+      5500
     );
   },
 
@@ -674,7 +691,7 @@ export const useApp = create<AppState>((set, get) => ({
       const link = zalo.find((z) => z.name === st.name && z.chatId);
       if (!link) {
         say(
-          vi ? `${st.name} chưa liên kết Zalo — chưa gửi được.` : `${st.name} has no Zalo link.`,
+          vi ? st.name + " chưa liên kết Zalo — chưa gửi được." : st.name + " has no Zalo link.",
           5000
         );
         return false;
@@ -694,7 +711,7 @@ export const useApp = create<AppState>((set, get) => ({
         say(
           toAdmin
             ? vi ? "Đã gửi thử về bot của Thầy ✓" : "Test sent to admin bot ✓"
-            : vi ? `Đã gửi học phí cho ${st.name} ✓` : `Tuition notice sent to ${st.name} ✓`,
+            : vi ? "Đã gửi học phí cho " + st.name + " ✓" : "Tuition notice sent to " + st.name,
           4000
         );
         return true;

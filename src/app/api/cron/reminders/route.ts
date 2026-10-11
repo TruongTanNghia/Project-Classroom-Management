@@ -81,6 +81,8 @@ export async function GET(request: Request) {
       supa.from("attendance_records").select("*").order("date"),
       supa.from("students").select("id,name"),
     ]);
+    // Lịch sử thu học phí thật trong DB (soi khi nghi "lưu mà không vào DB")
+    const payRows = await supa.from("payments").select("*").order("id", { ascending: false }).limit(20);
     // Tin webhook Zalo gần nhất (soi khi bot không trả lời)
     const hook = await supa.from("app_settings").select("value").eq("key", "zalo_webhook_last").maybeSingle();
     // Cột `paid` / `detail` đã tạo chưa (migration_tuition_cycle.sql)
@@ -104,6 +106,17 @@ export async function GET(request: Request) {
       recentSentError: log.error?.message || null,
       reminderSentKeys: (rem.data || []).map((r: any) => r.id),
       zaloWebhookLast: (hook.data as any)?.value || null,
+      paymentsError: payRows.error?.message || null,
+      paymentsCount: (payRows.data || []).length,
+      payments: (payRows.data || []).map((r: any) => ({
+        id: r.id,
+        student: stuName.get(r.student_id) || ("id:" + r.student_id),
+        date: r.date,
+        sessions: r.sessions,
+        amount: r.amount,
+        detailCount: Array.isArray(r.detail) ? r.detail.length : null,
+      })),
+      attendancePaidCount: (att.data || []).filter((r: any) => r.paid).length,
       migrationTuition: {
         attendance_paid: paidCol.error ? "THIẾU — chưa chạy SQL" : "CÓ",
         payments_detail: detailCol.error ? "THIẾU — chưa chạy SQL" : "CÓ",
