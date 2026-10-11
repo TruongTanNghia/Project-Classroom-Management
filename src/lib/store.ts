@@ -619,41 +619,64 @@ export const useApp = create<AppState>((set, get) => ({
     pays.push(pay);
 
     const mark = new Set(take.map((r) => r.sessionId + "|" + r.date));
-    set({
-      students: students.map((r) => (r.id === id ? { ...r, payments: pays } : r)),
-      attRecords: attRecords.map((r) =>
-        r.studentId === id && r.present && !r.paid && mark.has(r.sessionId + "|" + r.date)
-          ? { ...r, paid: true }
-          : r
-      ),
-    });
+    const applyLocal = () =>
+      set({
+        students: students.map((r) => (r.id === id ? { ...r, payments: pays } : r)),
+        attRecords: attRecords.map((r) =>
+          r.studentId === id && r.present && !r.paid && mark.has(r.sessionId + "|" + r.date)
+            ? { ...r, paid: true }
+            : r
+        ),
+      });
 
     const supa = sb();
-    if (supa) {
-      supa.from("payments")
-        .insert({ student_id: id, date: pay.date, sessions: pay.sessions, amount: pay.amount, detail })
-        .then(({ error }) => reportSync(error));
-      // Chỉ đánh dấu ĐÚNG những buổi vừa thu (không đụng buổi để dành kỳ sau)
+    if (!supa) {
+      applyLocal();
+      return;
+    }
+
+    // TIỀN BẠC: phải GHI PHIẾU THU THÀNH CÔNG rồi mới đánh dấu buổi "đã thu".
+    // Nếu ghi phiếu lỗi thì KHÔNG đụng gì cả → không bao giờ còn cảnh
+    // "buổi bị trừ mà sổ sách trống".
+    (async () => {
+      const ins = await supa
+        .from("payments")
+        .insert({ student_id: id, date: pay.date, sessions: pay.sessions, amount: pay.amount, detail });
+      if (ins.error) {
+        console.error("[payments] ghi phiếu thất bại:", ins.error);
+        get().showToast(
+          vi
+            ? "⚠️ CHƯA THU ĐƯỢC — không lưu được phiếu thu lên Supabase (" +
+              (ins.error.message || "lỗi") + "). Chưa trừ buổi nào, anh thử lại nha!"
+            : "Payment not saved: " + (ins.error.message || "error"),
+          10000
+        );
+        return;
+      }
+      applyLocal();
+
       const rowIds = take.map((r) => r.id).filter((x): x is number => typeof x === "number");
       if (rowIds.length) {
-        supa.from("attendance_records").update({ paid: true }).in("id", rowIds)
-          .then(({ error }) => reportSync(error));
+        const up = await supa.from("attendance_records").update({ paid: true }).in("id", rowIds);
+        reportSync(up.error);
       }
-      take
-        .filter((r) => typeof r.id !== "number")
-        .forEach((r) => {
-          supa.from("attendance_records").update({ paid: true })
-            .eq("session_id", r.sessionId).eq("student_id", id).eq("date", r.date)
-            .then(({ error }) => reportSync(error));
-        });
-    }
-    get().showToast(
-      vi
-        ? "Đã thu " + take.length + " buổi · " + pay.amount +
-          (carry > 0 ? " · còn " + carry + " buổi chuyển sang kỳ sau" : "")
-        : "Collected " + take.length + " sessions" + (carry > 0 ? " · " + carry + " carried over" : ""),
-      5500
-    );
+      for (const r of take.filter((x) => typeof x.id !== "number")) {
+        const up = await supa
+          .from("attendance_records")
+          .update({ paid: true })
+          .eq("session_id", r.sessionId)
+          .eq("student_id", id)
+          .eq("date", r.date);
+        reportSync(up.error);
+      }
+      get().showToast(
+        vi
+          ? "Đã thu " + take.length + " buổi · " + pay.amount +
+            (carry > 0 ? " · còn " + carry + " buổi chuyển sang kỳ sau" : "")
+          : "Collected " + take.length + " sessions" + (carry > 0 ? " · " + carry + " carried over" : ""),
+        5500
+      );
+    })();
   },
 
   // Gửi THÔNG BÁO HỌC PHÍ qua Zalo: liệt kê đủ từng buổi đã học chưa đóng + số tiền.
