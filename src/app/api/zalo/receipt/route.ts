@@ -41,12 +41,14 @@ export async function POST(request: Request) {
   const name = (st as any)?.name || "";
   const { data: links } = await supa.from("zalo_links").select("student_name,token,chat_id");
   const link = (links || []).find((z: any) => z.student_name === name && String(z.chat_id || "").trim());
-  if (!link) {
+  if (!link && !body.linkOnly) {
     return NextResponse.json({ ok: false, error: name + " chưa liên kết Zalo" }, { status: 400 });
   }
 
   const origin = new URL(request.url).origin;
   const url = receiptUrl(origin, paymentId);
+  // Chỉ lấy link để Thầy mở xem lại, không gửi cho học viên
+  if (body.linkOnly) return NextResponse.json({ ok: true, url, student: name });
   const text = buildReceiptMessage(name, p as any, url);
 
   const token = String((link as any).token || "").trim() || process.env.ZALO_BOT_TOKEN || "";

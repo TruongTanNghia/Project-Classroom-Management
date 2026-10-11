@@ -98,6 +98,8 @@ interface AppState {
   sendTuitionBillAll: (studentIds: number[]) => Promise<void>;
   /** Gửi LINK biên lai thu học phí cho học viên qua Zalo. */
   sendReceipt: (paymentId: number) => Promise<void>;
+  /** Mở xem lại biên lai đã lưu của một phiếu thu. */
+  openReceipt: (paymentId: number) => Promise<void>;
   toggleAuto: (key: keyof ZaloAuto) => void;
   remindFee: (name: string, fee?: string) => void;
   remindAll: (list: { name: string; fee?: string }[]) => void;
@@ -799,6 +801,27 @@ export const useApp = create<AppState>((set, get) => ({
       }
     } catch {
       get().showToast(vi ? "Không gọi được API gửi biên lai" : "Receipt API unreachable", 5000);
+    }
+  },
+
+  openReceipt: async (paymentId) => {
+    const vi = get().lang !== "en";
+    const supa = sb();
+    if (!supa) return;
+    const { data } = await supa.auth.getSession();
+    const tok = data.session?.access_token;
+    if (!tok) return;
+    try {
+      const res = await fetch("/api/zalo/receipt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok },
+        body: JSON.stringify({ paymentId, linkOnly: true }),
+      });
+      const d = await res.json();
+      if (d.ok && d.url) window.open(d.url, "_blank");
+      else get().showToast((vi ? "Không mở được biên lai: " : "Cannot open: ") + (d.error || "?"), 5000);
+    } catch {
+      get().showToast(vi ? "Không gọi được API biên lai" : "Receipt API unreachable", 5000);
     }
   },
 

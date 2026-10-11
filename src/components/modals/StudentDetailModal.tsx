@@ -24,6 +24,7 @@ export default function StudentDetailModal() {
   const removeAttendance = useApp((s) => s.removeAttendance);
   const sendTuitionBill = useApp((s) => s.sendTuitionBill);
   const sendReceipt = useApp((s) => s.sendReceipt);
+  const openReceipt = useApp((s) => s.openReceipt);
   const vi = lang !== "en";
   const t = dicts[lang];
 
@@ -280,6 +281,14 @@ export default function StudentDetailModal() {
                       >
                         <Receipt size={13} strokeWidth={2.2} />
                         {vi ? "Gửi biên lai" : "Send receipt"}
+                      </button>
+                      <button
+                        className="btn"
+                        onClick={() => openReceipt(p.id)}
+                        title={vi ? "Mở xem biên lai đã lưu" : "View saved receipt"}
+                        style={{ marginTop: 9, marginLeft: 8, padding: "6px 12px", fontSize: 12.5 }}
+                      >
+                        {vi ? "Xem" : "View"}
                       </button>
                       {p.detail && p.detail.length > 0 && (
                         <div style={{ marginTop: 7, display: "flex", flexWrap: "wrap", gap: 5 }}>
