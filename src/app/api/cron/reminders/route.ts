@@ -193,6 +193,79 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: true, hook, count: out.length, bots: out });
   }
 
+  // ĐỐI SOÁT & DỌN DỮ LIỆU HỌC PHÍ (có khóa). Mặc định chỉ XEM TRƯỚC;
+  // thêm &apply=1 mới thực sự ghi. Ba việc:
+  //  (A) xoá phiếu thu TRÙNG y hệt (cùng HV + ngày + số buổi + số tiền)
+  //  (B) phiếu ghi vượt chu kỳ -> kéo về đúng chu kỳ của học viên
+  //  (C) buổi bị đánh dấu "đã thu" mà KHÔNG có phiếu nào -> trả về chưa thu
+  if (url.searchParams.get("fixdata") === "1") {
+    const apply = url.searchParams.get("apply") === "1";
+    const [stuR, payR, attR] = await Promise.all([
+      supa.from("students").select("id,name,cycle"),
+      supa.from("payments").select("*").order("id"),
+      supa.from("attendance_records").select("*"),
+    ]);
+    const studs = (stuR.data || []) as any[];
+    const pays = (payR.data || []) as any[];
+    const atts = (attR.data || []) as any[];
+    const nameOf = (sid: number) => studs.find((s) => s.id === sid)?.name || ("id:" + sid);
+    const cycleOf = (sid: number) => studs.find((s) => s.id === sid)?.cycle || 10;
+    const plan: any[] = [];
+
+    // (A) phiếu trùng y hệt — giữ cái id nhỏ nhất
+    const seen = new Map<string, any>();
+    const dupIds: number[] = [];
+    for (const p of pays) {
+      const k = [p.student_id, p.date, p.sessions, p.amount].join("|");
+      if (seen.has(k)) {
+        dupIds.push(p.id);
+        plan.push({ act: "XOÁ phiếu trùng", student: nameOf(p.student_id), id: p.id, date: p.date, sessions: p.sessions, amount: p.amount });
+      } else seen.set(k, p);
+    }
+
+    // (B) phiếu vượt chu kỳ
+    const capped: any[] = [];
+    for (const p of pays) {
+      if (dupIds.includes(p.id)) continue;
+      const cyc = cycleOf(p.student_id);
+      if (p.sessions > cyc) {
+        capped.push({ id: p.id, sessions: cyc });
+        plan.push({ act: "SỬA phiếu vượt chu kỳ", student: nameOf(p.student_id), id: p.id, from: p.sessions, to: cyc });
+      }
+    }
+
+    // (C) buổi đã đánh dấu thu nhưng học viên KHÔNG có phiếu thu nào
+    const payBy = new Set(pays.filter((p) => !dupIds.includes(p.id)).map((p) => p.student_id));
+    const orphan = atts.filter((a) => a.paid && a.present && !payBy.has(a.student_id));
+    const orphanBy: Record<string, number> = {};
+    orphan.forEach((a) => {
+      const n = nameOf(a.student_id);
+      orphanBy[n] = (orphanBy[n] || 0) + 1;
+    });
+    Object.keys(orphanBy).forEach((n) =>
+      plan.push({ act: "TRẢ VỀ chưa thu (không có phiếu)", student: n, sessions: orphanBy[n] })
+    );
+
+    if (!apply) {
+      return NextResponse.json({ ok: true, dryRun: true, willDo: plan.length, plan });
+    }
+    const done: any[] = [];
+    if (dupIds.length) {
+      const r = await supa.from("payments").delete().in("id", dupIds);
+      done.push({ step: "xoá phiếu trùng", ids: dupIds, error: r.error?.message || null });
+    }
+    for (const c of capped) {
+      const r = await supa.from("payments").update({ sessions: c.sessions }).eq("id", c.id);
+      done.push({ step: "sửa phiếu " + c.id + " -> " + c.sessions + " buổi", error: r.error?.message || null });
+    }
+    if (orphan.length) {
+      const ids = orphan.map((a) => a.id).filter((x) => typeof x === "number");
+      const r = await supa.from("attendance_records").update({ paid: false }).in("id", ids);
+      done.push({ step: "trả " + ids.length + " buổi về chưa thu", error: r.error?.message || null });
+    }
+    return NextResponse.json({ ok: true, applied: true, done });
+  }
+
   // Kiểm tra FK điểm danh (có khóa): tạo buổi + điểm danh GIẢ, xóa buổi, xem điểm
   // danh còn không → biết đã chạy migration_attendance_keep.sql (SET NULL) chưa.
   if (url.searchParams.get("checkfk") === "1") {
