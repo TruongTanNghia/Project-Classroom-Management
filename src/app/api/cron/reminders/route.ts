@@ -79,7 +79,7 @@ export async function GET(request: Request) {
       supa.from("reminder_sent").select("id").order("id", { ascending: false }).limit(15),
       supa.from("app_settings").select("value").eq("key", "cron_heartbeat").maybeSingle(),
       supa.from("attendance_records").select("*").order("date"),
-      supa.from("students").select("id,name"),
+      supa.from("students").select("id,name,cycle,fee"),
     ]);
     // Lịch sử thu học phí thật trong DB (soi khi nghi "lưu mà không vào DB")
     const payRows = await supa.from("payments").select("*").order("id", { ascending: false }).limit(20);
@@ -106,6 +106,7 @@ export async function GET(request: Request) {
       recentSentError: log.error?.message || null,
       reminderSentKeys: (rem.data || []).map((r: any) => r.id),
       zaloWebhookLast: (hook.data as any)?.value || null,
+      studentsInfo: (stu.data || []).map((r: any) => ({ id: r.id, name: r.name, cycle: r.cycle, fee: r.fee })),
       paymentsError: payRows.error?.message || null,
       paymentsCount: (payRows.data || []).length,
       payments: (payRows.data || []).map((r: any) => ({
@@ -125,7 +126,7 @@ export async function GET(request: Request) {
       attendanceCount: (att.data || []).length,
       attendance: (att.data || []).map((r: any) => ({
         student: stuName.get(r.student_id) || ("id:" + r.student_id),
-        session_id: r.session_id, date: r.date, present: r.present,
+        session_id: r.session_id, date: r.date, present: r.present, paid: Boolean(r.paid),
         sessionAlive: liveSessionIds.has(r.session_id), // buổi này còn tồn tại không?
       })),
     });
