@@ -30,6 +30,24 @@ async function send(token: string, chatId: string, text: string) {
   }
 }
 
+/** Tin quá dài thì cắt thành nhiều tin (Zalo giới hạn độ dài). */
+async function sendLong(token: string, chatId: string, text: string) {
+  const LIMIT = 1800;
+  if (text.length <= LIMIT) return send(token, chatId, text);
+  const NL = String.fromCharCode(10);
+  const lines = text.split(NL);
+  let buf = "";
+  for (const ln of lines) {
+    if ((buf + NL + ln).length > LIMIT && buf) {
+      await send(token, chatId, buf);
+      buf = ln;
+    } else {
+      buf = buf ? buf + NL + ln : ln;
+    }
+  }
+  if (buf) await send(token, chatId, buf);
+}
+
 /** Bỏ dấu tiếng Việt để khớp lệnh kiểu gì cũng nhận. */
 const noAccent = (s: string) =>
   String(s || "")
@@ -410,15 +428,24 @@ Chúc em học tốt! 💪`;
         });
 
       const system = [
-        "Bạn là trợ lý quản lý lớp học của thầy Trương Tấn Nghĩa (trung tâm AIhoclaptrinh).",
+        "Bạn là trợ lý AI riêng của thầy Trương Tấn Nghĩa (trung tâm AIhoclaptrinh).",
         "Người đang nhắn là THẦY. Trả lời bằng tiếng Việt, xưng 'em', gọi người hỏi là 'Thầy'.",
-        "QUY TẮC QUAN TRỌNG:",
-        "- Chỉ trả lời dựa trên DỮ LIỆU bên dưới. Tuyệt đối KHÔNG bịa số liệu, tên, ngày giờ.",
-        "- Nếu dữ liệu không có thông tin để trả lời, hãy nói thẳng là chưa có dữ liệu.",
-        "- Trả lời NGẮN GỌN, đi thẳng vào việc, tối đa khoảng 12 dòng.",
-        "- Đây là tin nhắn Zalo: viết chữ thường, KHÔNG dùng markdown (** , # , bảng). Dùng gạch đầu dòng hoặc emoji đơn giản.",
         "",
-        "=== DỮ LIỆU ===",
+        "BẠN LÀM ĐƯỢC 2 VIỆC:",
+        "1) TRỢ LÝ LỚP HỌC — khi Thầy hỏi về học viên, lịch dạy, điểm danh, học phí:",
+        "   chỉ dùng DỮ LIỆU bên dưới, TUYỆT ĐỐI KHÔNG bịa số liệu/tên/ngày giờ.",
+        "   Dữ liệu không có thì nói thẳng là chưa có, đừng đoán.",
+        "2) TRỢ LÝ ĐA NĂNG — mọi câu hỏi khác (lập trình, AI, toán, dịch thuật, soạn",
+        "   nội dung, ý tưởng dạy học, đời sống...): cứ trả lời đầy đủ và hữu ích",
+        "   như một trợ lý AI thông thường, KHÔNG cần bám vào dữ liệu lớp học.",
+        "",
+        "CÁCH VIẾT (đây là tin nhắn Zalo):",
+        "- KHÔNG dùng markdown (**, ##, bảng, khối code ```). Viết chữ thuần.",
+        "- Dùng gạch đầu dòng '-' hoặc đánh số, emoji vừa phải cho dễ đọc.",
+        "- Câu hỏi tra cứu thì trả lời ngắn gọn; câu hỏi cần giải thích thì được",
+        "  viết dài hơn nhưng tránh lan man.",
+        "",
+        "=== DỮ LIỆU LỚP HỌC (chỉ dùng khi câu hỏi liên quan) ===",
         ctxLines.join(BR),
       ].join(BR);
 
@@ -429,7 +456,7 @@ Chúc em học tốt! 💪`;
     }
   }
 
-  await send(token, adminChatId, reply);
+  await sendLong(token, adminChatId, reply);
   return NextResponse.json({ ok: true, replied: true });
 }
 

@@ -35,7 +35,7 @@ export async function askGemini(system: string, question: string, key?: string):
   const body = {
     systemInstruction: { parts: [{ text: system }] },
     contents: [{ role: "user", parts: [{ text: question }] }],
-    generationConfig: { temperature: 0.3, maxOutputTokens: 900 },
+    generationConfig: { temperature: 0.3, maxOutputTokens: 2000 },
   };
 
   let lastErr = "";
