@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { askGemini, geminiKey } from "@/lib/gemini";
 
 // BOT TRỢ LÝ CHO THẦY — Thầy nhắn vào bot Zalo, hệ thống trả lời ngay.
 // KHÔNG dùng LLM: chỉ khớp từ khoá cố định (hỏi gì đáp nấy).
@@ -379,7 +380,53 @@ Chúc em học tốt! 💪`;
       });
     }
   } else {
-    reply = MENU;
+    // Không khớp lệnh cố định nào → nhờ Gemini trả lời, kèm ngữ cảnh dữ liệu lớp.
+    const key = geminiKey();
+    if (!key) {
+      reply = MENU;
+    } else {
+      const BR = String.fromCharCode(10);
+      const ctxLines: string[] = [];
+      ctxLines.push("HÔM NAY: " + DAYS[todayIdx] + " " + dmy(todayISO));
+      ctxLines.push("");
+      ctxLines.push("HỌC VIÊN (tên | trạng thái | chu kỳ thu | tổng buổi đã học | buổi chưa đóng | học phí):");
+      students.forEach((st: any) => {
+        const mine = att.filter((a: any) => a.student_id === st.id && a.present);
+        ctxLines.push(
+          "- " + st.name + " | " + (st.status || "") + " | " + (st.cycle || 10) + " buổi/kỳ | " +
+          mine.length + " buổi | " + unpaidOf(st.id) + " buổi chưa đóng | " + (st.fee || "chưa đặt")
+        );
+      });
+      ctxLines.push("");
+      ctxLines.push("LỊCH HỌC HÀNG TUẦN (thứ | giờ | lớp | phòng | học viên):");
+      sessions
+        .filter((x: any) => started(x))
+        .sort((a: any, b: any) => a.day - b.day || String(a.slot).localeCompare(String(b.slot)))
+        .forEach((x: any) => {
+          ctxLines.push(
+            "- " + DAYS[x.day] + " | " + x.slot + " | " + x.name + " | " + (x.room || "—") +
+            " | " + (rosterOf(x).join(", ") || "chưa xếp")
+          );
+        });
+
+      const system = [
+        "Bạn là trợ lý quản lý lớp học của thầy Trương Tấn Nghĩa (trung tâm AIhoclaptrinh).",
+        "Người đang nhắn là THẦY. Trả lời bằng tiếng Việt, xưng 'em', gọi người hỏi là 'Thầy'.",
+        "QUY TẮC QUAN TRỌNG:",
+        "- Chỉ trả lời dựa trên DỮ LIỆU bên dưới. Tuyệt đối KHÔNG bịa số liệu, tên, ngày giờ.",
+        "- Nếu dữ liệu không có thông tin để trả lời, hãy nói thẳng là chưa có dữ liệu.",
+        "- Trả lời NGẮN GỌN, đi thẳng vào việc, tối đa khoảng 12 dòng.",
+        "- Đây là tin nhắn Zalo: viết chữ thường, KHÔNG dùng markdown (** , # , bảng). Dùng gạch đầu dòng hoặc emoji đơn giản.",
+        "",
+        "=== DỮ LIỆU ===",
+        ctxLines.join(BR),
+      ].join(BR);
+
+      const r = await askGemini(system, text);
+      reply = r.ok
+        ? (r.text as string)
+        : "Em chưa trả lời được câu này (" + (r.error || "lỗi AI") + ")." + BR + BR + MENU;
+    }
   }
 
   await send(token, adminChatId, reply);
