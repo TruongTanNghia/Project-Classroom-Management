@@ -6,6 +6,7 @@ import {
 } from "@/lib/reminders";
 import { buildTuitionMessage } from "@/lib/derived";
 import { buildReceiptMessage, receiptUrl } from "@/lib/receipt";
+import { askGemini, geminiKey } from "@/lib/gemini";
 import type { AttRecord, Session, Student, ZaloAuto, ZaloLink } from "@/lib/types";
 
 // Cron chạy MỌI tự động Zalo: một dịch vụ cron ngoài (VD cron-job.org) gọi route
@@ -106,6 +107,7 @@ export async function GET(request: Request) {
       recentSent: log.data,
       recentSentError: log.error?.message || null,
       reminderSentKeys: (rem.data || []).map((r: any) => r.id),
+      geminiConfigured: Boolean(geminiKey()),
       zaloWebhookLast: (hook.data as any)?.value || null,
       studentsInfo: (stu.data || []).map((r: any) => ({ id: r.id, name: r.name, cycle: r.cycle, fee: r.fee })),
       paymentsError: payRows.error?.message || null,
@@ -286,6 +288,29 @@ export async function GET(request: Request) {
     if (!adminId || !fb) return NextResponse.json({ ok: false, error: "Thiếu adminChatId/token", preview: text, link });
     const sent = await sendZalo(fb, adminId, text);
     return NextResponse.json({ ok: sent.ok, paymentId: pay.id, student: sname, link, preview: text, raw: sent.data });
+  }
+
+  // TEST AI (có khóa): hỏi Gemini một câu rồi gửi câu trả lời về bot Thầy.
+  //   ?demo=ai&q=<câu hỏi>[&dry=1]
+  if (url.searchParams.get("demo") === "ai") {
+    const q = (url.searchParams.get("q") || "Chào em, em là ai và giúp được Thầy việc gì?").trim();
+    if (!geminiKey()) {
+      return NextResponse.json({ ok: false, error: "Server CHƯA có GEMINI_API_KEY (cần thêm trên Vercel rồi redeploy)" });
+    }
+    const r = await askGemini(
+      "Bạn là trợ lý AI riêng của thầy Trương Tấn Nghĩa (AIhoclaptrinh). Trả lời tiếng Việt, xưng 'em', gọi người hỏi là 'Thầy'. Viết chữ thuần, không markdown.",
+      q
+    );
+    if (!r.ok) return NextResponse.json({ ok: false, error: r.error });
+    if (url.searchParams.get("dry") === "1") {
+      return NextResponse.json({ ok: true, dry: true, model: r.model, answer: r.text });
+    }
+    const setQ = await supa.from("app_settings").select("value").eq("key", "adminZalo").maybeSingle();
+    const adminId = (((setQ.data as any)?.value?.chatId as string) || "").trim();
+    const fb = process.env.ZALO_BOT_TOKEN || "";
+    if (!adminId || !fb) return NextResponse.json({ ok: true, model: r.model, answer: r.text, note: "thiếu adminChatId/token" });
+    const sent = await sendZalo(fb, adminId, r.text as string);
+    return NextResponse.json({ ok: sent.ok, model: r.model, question: q, answer: r.text });
   }
 
   // Kiểm tra FK điểm danh (có khóa): tạo buổi + điểm danh GIẢ, xóa buổi, xem điểm
