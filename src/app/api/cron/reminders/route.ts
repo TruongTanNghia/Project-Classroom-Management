@@ -249,6 +249,13 @@ export async function GET(request: Request) {
       plan.push({ act: "TRẢ VỀ chưa thu (không có phiếu)", student: n, sessions: orphanBy[n] })
     );
 
+    // (D) liên kết Zalo không khớp học viên nào (bản ghi test/cũ còn sót)
+    const zRows = (await supa.from("zalo_links").select("id,student_name")).data || [];
+    const orphanZalo = (zRows as any[]).filter((z) => !studs.some((s2) => s2.name === z.student_name));
+    orphanZalo.forEach((z) =>
+      plan.push({ act: "XOÁ liên kết Zalo mồ côi", student: z.student_name, id: z.id })
+    );
+
     if (!apply) {
       return NextResponse.json({ ok: true, dryRun: true, willDo: plan.length, plan });
     }
@@ -265,6 +272,11 @@ export async function GET(request: Request) {
       const ids = orphan.map((a) => a.id).filter((x) => typeof x === "number");
       const r = await supa.from("attendance_records").update({ paid: false }).in("id", ids);
       done.push({ step: "trả " + ids.length + " buổi về chưa thu", error: r.error?.message || null });
+    }
+    if (orphanZalo.length) {
+      const ids = orphanZalo.map((z) => z.id);
+      const r = await supa.from("zalo_links").delete().in("id", ids);
+      done.push({ step: "xoá " + ids.length + " liên kết Zalo mồ côi", ids, error: r.error?.message || null });
     }
     return NextResponse.json({ ok: true, applied: true, done });
   }
