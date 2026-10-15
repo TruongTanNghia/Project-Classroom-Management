@@ -530,13 +530,32 @@ export const useApp = create<AppState>((set, get) => ({
     const localNew: AttRecord[] = rows.map((r) => ({
       sessionId: r.session_id, studentId: r.student_id, date: r.date, present: r.present,
     }));
+    const prev = attRecords;
     set({ attRecords: [...kept, ...localNew], attendId: null, attendDraft: {} });
-    if (rows.length)
-      sb()?.from("attendance_records")
-        .upsert(rows, { onConflict: "session_id,student_id,date" })
-        .then(({ error }) => reportSync(error));
     const vi = get().lang !== "en";
-    get().showToast(vi ? "Đã lưu điểm danh ✓" : "Attendance saved ✓");
+    const supa = sb();
+    if (!supa || !rows.length) {
+      get().showToast(vi ? "Đã lưu điểm danh ✓" : "Attendance saved ✓");
+      return;
+    }
+    // Chờ ghi xong mới báo. Lỗi thì HOÀN TÁC để không báo "đã lưu" giả.
+    (async () => {
+      const { error } = await supa
+        .from("attendance_records")
+        .upsert(rows, { onConflict: "session_id,student_id,date" });
+      if (error) {
+        set({ attRecords: prev });
+        console.error("[attendance] ghi thất bại:", error);
+        get().showToast(
+          vi
+            ? "⚠️ CHƯA LƯU ĐƯỢC điểm danh — " + (error.message || "lỗi") + ". Đã hoàn tác, anh thử lại nha!"
+            : "Attendance not saved: " + (error.message || "error"),
+          10000
+        );
+        return;
+      }
+      get().showToast(vi ? "Đã lưu điểm danh ✓" : "Attendance saved ✓");
+    })();
   },
   closeAttend: () => set({ attendId: null, attendDraft: {} }),
 
@@ -548,12 +567,33 @@ export const useApp = create<AppState>((set, get) => ({
     const kept = get().attRecords.filter(
       (r) => !(r.sessionId === sessionId && r.studentId === studentId && r.date === date)
     );
+    const prev = get().attRecords;
     set({ attRecords: [...kept, { sessionId, studentId, date, present }] });
-    sb()?.from("attendance_records")
-      .upsert({ session_id: sessionId, student_id: studentId, date, present }, { onConflict: "session_id,student_id,date" })
-      .then(({ error }) => reportSync(error));
     const vi = get().lang !== "en";
-    get().showToast(present ? (vi ? "Đã ghi nhận có mặt ✓" : "Marked present ✓") : (vi ? "Đã ghi nhận vắng" : "Marked absent"));
+    const supa = sb();
+    if (!supa) return;
+    (async () => {
+      const { error } = await supa
+        .from("attendance_records")
+        .upsert(
+          { session_id: sessionId, student_id: studentId, date, present },
+          { onConflict: "session_id,student_id,date" }
+        );
+      if (error) {
+        set({ attRecords: prev });
+        console.error("[attendance] ghi thất bại:", error);
+        get().showToast(
+          vi
+            ? "⚠️ CHƯA LƯU ĐƯỢC điểm danh — " + (error.message || "lỗi") + ". Đã hoàn tác, anh thử lại nha!"
+            : "Attendance not saved: " + (error.message || "error"),
+          10000
+        );
+        return;
+      }
+      get().showToast(
+        present ? (vi ? "Đã ghi nhận có mặt ✓" : "Marked present ✓") : (vi ? "Đã ghi nhận vắng" : "Marked absent")
+      );
+    })();
   },
   removeAttendance: (sessionId, studentId, date) => {
     set({

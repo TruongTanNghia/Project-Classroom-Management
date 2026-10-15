@@ -16,6 +16,12 @@ export function getSupabase(): SupabaseClient | null {
   if (!client)
     client = createClient(url!, anonKey!, {
       auth: { persistSession: true, autoRefreshToken: true, storageKey: "aihlt-auth" },
+      global: {
+        // CHẶN CACHE: trình duyệt từng trả lại bản dữ liệu cũ sau khi F5 khiến
+        // điểm danh vừa lưu "biến mất". Ép mọi request luôn lấy bản mới nhất.
+        fetch: (input: RequestInfo | URL, init?: RequestInit) =>
+          fetch(input, { ...init, cache: "no-store" }),
+      },
     });
   return client;
 }
