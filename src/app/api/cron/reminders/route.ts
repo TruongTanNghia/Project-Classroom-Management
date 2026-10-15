@@ -75,7 +75,7 @@ export async function GET(request: Request) {
     const dow = vn.getUTCDay();
     const todayIdx = dow === 0 ? 6 : dow - 1; // 0=T2..6=CN
     const [s, z, log, rem, hb, att, stu] = await Promise.all([
-      supa.from("schedule_sessions").select("id,name,day,slot,date").order("day"),
+      supa.from("schedule_sessions").select("id,name,day,slot,date,student_ids").order("day"),
       supa.from("zalo_links").select("student_name,chat_id,status"),
       supa.from("message_log").select("sent_at,kind,student_name,ok,error").order("sent_at", { ascending: false }).limit(15),
       supa.from("reminder_sent").select("id").order("id", { ascending: false }).limit(15),
