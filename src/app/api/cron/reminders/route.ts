@@ -313,6 +313,88 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: sent.ok, model: r.model, question: q, answer: r.text });
   }
 
+  // TỰ KIỂM TRA TOÀN BỘ (có khóa): chạy thử mọi thao tác ghi dữ liệu trên
+  // dữ liệu GIẢ rồi dọn sạch, báo cái nào hỏng. Không đụng dữ liệu thật.
+  if (url.searchParams.get("selftest") === "1") {
+    const T = 980000000; // vùng id riêng cho dữ liệu test
+    const res: { buoc: string; ok: boolean; loi?: string }[] = [];
+    const log = (buoc: string, error: any) =>
+      res.push({ buoc, ok: !error, loi: error?.message || error?.details || undefined });
+
+    // dọn trước cho sạch
+    await supa.from("attendance_records").delete().eq("student_id", T + 2);
+    await supa.from("payments").delete().eq("student_id", T + 2);
+    await supa.from("schedule_sessions").delete().eq("id", T + 1);
+    await supa.from("students").delete().eq("id", T + 2);
+    await supa.from("zalo_links").delete().eq("id", T + 3);
+    await supa.from("courses").delete().eq("id", T + 4);
+
+    log("Tạo học viên", (await supa.from("students").insert({
+      id: T + 2, name: "__selftest__", email: "t@t.vn", status: "Active", cycle: 8, fee: "1000000",
+    })).error);
+    log("Sửa học viên", (await supa.from("students").update({ cycle: 10 }).eq("id", T + 2)).error);
+
+    log("Tạo buổi học", (await supa.from("schedule_sessions").insert({
+      id: T + 1, day: 0, slot: "07:30–09:00", name: "__selftest__", room: "A",
+      subject: "CS", student_ids: [T + 2], attendance: {},
+    })).error);
+    log("Sửa buổi học", (await supa.from("schedule_sessions").update({ room: "B" }).eq("id", T + 1)).error);
+
+    // ĐIỂM DANH: đúng cách app đang làm (upsert theo buổi+học viên+ngày)
+    const attRow = { session_id: T + 1, student_id: T + 2, date: "2000-01-02", present: true };
+    log("Điểm danh (upsert lần 1)", (await supa.from("attendance_records")
+      .upsert([attRow], { onConflict: "session_id,student_id,date" })).error);
+    log("Điểm danh (upsert đè lần 2)", (await supa.from("attendance_records")
+      .upsert([{ ...attRow, present: false }], { onConflict: "session_id,student_id,date" })).error);
+    const back = await supa.from("attendance_records").select("*")
+      .eq("student_id", T + 2).eq("date", "2000-01-02");
+    res.push({
+      buoc: "Điểm danh đọc lại được",
+      ok: !back.error && (back.data || []).length === 1,
+      loi: back.error?.message || ("số dòng đọc được: " + (back.data || []).length),
+    });
+    log("Đánh dấu buổi đã thu (paid)", (await supa.from("attendance_records")
+      .update({ paid: true }).eq("student_id", T + 2)).error);
+
+    log("Tạo phiếu thu (kèm list buổi)", (await supa.from("payments").insert({
+      student_id: T + 2, date: "02/01/2000", sessions: 8, amount: "1000000",
+      detail: [{ name: "__selftest__", date: "2000-01-02" }],
+    })).error);
+
+    log("Tạo liên kết Zalo", (await supa.from("zalo_links").insert({
+      id: T + 3, code: "STU-TEST", student_name: "__selftest__", token: "", chat_id: "", status: "Pending", last_msg: "—",
+    })).error);
+
+    log("Tạo khóa học", (await supa.from("courses").insert({
+      id: T + 4, subject: "CS", name: "__selftest__", teacher: "T", schedule: "",
+      price: "1000", html_content: "", total_sessions: 8, image: "", students: 0, avg: "—", progress: 0,
+    })).error);
+
+    log("Ghi cấu hình (app_settings)", (await supa.from("app_settings")
+      .upsert({ key: "__selftest__", value: { ok: true } })).error);
+    log("Ghi nhật ký tin nhắn", (await supa.from("message_log").insert({
+      kind: "selftest", student_name: "__selftest__", chat_id: "0", ok: true, error: "",
+    })).error);
+
+    // dọn sạch dữ liệu test
+    await supa.from("attendance_records").delete().eq("student_id", T + 2);
+    await supa.from("payments").delete().eq("student_id", T + 2);
+    await supa.from("schedule_sessions").delete().eq("id", T + 1);
+    await supa.from("students").delete().eq("id", T + 2);
+    await supa.from("zalo_links").delete().eq("id", T + 3);
+    await supa.from("courses").delete().eq("id", T + 4);
+    await supa.from("app_settings").delete().eq("key", "__selftest__");
+    await supa.from("message_log").delete().eq("kind", "selftest");
+
+    const fail = res.filter((r) => !r.ok);
+    return NextResponse.json({
+      ok: fail.length === 0,
+      tong: res.length,
+      hong: fail.length,
+      ketQua: res,
+    });
+  }
+
   // Kiểm tra FK điểm danh (có khóa): tạo buổi + điểm danh GIẢ, xóa buổi, xem điểm
   // danh còn không → biết đã chạy migration_attendance_keep.sql (SET NULL) chưa.
   if (url.searchParams.get("checkfk") === "1") {
