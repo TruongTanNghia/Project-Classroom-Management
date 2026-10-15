@@ -395,6 +395,117 @@ export async function GET(request: Request) {
     });
   }
 
+  // KIỂM TRA TOÀN BỘ DB (có khóa): cấu trúc + ràng buộc + toàn vẹn dữ liệu.
+  // Chỉ ĐỌC và test ràng buộc trên dữ liệu giả, không sửa dữ liệu thật.
+  if (url.searchParams.get("audit") === "1") {
+    const issues: { muc: string; van_de: string; so_luong?: number; chi_tiet?: any }[] = [];
+    const checks: { muc: string; ok: boolean; ghi_chu?: string }[] = [];
+
+    // ---- A. CỘT BẮT BUỘC CỦA TỪNG BẢNG ----
+    const NEED: Record<string, string[]> = {
+      students: ["id", "name", "email", "phone", "status", "cycle", "fee"],
+      payments: ["id", "student_id", "date", "sessions", "amount", "detail"],
+      courses: ["id", "name", "teacher", "price", "html_content", "total_sessions", "image"],
+      schedule_sessions: ["id", "day", "slot", "name", "room", "subject", "student_ids", "attendance", "date"],
+      attendance_records: ["id", "session_id", "student_id", "date", "present", "paid"],
+      zalo_links: ["id", "code", "student_name", "token", "chat_id", "status", "last_msg"],
+      threads: ["id", "from_name", "role", "subject", "preview", "time_label", "unread"],
+      app_settings: ["key", "value"],
+      reminder_sent: ["id"],
+      message_log: ["kind", "student_name", "chat_id", "ok", "error", "sent_at"],
+    };
+    for (const t of Object.keys(NEED)) {
+      const missing: string[] = [];
+      for (const c of NEED[t]) {
+        const r = await supa.from(t).select(c).limit(1);
+        if (r.error) missing.push(c);
+      }
+      checks.push({ muc: "Bảng " + t, ok: missing.length === 0, ghi_chu: missing.length ? "thiếu cột: " + missing.join(", ") : "đủ " + NEED[t].length + " cột" });
+      if (missing.length) issues.push({ muc: t, van_de: "thiếu cột", chi_tiet: missing });
+    }
+
+    // ---- B. RÀNG BUỘC CHỐNG TRÙNG ĐIỂM DANH ----
+    const TS = 970000001, TU = 970000002;
+    await supa.from("attendance_records").delete().eq("student_id", TU);
+    await supa.from("schedule_sessions").delete().eq("id", TS);
+    await supa.from("students").delete().eq("id", TU);
+    await supa.from("students").insert({ id: TU, name: "__audit__", email: "a@a.vn", status: "Active", cycle: 10 });
+    await supa.from("schedule_sessions").insert({ id: TS, day: 0, slot: "00:00", name: "__audit__", room: "", subject: "CS", student_ids: [], attendance: {} });
+    const row = { session_id: TS, student_id: TU, date: "2000-01-03", present: true };
+    await supa.from("attendance_records").insert(row);
+    const dup = await supa.from("attendance_records").insert(row); // phải LỖI mới đúng
+    checks.push({
+      muc: "Chống trùng điểm danh (buổi+học viên+ngày)",
+      ok: Boolean(dup.error),
+      ghi_chu: dup.error ? "chặn đúng" : "KHÔNG chặn — có thể sinh bản ghi trùng!",
+    });
+    if (!dup.error) issues.push({ muc: "attendance_records", van_de: "thiếu ràng buộc chống trùng" });
+    await supa.from("attendance_records").delete().eq("student_id", TU);
+    await supa.from("schedule_sessions").delete().eq("id", TS);
+    await supa.from("students").delete().eq("id", TU);
+
+    // ---- C. TOÀN VẸN DỮ LIỆU THẬT ----
+    const [stuQ, sesQ, attQ, payQ, zaQ] = await Promise.all([
+      supa.from("students").select("id,name,cycle,fee,status"),
+      supa.from("schedule_sessions").select("id,name,student_ids"),
+      supa.from("attendance_records").select("id,session_id,student_id,date,present,paid"),
+      supa.from("payments").select("id,student_id,date,sessions,amount"),
+      supa.from("zalo_links").select("id,student_name,chat_id,token"),
+    ]);
+    const studs = (stuQ.data || []) as any[];
+    const sess = (sesQ.data || []) as any[];
+    const atts = (attQ.data || []) as any[];
+    const pays = (payQ.data || []) as any[];
+    const zas = (zaQ.data || []) as any[];
+    const stuIds = new Set(studs.map((x) => x.id));
+    const sesIds = new Set(sess.map((x) => x.id));
+    const nameOf = (id: number) => studs.find((x) => x.id === id)?.name || ("id:" + id);
+
+    const add = (van_de: string, list: any[]) => {
+      if (list.length) issues.push({ muc: "dữ liệu", van_de, so_luong: list.length, chi_tiet: list.slice(0, 8) });
+    };
+    add("điểm danh trùng (cùng buổi+học viên+ngày)", Object.entries(
+      atts.reduce((m: any, a) => { const k = a.session_id + "|" + a.student_id + "|" + a.date; m[k] = (m[k] || 0) + 1; return m; }, {})
+    ).filter(([, n]) => (n as number) > 1).map(([k]) => k));
+    add("điểm danh trỏ tới buổi đã xoá", atts.filter((a) => a.session_id != null && !sesIds.has(a.session_id)).map((a) => nameOf(a.student_id) + " " + a.date));
+    add("điểm danh trỏ tới học viên không tồn tại", atts.filter((a) => !stuIds.has(a.student_id)).map((a) => a.student_id));
+    add("phiếu thu của học viên không tồn tại", pays.filter((p) => !stuIds.has(p.student_id)).map((p) => p.id));
+    add("phiếu thu trùng y hệt", Object.entries(
+      pays.reduce((m: any, p) => { const k = [p.student_id, p.date, p.sessions, p.amount].join("|"); m[k] = (m[k] || 0) + 1; return m; }, {})
+    ).filter(([, n]) => (n as number) > 1).map(([k]) => k));
+    add("phiếu thu vượt chu kỳ học viên", pays.filter((p) => {
+      const c = studs.find((x) => x.id === p.student_id)?.cycle || 10;
+      return p.sessions > c;
+    }).map((p) => nameOf(p.student_id) + " #" + p.id + ": " + p.sessions + " buổi"));
+    add("buổi đã đánh dấu thu nhưng học viên chưa có phiếu thu nào", (() => {
+      const hasPay = new Set(pays.map((p) => p.student_id));
+      const bad = atts.filter((a) => a.paid && !hasPay.has(a.student_id));
+      const by: Record<string, number> = {};
+      bad.forEach((a) => { const n = nameOf(a.student_id); by[n] = (by[n] || 0) + 1; });
+      return Object.entries(by).map(([n, c]) => n + ": " + c + " buổi");
+    })());
+    add("học viên chưa đặt chu kỳ thu", studs.filter((x) => !x.cycle).map((x) => x.name));
+    add("học viên chưa đặt học phí", studs.filter((x) => !String(x.fee || "").trim()).map((x) => x.name));
+    add("buổi học chưa xếp học viên", sess.filter((x) => !(x.student_ids || []).length).map((x) => x.name + " #" + x.id));
+    add("buổi học gán học viên không tồn tại", sess.filter((x) => (x.student_ids || []).some((i: number) => !stuIds.has(i))).map((x) => x.name + " #" + x.id));
+    add("liên kết Zalo trùng tên học viên", Object.entries(
+      zas.reduce((m: any, z) => { m[z.student_name] = (m[z.student_name] || 0) + 1; return m; }, {})
+    ).filter(([, n]) => (n as number) > 1).map(([k]) => k));
+    add("liên kết Zalo tên không khớp học viên nào", zas.filter((z) => !studs.some((x) => x.name === z.student_name)).map((z) => z.student_name));
+    add("học viên chưa có bot Zalo", studs.filter((x) => !zas.some((z) => z.student_name === x.name && String(z.chat_id || "").trim())).map((x) => x.name));
+
+    return NextResponse.json({
+      ok: issues.length === 0,
+      tong_quan: {
+        hoc_vien: studs.length, buoi_hoc: sess.length, diem_danh: atts.length,
+        phieu_thu: pays.length, lien_ket_zalo: zas.length,
+      },
+      kiem_tra_cau_truc: checks,
+      so_van_de: issues.length,
+      van_de: issues,
+    });
+  }
+
   // Kiểm tra FK điểm danh (có khóa): tạo buổi + điểm danh GIẢ, xóa buổi, xem điểm
   // danh còn không → biết đã chạy migration_attendance_keep.sql (SET NULL) chưa.
   if (url.searchParams.get("checkfk") === "1") {
