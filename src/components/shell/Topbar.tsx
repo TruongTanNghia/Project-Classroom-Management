@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Bell, Menu, Moon, Plus, Search, Sun } from "lucide-react";
+import { Bell, Menu, Moon, Plus, RefreshCw, Search, Sun } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { dicts, screenTitles } from "@/lib/i18n";
 import { screenFromPath } from "./screen";
@@ -10,6 +10,9 @@ export default function Topbar() {
   const pathname = usePathname();
   const lang = useApp((s) => s.lang);
   const dark = useApp((s) => s.dark);
+  const refreshData = useApp((s) => s.refreshData);
+  const syncing = useApp((s) => s.syncing);
+  const lastSync = useApp((s) => s.lastSync);
   const setLang = useApp((s) => s.setLang);
   const toggleDark = useApp((s) => s.toggleDark);
   const setMenuOpen = useApp((s) => s.setMenuOpen);
@@ -77,6 +80,26 @@ export default function Topbar() {
         <button onClick={() => setLang("vi")} style={langBtn(lang === "vi")}>VI</button>
         <button onClick={() => setLang("en")} style={langBtn(lang === "en")}>EN</button>
       </div>
+      <button
+        className="icon-btn"
+        onClick={() => refreshData(false)}
+        disabled={syncing}
+        title={
+          (lang === "en" ? "Refresh data" : "Tải lại dữ liệu mới nhất") +
+          (lastSync
+            ? (lang === "en" ? " · synced " : " · đã đồng bộ lúc ") +
+              new Date(lastSync).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+            : "")
+        }
+        aria-label="Refresh data"
+      >
+        <RefreshCw
+          size={15}
+          strokeWidth={2}
+          color="var(--text-2)"
+          className={syncing ? "spin" : undefined}
+        />
+      </button>
       <button className="icon-btn" onClick={toggleDark} aria-label="Toggle theme">
         {dark ? (
           <Sun size={15} strokeWidth={2} color="var(--text-2)" />

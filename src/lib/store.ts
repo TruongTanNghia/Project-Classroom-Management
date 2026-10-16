@@ -43,6 +43,8 @@ export interface MsgStats {
 
 interface AppState {
   hydrated: boolean;
+  lastSync: number | null; // lúc đồng bộ dữ liệu gần nhất
+  syncing: boolean;
   msgStats: MsgStats | null; // KPI thật từ message_log (null = chưa có / demo)
   lang: Lang;
   dark: boolean;
@@ -66,6 +68,8 @@ interface AppState {
   adminChatId: string; // Chat ID Zalo của Thầy (admin) — nhận thông báo mọi buổi
 
   hydrate: () => void;
+  /** Tải lại toàn bộ dữ liệu từ Supabase (nguồn sự thật). */
+  refreshData: (silent?: boolean) => Promise<void>;
   setAdminChatId: (chatId: string) => void;
   setLang: (lang: Lang) => void;
   toggleDark: () => void;
@@ -274,6 +278,8 @@ async function loadMsgStats(): Promise<MsgStats | null> {
 
 export const useApp = create<AppState>((set, get) => ({
   hydrated: false,
+  lastSync: null,
+  syncing: false,
   msgStats: null,
   lang: "vi",
   dark: false,
@@ -313,7 +319,7 @@ export const useApp = create<AppState>((set, get) => ({
       set({ students: [], courses: [], sessions: [], zalo: [], threads: [], attRecords: [] });
       loadFromSupabase()
         .then((data) => {
-          if (data) set(data);
+          if (data) set({ ...data, lastSync: Date.now() });
         })
         .catch((e) =>
           get().showToast(
@@ -323,6 +329,30 @@ export const useApp = create<AppState>((set, get) => ({
           )
         );
       loadMsgStats().then((stats) => stats && set({ msgStats: stats }));
+    }
+  },
+
+  // Đồng bộ lại với DB. Gọi sau mỗi lần ghi và mỗi khi quay lại tab, để thứ
+  // Thầy nhìn thấy LUÔN khớp dữ liệu thật dưới Supabase.
+  refreshData: async (silent = true) => {
+    if (!isSupabaseConfigured || get().syncing) return;
+    set({ syncing: true });
+    try {
+      const data = await loadFromSupabase();
+      if (data) set({ ...data, lastSync: Date.now() });
+      if (!silent) {
+        const vi = get().lang !== "en";
+        get().showToast(vi ? "Đã đồng bộ dữ liệu mới nhất ✓" : "Data synced ✓", 2500);
+      }
+    } catch (e: unknown) {
+      const vi = get().lang !== "en";
+      get().showToast(
+        (vi ? "⚠️ Không đồng bộ được dữ liệu: " : "Sync failed: ") +
+          ((e as { message?: string })?.message || "lỗi"),
+        8000
+      );
+    } finally {
+      set({ syncing: false });
     }
   },
 
@@ -555,6 +585,7 @@ export const useApp = create<AppState>((set, get) => ({
         return;
       }
       get().showToast(vi ? "Đã lưu điểm danh ✓" : "Attendance saved ✓");
+      get().refreshData(); // lấy lại từ DB để màn hình luôn khớp dữ liệu thật
     })();
   },
   closeAttend: () => set({ attendId: null, attendDraft: {} }),
@@ -593,6 +624,7 @@ export const useApp = create<AppState>((set, get) => ({
       get().showToast(
         present ? (vi ? "Đã ghi nhận có mặt ✓" : "Marked present ✓") : (vi ? "Đã ghi nhận vắng" : "Marked absent")
       );
+      get().refreshData();
     })();
   },
   removeAttendance: (sessionId, studentId, date) => {
@@ -604,7 +636,10 @@ export const useApp = create<AppState>((set, get) => ({
     sb()?.from("attendance_records")
       .delete()
       .eq("session_id", sessionId).eq("student_id", studentId).eq("date", date)
-      .then(({ error }) => reportSync(error));
+      .then(({ error }) => {
+        reportSync(error);
+        if (!error) get().refreshData();
+      });
   },
 
   confirmDelete: () => {
@@ -726,6 +761,7 @@ export const useApp = create<AppState>((set, get) => ({
           : "Collected " + take.length + " sessions" + (carry > 0 ? " · " + carry + " carried over" : ""),
         5500
       );
+      get().refreshData();
     })();
   },
 

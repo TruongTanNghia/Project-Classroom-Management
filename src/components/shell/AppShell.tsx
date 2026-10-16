@@ -35,6 +35,20 @@ function ShellInner({ children }: { children: React.ReactNode }) {
     hydrate();
   }, [hydrate]);
 
+  // Tự đồng bộ lại khi quay lại tab / cửa sổ: trưa ghi, chiều mở lên là thấy
+  // ngay dữ liệu mới nhất, không bao giờ nhìn nhầm bản cũ.
+  useEffect(() => {
+    const sync = () => {
+      if (document.visibilityState === "visible") useApp.getState().refreshData();
+    };
+    document.addEventListener("visibilitychange", sync);
+    window.addEventListener("focus", sync);
+    return () => {
+      document.removeEventListener("visibilitychange", sync);
+      window.removeEventListener("focus", sync);
+    };
+  }, []);
+
   useEffect(() => {
     const ms = first.current ? 750 : 620;
     first.current = false;
