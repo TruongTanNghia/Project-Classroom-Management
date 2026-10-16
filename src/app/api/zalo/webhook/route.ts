@@ -149,6 +149,7 @@ Bot chỉ phục vụ học viên đã được kết nối. Em liên hệ Thầ
   const students = stuRes.data || [];
   const sessions = sesRes.data || [];
   const att = attRes.data || [];
+  const zalos = linkRes.data || [];
 
   const now = Date.now();
   const vn = new Date(now + VN_MS);
@@ -382,6 +383,62 @@ Chúc em học tốt! 💪`;
       const st = s.status === "Active" ? "Đang học" : s.status === "At risk" ? "Cần chú ý" : "Bảo lưu";
       reply += `\n${i + 1}. ${s.name} — ${st}${n > 0 ? ` · nợ ${n} buổi` : ""}`;
     });
+  } else if (q === "kt" || q.includes("kiem tra") || q === "audit" || q.includes("suc khoe")) {
+    /* ---------- 🩺 KIỂM TRA HỆ THỐNG ---------- */
+    const payQ = await supa.from("payments").select("id,student_id,date,sessions,amount");
+    const pays = (payQ.data || []) as any[];
+    const issues: string[] = [];
+
+    const dupAtt = Object.entries(
+      att.reduce((m: any, a: any) => {
+        const k = a.session_id + "|" + a.student_id + "|" + a.date;
+        m[k] = (m[k] || 0) + 1;
+        return m;
+      }, {})
+    ).filter(([, n]) => (n as number) > 1);
+    if (dupAtt.length) issues.push("• " + dupAtt.length + " bản ghi điểm danh bị trùng");
+
+    const sesIds = new Set(sessions.map((x: any) => x.id));
+    const orphan = att.filter((a: any) => a.session_id != null && !sesIds.has(a.session_id));
+    if (orphan.length) issues.push("• " + orphan.length + " điểm danh trỏ tới buổi đã xoá");
+
+    const dupPay = Object.entries(
+      pays.reduce((m: any, p) => {
+        const k = [p.student_id, p.date, p.sessions, p.amount].join("|");
+        m[k] = (m[k] || 0) + 1;
+        return m;
+      }, {})
+    ).filter(([, n]) => (n as number) > 1);
+    if (dupPay.length) issues.push("• " + dupPay.length + " phiếu thu bị trùng");
+
+    const overPay = pays.filter((p) => {
+      const c = students.find((x: any) => x.id === p.student_id)?.cycle || 10;
+      return p.sessions > c;
+    });
+    if (overPay.length) issues.push("• " + overPay.length + " phiếu thu vượt chu kỳ");
+
+    const hasPay = new Set(pays.map((p) => p.student_id));
+    const ghost = att.filter((a: any) => a.paid && !hasPay.has(a.student_id));
+    if (ghost.length) issues.push("• " + ghost.length + " buổi đánh dấu đã thu mà không có phiếu");
+
+    const noFee = students.filter((x: any) => !String(x.fee || "").trim());
+    if (noFee.length) issues.push("• Chưa đặt học phí: " + noFee.map((x: any) => x.name).join(", "));
+
+    const noBot = students.filter(
+      (x: any) => !(zalos || []).some((z: any) => z.student_name === x.name && String(z.chat_id || "").trim())
+    );
+    if (noBot.length) issues.push("• Chưa có bot Zalo: " + noBot.map((x: any) => x.name).join(", "));
+
+    reply =
+      "🩺 KIỂM TRA HỆ THỐNG · " + stamp + "\n\n" +
+      "📊 Dữ liệu hiện có:\n" +
+      "   • " + students.length + " học viên\n" +
+      "   • " + sessions.length + " buổi học/tuần\n" +
+      "   • " + att.length + " bản ghi điểm danh\n" +
+      "   • " + pays.length + " phiếu thu\n\n" +
+      (issues.length
+        ? "⚠️ Cần để ý (" + issues.length + "):\n" + issues.join("\n")
+        : "✅ Mọi thứ sạch sẽ, không có lỗi dữ liệu nào.");
   } else if (q === "dd" || q.includes("diem danh")) {
     /* ---------- ✅ ĐIỂM DANH HÔM NAY ---------- */
     const list = sessions.filter((s: any) => s.day === todayIdx && started(s));
