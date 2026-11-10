@@ -1,0 +1,184 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="380" viewBox="0 0 1200 380" role="img" aria-label="EduFlow AI - He thong quan ly lop hoc cua AI Hoc Lap Trinh">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FCF6EC"/>
+      <stop offset="55%" stop-color="#F7EEDE"/>
+      <stop offset="100%" stop-color="#F3E3CC"/>
+    </linearGradient>
+    <linearGradient id="rule" gradientUnits="userSpaceOnUse" x1="62" y1="0" x2="520" y2="0">
+      <stop offset="0%" stop-color="#F28C1B"/>
+      <stop offset="50%" stop-color="#3BB8C3"/>
+      <stop offset="100%" stop-color="#0E4A63"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F6FBFC"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#3BB8C3" stop-opacity="0.35"/>
+      <stop offset="70%" stop-color="#3BB8C3" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#3BB8C3" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="dots" width="26" height="26" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="1.6" fill="#0E4A63" opacity="0.10"/>
+    </pattern>
+    <clipPath id="clipCard"><rect x="760" y="72" width="290" height="186" rx="16"/></clipPath>
+  </defs>
+
+  <rect width="1200" height="380" rx="20" fill="url(#bg)"/>
+  <rect width="1200" height="380" rx="20" fill="url(#dots)"/>
+  <rect x="1" y="1" width="1198" height="378" rx="20" fill="none" stroke="#0E4A63" stroke-opacity="0.16" stroke-width="2"/>
+  <rect x="0" y="0" width="7" height="380" fill="#F28C1B" opacity="0.9"/>
+
+  <!-- ============ LEFT: text block ============ -->
+  <text x="62" y="78" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="700" letter-spacing="4.2" fill="#1E8FA8">AI H&#7884;C L&#7852;P TR&#204;NH &#183; CLASSROOM OPS</text>
+
+  <text x="60" y="158" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="74" font-weight="800" letter-spacing="-1">
+    <tspan fill="#0E4A63">EduFlow</tspan><tspan fill="#F28C1B" dx="14">AI</tspan>
+  </text>
+
+  <text x="62" y="196" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="18" font-weight="600" fill="#0E4A63" opacity="0.82">&#272;i&#7875;m danh &#8594; t&#237;nh h&#7885;c ph&#237; &#8594; nh&#7855;c l&#7883;ch qua Zalo</text>
+
+  <rect x="62" y="212" width="0" height="5" rx="2.5" fill="url(#rule)">
+    <animate attributeName="width" values="0;458;458" keyTimes="0;0.55;1" dur="3.4s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- tech chips -->
+  <g font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="700">
+    <g opacity="0">
+      <rect x="62" y="248" width="104" height="31" rx="15.5" fill="#0E4A63"/>
+      <text x="114" y="268.5" text-anchor="middle" fill="#FCF6EC">Next.js 16</text>
+      <animate attributeName="opacity" values="0;1" dur="0.5s" begin="0.4s" fill="freeze"/>
+    </g>
+    <g opacity="0">
+      <rect x="176" y="248" width="96" height="31" rx="15.5" fill="#1E8FA8"/>
+      <text x="224" y="268.5" text-anchor="middle" fill="#FCF6EC">Supabase</text>
+      <animate attributeName="opacity" values="0;1" dur="0.5s" begin="0.6s" fill="freeze"/>
+    </g>
+    <g opacity="0">
+      <rect x="282" y="248" width="94" height="31" rx="15.5" fill="#F28C1B"/>
+      <text x="329" y="268.5" text-anchor="middle" fill="#2B1A05">Zalo Bot</text>
+      <animate attributeName="opacity" values="0;1" dur="0.5s" begin="0.8s" fill="freeze"/>
+    </g>
+    <g opacity="0">
+      <rect x="386" y="248" width="86" height="31" rx="15.5" fill="none" stroke="#0E4A63" stroke-width="2"/>
+      <text x="429" y="268.5" text-anchor="middle" fill="#0E4A63">Gemini</text>
+      <animate attributeName="opacity" values="0;1" dur="0.5s" begin="1s" fill="freeze"/>
+    </g>
+  </g>
+
+  <text x="62" y="352" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="12" font-weight="600" fill="#0E4A63" opacity="0.52">&#169; Tr&#432;&#417;ng T&#7845;n Ngh&#297;a &#183; AI H&#7885;c L&#7853;p Tr&#236;nh &#183; Never give up</text>
+
+  <!-- ============ RIGHT: animated illustration ============ -->
+  <ellipse cx="905" cy="170" rx="200" ry="142" fill="url(#glow)">
+    <animate attributeName="rx" values="200;218;200" dur="5s" repeatCount="indefinite"/>
+    <animate attributeName="ry" values="142;158;142" dur="5s" repeatCount="indefinite"/>
+  </ellipse>
+
+  <!-- student avatars column -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 0;0 -6;0 0" dur="4.2s" repeatCount="indefinite"/>
+    <circle cx="712" cy="108" r="17" fill="#0E4A63"/>
+    <text x="712" y="113.5" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="13" font-weight="700" fill="#FCF6EC">HV</text>
+    <circle cx="712" cy="108" r="17" fill="none" stroke="#3BB8C3" stroke-width="2.5" opacity="0">
+      <animate attributeName="r" values="17;28" dur="2.4s" begin="0s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.8;0" dur="2.4s" begin="0s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="712" cy="162" r="17" fill="#1E8FA8"/>
+    <text x="712" y="167.5" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="13" font-weight="700" fill="#FCF6EC">HV</text>
+    <circle cx="712" cy="162" r="17" fill="none" stroke="#3BB8C3" stroke-width="2.5" opacity="0">
+      <animate attributeName="r" values="17;28" dur="2.4s" begin="0.8s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.8;0" dur="2.4s" begin="0.8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="712" cy="216" r="17" fill="#F28C1B"/>
+    <text x="712" y="221.5" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="13" font-weight="700" fill="#2B1A05">HV</text>
+    <circle cx="712" cy="216" r="17" fill="none" stroke="#F28C1B" stroke-width="2.5" opacity="0">
+      <animate attributeName="r" values="17;28" dur="2.4s" begin="1.6s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.8;0" dur="2.4s" begin="1.6s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- data flow: avatars -> board -->
+  <path d="M732 162 C 745 162 748 165 758 165" fill="none" stroke="#1E8FA8" stroke-width="2.4" stroke-dasharray="5 6" opacity="0.75">
+    <animate attributeName="stroke-dashoffset" values="22;0" dur="1.1s" repeatCount="indefinite"/>
+  </path>
+
+  <!-- schedule board card -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 0;0 -5;0 0" dur="5.6s" repeatCount="indefinite"/>
+    <rect x="760" y="72" width="290" height="186" rx="16" fill="url(#card)" stroke="#0E4A63" stroke-opacity="0.22" stroke-width="2"/>
+    <g clip-path="url(#clipCard)">
+      <rect x="760" y="72" width="290" height="34" fill="#0E4A63"/>
+    </g>
+    <circle cx="777" cy="89" r="4" fill="#F28C1B"/>
+    <circle cx="790" cy="89" r="4" fill="#3BB8C3"/>
+    <circle cx="803" cy="89" r="4" fill="#FCF6EC" opacity="0.55"/>
+    <text x="1036" y="94" text-anchor="end" font-family="'Segoe UI',Arial,sans-serif" font-size="12" font-weight="700" letter-spacing="1.4" fill="#FCF6EC">L&#7882;CH TU&#7846;N</text>
+
+    <!-- day headers -->
+    <g font-family="'Segoe UI',Arial,sans-serif" font-size="10.5" font-weight="700" fill="#0E4A63" opacity="0.6">
+      <text x="797" y="124" text-anchor="middle">T2</text>
+      <text x="851" y="124" text-anchor="middle">T3</text>
+      <text x="905" y="124" text-anchor="middle">T4</text>
+      <text x="959" y="124" text-anchor="middle">T5</text>
+      <text x="1013" y="124" text-anchor="middle">T6</text>
+    </g>
+
+    <!-- attendance grid 5 x 4 -->
+    <g>
+      <rect x="773" y="132" width="48" height="22" rx="6" fill="#3BB8C3" opacity="0.18"/>
+      <rect x="827" y="132" width="48" height="22" rx="6" fill="#0E4A63" opacity="0.12"/>
+      <rect x="881" y="132" width="48" height="22" rx="6" fill="#3BB8C3" opacity="0.18"/>
+      <rect x="935" y="132" width="48" height="22" rx="6" fill="#0E4A63" opacity="0.12"/>
+      <rect x="989" y="132" width="48" height="22" rx="6" fill="#F28C1B" opacity="0.22"/>
+
+      <rect x="773" y="162" width="48" height="22" rx="6" fill="#0E4A63" opacity="0.12"/>
+      <rect x="827" y="162" width="48" height="22" rx="6" fill="#3BB8C3" opacity="0.18"/>
+      <rect x="881" y="162" width="48" height="22" rx="6" fill="#F28C1B" opacity="0.22"/>
+      <rect x="935" y="162" width="48" height="22" rx="6" fill="#3BB8C3" opacity="0.18"/>
+      <rect x="989" y="162" width="48" height="22" rx="6" fill="#0E4A63" opacity="0.12"/>
+
+      <rect x="773" y="192" width="48" height="22" rx="6" fill="#3BB8C3" opacity="0.18"/>
+      <rect x="827" y="192" width="48" height="22" rx="6" fill="#F28C1B" opacity="0.22"/>
+      <rect x="881" y="192" width="48" height="22" rx="6" fill="#0E4A63" opacity="0.12"/>
+      <rect x="935" y="192" width="48" height="22" rx="6" fill="#0E4A63" opacity="0.12"/>
+      <rect x="989" y="192" width="48" height="22" rx="6" fill="#3BB8C3" opacity="0.18"/>
+
+      <rect x="773" y="222" width="48" height="22" rx="6" fill="#0E4A63" opacity="0.12"/>
+      <rect x="827" y="222" width="48" height="22" rx="6" fill="#3BB8C3" opacity="0.18"/>
+      <rect x="881" y="222" width="48" height="22" rx="6" fill="#3BB8C3" opacity="0.18"/>
+      <rect x="935" y="222" width="48" height="22" rx="6" fill="#F28C1B" opacity="0.22"/>
+      <rect x="989" y="222" width="48" height="22" rx="6" fill="#0E4A63" opacity="0.12"/>
+    </g>
+
+    <!-- attendance cursor sweeping across the grid -->
+    <rect x="773" y="132" width="48" height="22" rx="6" fill="none" stroke="#F28C1B" stroke-width="2.6">
+      <animate attributeName="x" values="773;827;881;935;989;773;827;881;935;989" dur="5s" repeatCount="indefinite" calcMode="discrete"/>
+      <animate attributeName="y" values="132;132;132;132;132;162;162;162;162;162" dur="5s" repeatCount="indefinite" calcMode="discrete"/>
+    </rect>
+  </g>
+
+  <!-- dashed link board -> zalo bubble -->
+  <path d="M1050 200 C 1082 206 1092 232 1094 256" fill="none" stroke="#F28C1B" stroke-width="2.4" stroke-dasharray="6 7" opacity="0.8">
+    <animate attributeName="stroke-dashoffset" values="26;0" dur="1.2s" repeatCount="indefinite"/>
+  </path>
+
+  <!-- zalo reminder bubble -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 0;0 -7;0 0" dur="3.2s" repeatCount="indefinite"/>
+    <path d="M1041 258 h104 a13 13 0 0 1 13 13 v30 a13 13 0 0 1 -13 13 h-82 l-14 13 v-13 h-8 a13 13 0 0 1 -13 -13 v-30 a13 13 0 0 1 13 -13 z" fill="#F28C1B" stroke="#C96F08" stroke-width="1.6"/>
+    <text x="1096" y="281" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="12.5" font-weight="800" fill="#2B1A05">ZALO BOT</text>
+    <text x="1096" y="298" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="11" font-weight="600" fill="#2B1A05" opacity="0.85">nh&#7855;c tr&#432;&#7899;c 20p</text>
+    <circle cx="1050" cy="266" r="5" fill="#FCF6EC">
+      <animate attributeName="opacity" values="1;0.25;1" dur="1.4s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- orbiting nodes around illustration -->
+  <g transform="translate(905,170)">
+    <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="22s" repeatCount="indefinite" additive="sum"/>
+    <circle cx="0" cy="-152" r="5.5" fill="#1E8FA8" opacity="0.85"/>
+    <circle cx="132" cy="76" r="4.5" fill="#F28C1B" opacity="0.8"/>
+    <circle cx="-132" cy="76" r="4.5" fill="#0E4A63" opacity="0.7"/>
+  </g>
+</svg>

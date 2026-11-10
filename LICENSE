@@ -1,0 +1,84 @@
+ALL RIGHTS RESERVED
+Bản quyền toàn phần
+
+EduFlow AI — Hệ thống quản lý lớp học
+Copyright (c) 2026 Trương Tấn Nghĩa — AI Học Lập Trình
+Liên hệ: https://github.com/TruongTanNghia
+
+
+================================================================
+TIẾNG VIỆT
+================================================================
+
+Toàn bộ nội dung trong repository này — bao gồm nhưng không giới hạn ở:
+mã nguồn ứng dụng, lược đồ cơ sở dữ liệu, các tệp migration SQL, logic
+nghiệp vụ tính học phí và điểm danh, thiết kế giao diện, hình ảnh SVG,
+logo, chữ ký, bảng màu và bộ nhận diện thương hiệu — thuộc quyền sở hữu
+của Trương Tấn Nghĩa (AI Học Lập Trình).
+
+Repository này được để ở chế độ công khai nhằm mục đích TRƯNG BÀY NĂNG
+LỰC CHUYÊN MÔN. Đây KHÔNG PHẢI là phần mềm mã nguồn mở.
+
+NGHIÊM CẤM các hành vi sau khi chưa có văn bản cho phép của tác giả:
+
+  1. Sao chép, nhân bản toàn bộ hoặc một phần mã nguồn.
+  2. Chỉnh sửa, tạo tác phẩm phái sinh từ mã nguồn hoặc thiết kế.
+  3. Phân phối, chia sẻ lại cho bên thứ ba dưới mọi hình thức.
+  4. Triển khai, vận hành bản sao của hệ thống này cho bất kỳ trung tâm,
+     lớp học hay tổ chức nào khác.
+  5. Sử dụng cho mục đích thương mại hoặc đào tạo có thu phí.
+  6. Dùng nội dung để huấn luyện mô hình AI.
+  7. Gỡ bỏ hoặc che giấu thông tin bản quyền, logo, chữ ký tác giả.
+
+LƯU Ý QUAN TRỌNG:
+Việc bạn xem được mã nguồn trong repository công khai này KHÔNG đồng
+nghĩa với việc bạn được cấp phép sử dụng. Quyền truy cập và quyền sử
+dụng là hai việc hoàn toàn khác nhau. Mọi quyền không được nêu rõ ở đây
+đều được tác giả bảo lưu.
+
+DỮ LIỆU HỌC VIÊN:
+Mã nguồn này không chứa và không được phép chứa dữ liệu cá nhân của học
+viên. Mọi thông tin học viên, khóa bí mật, token và biến môi trường đều
+nằm ngoài repository.
+
+
+================================================================
+ENGLISH
+================================================================
+
+All content in this repository — including but not limited to the
+application source code, database schema, SQL migration files, tuition
+and attendance business logic, interface design, SVG graphics, logo,
+signature, color palette and brand identity assets — is owned by
+Trương Tấn Nghĩa (AI Học Lập Trình).
+
+This repository is public for the purpose of PROFESSIONAL PORTFOLIO
+DISPLAY. It is NOT open-source software.
+
+The following are STRICTLY PROHIBITED without prior written permission
+from the author:
+
+  1. Copying or reproducing the source code, in whole or in part.
+  2. Modifying it or creating derivative works from the code or design.
+  3. Distributing or redistributing it to third parties in any form.
+  4. Deploying or operating a copy of this system for any other center,
+     class or organization.
+  5. Using it for commercial purposes or paid training programs.
+  6. Using the content to train AI models.
+  7. Removing or obscuring copyright notices, logo or author signature.
+
+IMPORTANT:
+Being able to view the source code in this public repository does NOT
+grant you a license to use it. Access and license are two entirely
+separate matters. All rights not expressly granted herein are reserved
+by the author.
+
+STUDENT DATA:
+This source code does not contain, and must not contain, any personal
+data of students. All student information, secret keys, tokens and
+environment variables live outside this repository.
+
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY ARISING FROM THE USE OF THIS SOFTWARE.

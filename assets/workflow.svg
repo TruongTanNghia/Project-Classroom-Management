@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="260" viewBox="0 0 1200 260" role="img" aria-label="Luong nghiep vu EduFlow AI: diem danh - dem buoi - du chu ky - thu hoc phi - bien lai - nhac Zalo">
+  <defs>
+    <linearGradient id="wbg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FCF6EC"/>
+      <stop offset="100%" stop-color="#F3E3CC"/>
+    </linearGradient>
+    <linearGradient id="track" gradientUnits="userSpaceOnUse" x1="150" y1="104" x2="1050" y2="104">
+      <stop offset="0%" stop-color="#0E4A63"/>
+      <stop offset="45%" stop-color="#1E8FA8"/>
+      <stop offset="75%" stop-color="#3BB8C3"/>
+      <stop offset="100%" stop-color="#F28C1B"/>
+    </linearGradient>
+    <pattern id="wdots" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="2.5" cy="2.5" r="1.4" fill="#0E4A63" opacity="0.08"/>
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="260" rx="18" fill="url(#wbg)"/>
+  <rect width="1200" height="260" rx="18" fill="url(#wdots)"/>
+  <rect x="1" y="1" width="1198" height="258" rx="18" fill="none" stroke="#0E4A63" stroke-opacity="0.14" stroke-width="2"/>
+
+  <!-- phase bands -->
+  <g font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="700" letter-spacing="2.6">
+    <rect x="96" y="24" width="288" height="24" rx="12" fill="#0E4A63" opacity="0.08"/>
+    <text x="240" y="40" text-anchor="middle" fill="#0E4A63" opacity="0.72">GHI NH&#7852;N L&#7898;P</text>
+
+    <rect x="456" y="24" width="288" height="24" rx="12" fill="#1E8FA8" opacity="0.12"/>
+    <text x="600" y="40" text-anchor="middle" fill="#13657A" opacity="0.85">T&#205;NH H&#7884;C PH&#205;</text>
+
+    <rect x="816" y="24" width="288" height="24" rx="12" fill="#F28C1B" opacity="0.16"/>
+    <text x="960" y="40" text-anchor="middle" fill="#A85D06">G&#7916;I RA NGO&#192;I</text>
+  </g>
+
+  <!-- track -->
+  <path id="line" d="M150 104 H1050" fill="none" stroke="url(#track)" stroke-width="5" stroke-linecap="round" opacity="0.9"/>
+  <path d="M150 104 H1050" fill="none" stroke="#FCF6EC" stroke-width="5" stroke-linecap="round" stroke-dasharray="10 14" opacity="0.65">
+    <animate attributeName="stroke-dashoffset" values="48;0" dur="1.6s" repeatCount="indefinite"/>
+  </path>
+
+  <!-- nodes -->
+  <g font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif">
+    <!-- 1 -->
+    <circle cx="150" cy="104" r="27" fill="#0E4A63"/>
+    <circle cx="150" cy="104" r="27" fill="none" stroke="#3BB8C3" stroke-width="2.5" opacity="0">
+      <animate attributeName="r" values="27;41" dur="3s" begin="0s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.75;0" dur="3s" begin="0s" repeatCount="indefinite"/>
+    </circle>
+    <text x="150" y="110" text-anchor="middle" font-size="18" font-weight="800" fill="#FCF6EC">1</text>
+    <text x="150" y="162" text-anchor="middle" font-size="14" font-weight="800" fill="#0E4A63">&#272;i&#7875;m danh</text>
+    <text x="150" y="182" text-anchor="middle" font-size="11.5" font-weight="600" fill="#0E4A63" opacity="0.66">L&#7883;ch tu&#7847;n T2&#8211;T6</text>
+    <text x="150" y="198" text-anchor="middle" font-size="11.5" font-weight="600" fill="#0E4A63" opacity="0.66">6 ca / ng&#224;y</text>
+
+    <!-- 2 -->
+    <circle cx="330" cy="104" r="27" fill="#14607C"/>
+    <circle cx="330" cy="104" r="27" fill="none" stroke="#3BB8C3" stroke-width="2.5" opacity="0">
+      <animate attributeName="r" values="27;41" dur="3s" begin="0.5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.75;0" dur="3s" begin="0.5s" repeatCount="indefinite"/>
+    </circle>
+    <text x="330" y="110" text-anchor="middle" font-size="18" font-weight="800" fill="#FCF6EC">2</text>
+    <text x="330" y="162" text-anchor="middle" font-size="14" font-weight="800" fill="#0E4A63">&#272;&#7871;m bu&#7893;i n&#7907;</text>
+    <text x="330" y="182" text-anchor="middle" font-size="11.5" font-weight="600" fill="#0E4A63" opacity="0.66">C&#243; m&#7863;t nh&#432;ng</text>
+    <text x="330" y="198" text-anchor="middle" font-size="11.5" font-weight="600" fill="#0E4A63" opacity="0.66">ch&#432;a thu ti&#7873;n</text>
+
+    <!-- 3 -->
+    <circle cx="510" cy="104" r="27" fill="#1E8FA8"/>
+    <circle cx="510" cy="104" r="27" fill="none" stroke="#3BB8C3" stroke-width="2.5" opacity="0">
+      <animate attributeName="r" values="27;41" dur="3s" begin="1s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.75;0" dur="3s" begin="1s" repeatCount="indefinite"/>
+    </circle>
+    <text x="510" y="110" text-anchor="middle" font-size="18" font-weight="800" fill="#FCF6EC">3</text>
+    <text x="510" y="162" text-anchor="middle" font-size="14" font-weight="800" fill="#0E4A63">&#272;&#7911; chu k&#7923;</text>
+    <text x="510" y="182" text-anchor="middle" font-size="11.5" font-weight="600" fill="#0E4A63" opacity="0.66">M&#7895;i HV t&#7921; &#273;&#7863;t</text>
+    <text x="510" y="198" text-anchor="middle" font-size="11.5" font-weight="600" fill="#0E4A63" opacity="0.66">8 hay 10 bu&#7893;i</text>
+
+    <!-- 4 -->
+    <circle cx="690" cy="104" r="27" fill="#3BB8C3"/>
+    <circle cx="690" cy="104" r="27" fill="none" stroke="#F28C1B" stroke-width="2.5" opacity="0">
+      <animate attributeName="r" values="27;41" dur="3s" begin="1.5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.75;0" dur="3s" begin="1.5s" repeatCount="indefinite"/>
+    </circle>
+    <text x="690" y="110" text-anchor="middle" font-size="18" font-weight="800" fill="#0B3F54">4</text>
+    <text x="690" y="162" text-anchor="middle" font-size="14" font-weight="800" fill="#0E4A63">Thu h&#7885;c ph&#237;</text>
+    <text x="690" y="182" text-anchor="middle" font-size="11.5" font-weight="600" fill="#0E4A63" opacity="0.66">Gom &#273;&#250;ng 1 chu k&#7923;</text>
+    <text x="690" y="198" text-anchor="middle" font-size="11.5" font-weight="600" fill="#0E4A63" opacity="0.66">d&#432; d&#7891;n k&#7923; sau</text>
+
+    <!-- 5 -->
+    <circle cx="870" cy="104" r="27" fill="#FFB547"/>
+    <circle cx="870" cy="104" r="27" fill="none" stroke="#F28C1B" stroke-width="2.5" opacity="0">
+      <animate attributeName="r" values="27;41" dur="3s" begin="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.75;0" dur="3s" begin="2s" repeatCount="indefinite"/>
+    </circle>
+    <text x="870" y="110" text-anchor="middle" font-size="18" font-weight="800" fill="#2B1A05">5</text>
+    <text x="870" y="162" text-anchor="middle" font-size="14" font-weight="800" fill="#0E4A63">Bi&#234;n lai ri&#234;ng</text>
+    <text x="870" y="182" text-anchor="middle" font-size="11.5" font-weight="600" fill="#0E4A63" opacity="0.66">Link c&#243; ch&#7919; k&#253; s&#7889;</text>
+    <text x="870" y="198" text-anchor="middle" font-size="11.5" font-weight="600" fill="#0E4A63" opacity="0.66">ai c&#7911;a ng&#432;&#7901;i &#273;&#243;</text>
+
+    <!-- 6 -->
+    <circle cx="1050" cy="104" r="27" fill="#F28C1B"/>
+    <circle cx="1050" cy="104" r="27" fill="none" stroke="#F28C1B" stroke-width="2.5" opacity="0">
+      <animate attributeName="r" values="27;41" dur="3s" begin="2.5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.75;0" dur="3s" begin="2.5s" repeatCount="indefinite"/>
+    </circle>
+    <text x="1050" y="110" text-anchor="middle" font-size="18" font-weight="800" fill="#2B1A05">6</text>
+    <text x="1050" y="162" text-anchor="middle" font-size="14" font-weight="800" fill="#0E4A63">Nh&#7855;c qua Zalo</text>
+    <text x="1050" y="182" text-anchor="middle" font-size="11.5" font-weight="600" fill="#0E4A63" opacity="0.66">Bot ri&#234;ng t&#7915;ng HV</text>
+    <text x="1050" y="198" text-anchor="middle" font-size="11.5" font-weight="600" fill="#0E4A63" opacity="0.66">cron m&#7895;i 5 ph&#250;t</text>
+  </g>
+
+  <!-- travelling pulse along the track -->
+  <circle r="8" fill="#FCF6EC" stroke="#F28C1B" stroke-width="3">
+    <animateMotion dur="4.4s" repeatCount="indefinite" rotate="0">
+      <mpath href="#line"/>
+    </animateMotion>
+  </circle>
+  <circle r="15" fill="#F28C1B" opacity="0.22">
+    <animateMotion dur="4.4s" repeatCount="indefinite" rotate="0">
+      <mpath href="#line"/>
+    </animateMotion>
+    <animate attributeName="r" values="12;19;12" dur="1.1s" repeatCount="indefinite"/>
+  </circle>
+
+  <text x="600" y="233" text-anchor="middle" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="600" fill="#0E4A63" opacity="0.5">&#169; Tr&#432;&#417;ng T&#7845;n Ngh&#297;a &#183; AI H&#7885;c L&#7853;p Tr&#236;nh</text>
+</svg>
