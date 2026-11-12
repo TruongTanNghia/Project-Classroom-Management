@@ -1,0 +1,19 @@
+/* Gỡ đệm của <main class="main-pad"> trong AppShell để .abt-canvas tự lo
+   đúng đệm của thiết kế (32px 28px 64px · 16px 16px 40px khi ≤640px).
+   Không sửa about.css — file đó do MCP xuất ra, chạy lại là ghi đè. */
+.abt-shell-reset {
+  margin: -28px -32px;
+}
+
+/* Tailwind preflight đặt line-height 1.5 trên <html>; trang thiết kế gốc
+   chạy với line-height mặc định của trình duyệt. Không trả về `normal` thì
+   mọi dòng chữ không khai báo line-height đều cao hơn thiết kế. */
+.abt-canvas {
+  line-height: normal;
+}
+
+@media (max-width: 640px) {
+  .abt-shell-reset {
+    margin: -16px;
+  }
+}

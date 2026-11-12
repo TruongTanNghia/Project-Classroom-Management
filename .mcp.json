@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "aihoclaptrinh-design": {
+      "type": "stdio",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "E:\\DẠY HỌC\\PROJECT-HUB\\UI\\aihoclaptrinh-design-mcp\\dist\\index.js"
+      ],
+      "env": {
+        "ABOUT_URL": "http://localhost:3001/about",
+        "APP_DARK_MODE": "class",
+        "APP_DARK_SELECTOR": ".dark",
+        "PLAYWRIGHT_BROWSERS_PATH": "E:\\DẠY HỌC\\PROJECT-HUB\\UI\\ms-playwright"
+      }
+    }
+  }
+}
