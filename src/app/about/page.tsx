@@ -6,7 +6,7 @@ import { cookies, headers } from "next/headers";
 import { AboutRoot } from "@/components/about/interactive/AboutRoot";
 import LangToggle from "@/components/about/LangToggle";
 import type { AbtLang } from "@/components/about/i18n-about";
-import { isPublicShell } from "@/lib/hosts";
+import { isPublicHost } from "@/lib/hosts";
 import AboutHero from "@/components/about/AboutHero";
 import AboutNav from "@/components/about/AboutNav";
 import AboutSkills from "@/components/about/AboutSkills";
@@ -29,7 +29,7 @@ import AboutContact from "@/components/about/AboutContact";
 export default async function AboutPage() {
   const [ck, hd] = await Promise.all([cookies(), headers()]);
   const lang: AbtLang = ck.get("aihlt-lang")?.value === "en" ? "en" : "vi";
-  const publicSite = isPublicShell(hd);
+  const publicSite = isPublicHost(hd.get("host"));
 
   return (
     <div className="abt-shell-reset">
