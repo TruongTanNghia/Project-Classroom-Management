@@ -15,6 +15,16 @@
   }
 }
 
+/* Trang công khai tràn hết bề ngang màn hình.
+   Thiết kế khoá .abt-root ở 1220px — hợp khi trang nằm trong app, nhưng ở
+   màn 1920 thì hai bên trơ ra. Bỏ khoá: ảnh chân dung vẫn giữ nguyên 304px
+   nên vòng quỹ đạo công nghệ giãn RA XA chân dung hơn, chip đỡ bị che
+   (đo ở 1920: 1220px có 4 chip bị che, full chỉ còn 1).
+   App quản trị không đụng tới — vẫn 1220px như thiết kế. */
+.public-site .abt-root {
+  max-width: none;
+}
+
 /* Tailwind preflight đặt line-height 1.5 trên <html>; trang thiết kế gốc
    chạy với line-height mặc định của trình duyệt. Không trả về `normal` thì
    mọi dòng chữ không khai báo line-height đều cao hơn thiết kế. */
