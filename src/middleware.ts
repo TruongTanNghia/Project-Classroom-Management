@@ -1,63 +1,91 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { isPublicHost } from "@/lib/hosts";
+import {
+  DOOR_COOKIE,
+  DOOR_MAX_AGE,
+  DOOR_PATHS,
+  GUEST_PATHS,
+  SHELL_HEADER,
+  isPublicHost,
+  matchesPrefix,
+} from "@/lib/hosts";
 
 /**
- * Tách hai mặt của cùng một ứng dụng theo TÊN MIỀN:
- *
- *   www.aihoclaptrinh.com     → trang công khai, CHỈ có trang Giới thiệu.
- *                               "/" hiện luôn nội dung Giới thiệu (không đổi URL).
- *                               Mọi đường dẫn quản trị đều bị đẩy về "/".
- *
- *   admin.aihoclaptrinh.com   → ứng dụng quản trị đầy đủ, có cổng đăng nhập.
- *   *.vercel.app, localhost     Danh sách tên miền công khai nằm ở src/lib/hosts.ts.
- *
- * Vẫn cho qua trên tên miền công khai:
- *   /bienlai/*  link biên lai đã gửi cho học viên qua Zalo (có chữ ký số)
- *   /api/*      webhook Zalo, cron nhắc lịch — đều tự bảo vệ bằng khoá bí mật
- * Chặn hai nhóm này sẽ làm chết tự động hoá và link học viên đang cầm.
+ * Chia một ứng dụng thành hai mặt. Xem src/lib/hosts.ts để biết luật chung;
+ * ở đây chỉ là chỗ thi hành.
  */
 
-const ALLOWED_ON_PUBLIC = ["/about", "/bienlai", "/api"];
+/** Ghi dấu cho máy này: đã vào cửa rồi, lần sau khỏi gõ /admin. */
+function moCua(res: NextResponse) {
+  res.cookies.set(DOOR_COOKIE, "1", {
+    path: "/",
+    maxAge: DOOR_MAX_AGE,
+    sameSite: "lax",
+  });
+  return res;
+}
+
+/** Cho đi tiếp, kèm mách cho layout gốc biết nên dựng khung nào. */
+function choQua(request: NextRequest, shell: "public" | "app") {
+  const headers = new Headers(request.headers);
+  headers.set(SHELL_HEADER, shell);
+  const res = NextResponse.next({ request: { headers } });
+  if (shell === "app") {
+    // Khu quản trị tuy chỉ hiện ô đăng nhập, nhưng để Google lập chỉ mục
+    // thì vẫn là chỉ đường vào nhà.
+    res.headers.set("X-Robots-Tag", "noindex, nofollow");
+  }
+  return res;
+}
+
+function doiSang(request: NextRequest, pathname: string) {
+  const url = request.nextUrl.clone();
+  url.pathname = pathname;
+  return url;
+}
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // ---- Cửa vào: dùng được trên MỌI tên miền ----
+  // Phải đặt trên cùng để aihoclaptrinh.com/admin cũng ăn. Link đặt lại mật
+  // khẩu trong mail cũng trỏ về đây, nên đuôi #access_token... phải sống sót
+  // qua cú chuyển trang này — trình duyệt giữ nguyên phần # khi Location
+  // không mang # riêng (đã dựng thật để kiểm).
+  if (matchesPrefix(pathname, DOOR_PATHS)) {
+    return moCua(NextResponse.redirect(doiSang(request, "/dashboard")));
+  }
+
+  // ---- Tên miền mặt trong: admin.*, *.vercel.app, localhost ----
   if (!isPublicHost(request.headers.get("host"))) {
-    // Gõ "admin.aihoclaptrinh.com" trần là vào thẳng Bảng điều khiển.
-    // Không thể trông vào redirect() trong src/app/page.tsx: cổng đăng nhập
-    // là client component, nó thay children bằng màn đăng nhập nên lệnh
-    // chuyển trang chỉ nổ ra SAU khi đăng nhập xong — trước đó "/" đứng im.
+    // Gõ tên miền trần là vào thẳng Bảng điều khiển. Không thể trông vào
+    // redirect() trong src/app/page.tsx: cổng đăng nhập là client component,
+    // nó thay children bằng màn đăng nhập nên lệnh chuyển trang chỉ nổ ra
+    // SAU khi đăng nhập xong — trước đó "/" đứng im ở khung xương.
     if (pathname === "/") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/dashboard";
-      return NextResponse.redirect(url);
+      return moCua(NextResponse.redirect(doiSang(request, "/dashboard")));
     }
-
-    // Tên miền quản trị: chạy app như cũ, nhưng xin các máy tìm kiếm đừng
-    // lập chỉ mục. Không có dòng này thì admin.aihoclaptrinh.com có ngày
-    // hiện lên Google — tuy chỉ ra màn đăng nhập, vẫn là chỉ đường.
-    const res = NextResponse.next();
-    res.headers.set("X-Robots-Tag", "noindex, nofollow");
-    return res;
+    return moCua(choQua(request, "app"));
   }
 
-  // Trang chủ của tên miền công khai = trang Giới thiệu, giữ nguyên URL "/"
+  // ---- Tên miền mặt tiền: aihoclaptrinh.com ----
+
+  // Trang chủ = trang Giới thiệu, giữ nguyên URL "/"
   if (pathname === "/") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/about";
-    return NextResponse.rewrite(url);
+    const headers = new Headers(request.headers);
+    headers.set(SHELL_HEADER, "public");
+    return NextResponse.rewrite(doiSang(request, "/about"), { request: { headers } });
   }
 
-  const allowed = ALLOWED_ON_PUBLIC.some(
-    (p) => pathname === p || pathname.startsWith(p + "/")
-  );
-  if (allowed) return NextResponse.next();
+  // Trang cho khách: Giới thiệu, biên lai học viên, webhook/cron
+  if (matchesPrefix(pathname, GUEST_PATHS)) return choQua(request, "public");
 
-  // Còn lại (dashboard, students, tuition…) → về trang Giới thiệu
-  const url = request.nextUrl.clone();
-  url.pathname = "/";
-  return NextResponse.redirect(url);
+  // Còn lại là đường dẫn quản trị. Máy đã vào cửa thì cho qua (và gia hạn
+  // dấu, để mở một lần là dùng mãi); máy lạ thì đẩy về trang Giới thiệu.
+  if (request.cookies.get(DOOR_COOKIE)?.value === "1") {
+    return moCua(choQua(request, "app"));
+  }
+  return NextResponse.redirect(doiSang(request, "/"));
 }
 
 export const config = {

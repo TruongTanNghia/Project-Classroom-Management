@@ -133,7 +133,10 @@ function LoginScreen() {
     const supa = getSupabase();
     if (!supa) return;
     const { error } = await supa.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: window.location.origin,
+      // "/admin" là cửa vào khu quản trị, chạy trên mọi tên miền. Trỏ về
+      // đây thay vì trang chủ, vì trang chủ của aihoclaptrinh.com là
+      // trang Giới thiệu — không có cổng đăng nhập để bắt token.
+      redirectTo: window.location.origin + "/admin",
     });
     setBusy(false);
     if (error) setErr("Chưa gửi được mail: " + error.message);
