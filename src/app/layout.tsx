@@ -3,9 +3,7 @@ import { headers } from "next/headers";
 import { Geist, Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
 import AppShell from "@/components/shell/AppShell";
-
-/* Trùng với PUBLIC_HOSTS trong src/middleware.ts — sửa thì sửa cả hai. */
-const PUBLIC_HOSTS = new Set(["aihoclaptrinh.com", "www.aihoclaptrinh.com"]);
+import { isPublicHost } from "@/lib/hosts";
 
 // Geist trên Google Fonts chưa có subset tiếng Việt — glyph có dấu sẽ
 // fallback sang font hệ thống, giống hệt hành vi của bản prototype.
@@ -35,8 +33,7 @@ export default async function RootLayout({
   // Tên miền công khai (aihoclaptrinh.com) chỉ dùng để khoe trang Giới thiệu:
   // không dựng sidebar/topbar quản trị, cũng không qua cổng đăng nhập —
   // middleware đã chặn mọi đường dẫn quản trị trên tên miền này rồi.
-  const host = ((await headers()).get("host") ?? "").toLowerCase().split(":")[0];
-  const publicSite = PUBLIC_HOSTS.has(host);
+  const publicSite = isPublicHost((await headers()).get("host"));
 
   // Trang công khai luôn chạy chủ đề tối: không có nút đổi chủ đề ở đó, và
   // nền tối lấp hai bên cánh nên màn rộng không bị trơ. Đặt class ngay từ
