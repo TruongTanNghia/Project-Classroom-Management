@@ -18,6 +18,7 @@ const workspaceNav = [
   { key: "courses", href: "/courses", Icon: BookOpen, badgeKey: "courses" as const },
   // { key: "insights", href: "/insights", Icon: Sparkles }, // tạm ẩn Phân tích AI
   { key: "schedule", href: "/schedule", Icon: Calendar },
+  { key: "chat", href: "/chat", Icon: Sparkles },
 ];
 
 const manageNav = [
