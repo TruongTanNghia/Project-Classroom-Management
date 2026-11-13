@@ -38,8 +38,15 @@ export default async function RootLayout({
   const host = ((await headers()).get("host") ?? "").toLowerCase().split(":")[0];
   const publicSite = PUBLIC_HOSTS.has(host);
 
+  // Trang công khai luôn chạy chủ đề tối: không có nút đổi chủ đề ở đó, và
+  // nền tối lấp hai bên cánh nên màn rộng không bị trơ. Đặt class ngay từ
+  // máy chủ để không chớp sáng một nhịp rồi mới tối.
+  const htmlClass = [geist.className, beVietnam.variable, publicSite && "dark"]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <html lang="vi" className={`${geist.className} ${beVietnam.variable}`} suppressHydrationWarning>
+    <html lang="vi" className={htmlClass} suppressHydrationWarning>
       <body className={publicSite ? "public-site" : "app-site"}>
         <script
           dangerouslySetInnerHTML={{
