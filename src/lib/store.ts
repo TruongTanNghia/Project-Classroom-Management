@@ -358,6 +358,13 @@ export const useApp = create<AppState>((set, get) => ({
 
   setLang: (lang) => {
     localStorage.setItem("aihlt-lang", lang);
+    // Trang Giới thiệu là server component nên không đọc được localStorage;
+    // ghi thêm cookie cùng tên để máy chủ dựng đúng ngôn ngữ.
+    try {
+      document.cookie = `aihlt-lang=${lang}; path=/; max-age=31536000; samesite=lax`;
+    } catch {
+      /* không có document (SSR) — bỏ qua */
+    }
     set({ lang });
   },
 
