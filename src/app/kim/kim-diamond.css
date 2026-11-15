@@ -1,0 +1,547 @@
+/* =====================================================================
+   Lớp "kim cương" phủ lên bản thiết kế Xưởng Kim.
+
+   Bản thiết kế dùng chất liệu xưởng: nhôm xước, đồng thau, thép. Anh Nghĩa mệnh Kim
+   và muốn mình là thứ quý đã qua tôi luyện, không phải kim loại rẻ tiền. Nên ở đây:
+     nhôm      → được đánh bóng, có ánh sáng lướt qua
+     đồng thau → thành vàng (cùng họ màu, thêm độ sâu và vệt sáng phản chiếu)
+     mặt đồng hồ → nạm một viên kim cương giác tròn (xem KimGem.tsx)
+     và những đốm sáng nhỏ như kim cương bắt đèn.
+
+   Luật màu giữ nguyên của bản thiết kế: trắng, bạc, thép (bản mệnh Kim) + vàng,
+   nâu đất (Thổ sinh Kim). KHÔNG đỏ, hồng, tím, cam (Hoả khắc Kim) — vì vậy ánh lửa
+   của kim cương ở đây là trắng và vàng champagne, không tán sắc cầu vồng.
+
+   Mọi luật nằm dưới .kim-jewel. Mở trang với ?plain=1 thì class này không có,
+   trang trở về đúng nguyên bản thiết kế (dùng để đo đối chiếu).
+   ===================================================================== */
+
+.kim-jewel {
+  --gem-hi: #ffffff;
+  --gem-lo: #8d969e;
+  --gem-line: rgba(36, 39, 43, 0.13);
+  --gem-depth: 0.2;
+  --gem-shade: #24272b;
+  --gem-fire: #f4dc94;
+  --gem-white: #ffffff;
+  --star-core: #ffffff;
+  --star-edge: #d9ac45;
+  --star-glow: rgba(169, 128, 44, 0.75);
+  --name-hi: #c3cbd2;
+  --spot-edge: rgba(184, 134, 43, 0.95);
+  --wash: rgba(255, 255, 255, 0.5);
+  --sheen: rgba(255, 255, 255, 0.8);
+  /* vàng: bốn nấc sáng tối như bề mặt cong phản chiếu, thay cho hai nấc của đồng thau */
+  --plate: linear-gradient(180deg, #faeab0 0%, #ecce73 34%, #d1a23f 68%, #e4c264 100%);
+  --sweep: linear-gradient(108deg, transparent 0 42%, var(--sheen) 50%, transparent 58% 100%);
+}
+.kim-jewel.dark {
+  --gem-hi: #8e979f;
+  --gem-lo: #101316;
+  --gem-depth: 0.55;
+  --gem-line: rgba(255, 255, 255, 0.15);
+  --gem-shade: #000000;
+  --gem-fire: #f6dc8e;
+  --star-edge: #f3d98b;
+  --star-glow: rgba(243, 217, 139, 0.8);
+  --name-hi: #f3d98b;
+  --spot-edge: rgba(243, 217, 139, 0.95);
+  --wash: rgba(255, 255, 255, 0.07);
+}
+
+/* ---------- Viên kim cương sau chân dung ---------- */
+/* chế độ đối chiếu (?plain=1): giấu viên đá để trang đúng nguyên bản thiết kế */
+.kim-canvas:not(.kim-jewel) :is(.kim-gem, .kim-gauge-glint) {
+  display: none;
+}
+.kim-gem {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 60cqw;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.kim-gem svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.kim-gem .gf {
+  stroke: var(--gem-line);
+  stroke-width: 0.45;
+  stroke-linejoin: round;
+  animation: kimFacetIn 0.9s var(--ease) backwards;
+  animation-delay: calc(150ms + var(--i) * 24ms);
+}
+.kim-gem .gw {
+  fill: var(--gem-white);
+}
+.kim-gem .gg {
+  fill: var(--gem-fire);
+}
+.kim-gem .girdle {
+  fill: none;
+  stroke: var(--gem-line);
+  stroke-width: 0.9;
+}
+.kim-gem .bezel {
+  fill: none;
+  stroke: var(--brass);
+  stroke-width: 1.2;
+}
+.kim-gem .prong {
+  stroke: rgba(46, 36, 18, 0.35);
+  stroke-width: 0.3;
+}
+.kim-gem .gs path {
+  fill: var(--star-core);
+  stroke: var(--star-edge);
+  stroke-width: 0.07;
+  filter: drop-shadow(0 0 0.35px var(--star-edge));
+}
+@keyframes kimFacetIn {
+  from {
+    opacity: 0;
+  }
+}
+
+/* tia sáng chạy trên vành vàng */
+.kim-gauge-glint {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.kim-gauge-glint path {
+  fill: none;
+  stroke: #fff8e0;
+  stroke-linecap: round;
+  stroke-dashoffset: 4;
+  animation: kimRail 6.5s cubic-bezier(0.5, 0, 0.3, 1) infinite 1.4s;
+}
+.kim-gauge-glint .head {
+  stroke-width: 5;
+  stroke-dasharray: 3 97;
+  opacity: 0.95;
+}
+.kim-gauge-glint .tail {
+  stroke-width: 7;
+  stroke-dasharray: 11 89;
+  opacity: 0.32;
+}
+@keyframes kimRail {
+  0% {
+    stroke-dashoffset: 12;
+  }
+  60%,
+  100% {
+    stroke-dashoffset: -100;
+  }
+}
+
+/* ---------- Màn mở đầu: các phần tử lần lượt hiện lên ---------- */
+/* Dùng thuộc tính translate/scale riêng (không phải transform) để không đè lên
+   transform định vị của bản thiết kế. Chỉ khai báo điểm đầu, điểm cuối là kiểu sẵn có. */
+.kim-jewel .kim-hero-copy > * {
+  animation: kimRise 0.75s var(--ease) backwards;
+}
+.kim-jewel .kim-hero-copy > :nth-child(1) { animation-delay: 0.05s; }
+.kim-jewel .kim-hero-copy > :nth-child(2) { animation-delay: 0.12s; }
+.kim-jewel .kim-hero-copy > :nth-child(3) { animation-delay: 0.2s; }
+.kim-jewel .kim-hero-copy > :nth-child(4) { animation-delay: 0.27s; }
+.kim-jewel .kim-hero-copy > :nth-child(5) { animation-delay: 0.34s; }
+.kim-jewel .kim-hero-copy > :nth-child(6) { animation-delay: 0.41s; }
+.kim-jewel .kim-gauge-portrait {
+  animation: kimRise 0.95s var(--ease) backwards 0.2s;
+}
+.kim-jewel .kim-gm-in {
+  animation: kimPop 0.55s var(--ease) backwards;
+  animation-delay: calc(0.55s + var(--n, 0) * 0.075s);
+}
+.kim-jewel .kim-proof {
+  animation: kimRise 0.8s var(--ease) backwards 0.5s;
+}
+.kim-jewel .kim-gm:nth-child(1), .kim-jewel .kim-station:nth-child(1) { --n: 0; }
+.kim-jewel .kim-gm:nth-child(2), .kim-jewel .kim-station:nth-child(2) { --n: 1; }
+.kim-jewel .kim-gm:nth-child(3), .kim-jewel .kim-station:nth-child(3) { --n: 2; }
+.kim-jewel .kim-gm:nth-child(4), .kim-jewel .kim-station:nth-child(4) { --n: 3; }
+.kim-jewel .kim-gm:nth-child(5), .kim-jewel .kim-station:nth-child(5) { --n: 4; }
+.kim-jewel .kim-gm:nth-child(6), .kim-jewel .kim-station:nth-child(6) { --n: 5; }
+.kim-jewel .kim-gm:nth-child(7), .kim-jewel .kim-station:nth-child(7) { --n: 6; }
+.kim-jewel .kim-gm:nth-child(8), .kim-jewel .kim-station:nth-child(8) { --n: 7; }
+@keyframes kimRise {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+}
+@keyframes kimPop {
+  from {
+    opacity: 0;
+    scale: 0.55;
+  }
+}
+
+/* ---------- Hiện dần khi cuộn tới (KimFx đặt data-rv) ---------- */
+/* Dùng animation chứ không dùng transition: thẻ còn có transition riêng cho lúc rê chuột,
+   hai thứ dùng chung một thuộc tính sẽ giẫm lên nhau. */
+.kim-jewel [data-rv=""] {
+  opacity: 0;
+}
+.kim-jewel [data-rv="in"] {
+  animation: kimRise 0.75s var(--ease) backwards;
+  animation-delay: calc(var(--rv-i, 0) * 75ms);
+}
+
+/* ---------- Chữ kim loại có ánh sáng lướt qua: tên, phương châm, số liệu ---------- */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .kim-jewel .kim-name,
+  .kim-jewel .kim-motto strong,
+  .kim-jewel .kim-proof strong {
+    background-color: var(--ink);
+    /* vệt sáng hẹp (khoảng 1/7 bề ngang chữ): rộng hơn thì trông như chữ bị mờ đi chứ không phải ánh kim */
+    background-image: linear-gradient(104deg, transparent 0 47.6%, var(--name-hi) 50%, transparent 52.4% 100%);
+    background-size: 300% 100%;
+    background-repeat: no-repeat;
+    background-position: 100% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    animation: kimTextSweep 7.5s ease-in-out infinite 1.6s;
+  }
+  .kim-jewel .kim-motto strong {
+    animation-delay: 0.6s;
+    animation-duration: 6.5s;
+  }
+  .kim-jewel .kim-proof > div:nth-child(2) strong { animation-delay: 2.3s; }
+  .kim-jewel .kim-proof > div:nth-child(3) strong { animation-delay: 3s; }
+}
+@keyframes kimTextSweep {
+  0%,
+  52% {
+    background-position: 100% 0;
+  }
+  88%,
+  100% {
+    background-position: 0% 0;
+  }
+}
+.kim-jewel .kim-motto strong {
+  position: relative;
+}
+
+/* ---------- Vàng: vệt sáng phản chiếu lướt qua ---------- */
+.kim-jewel .kim-btn-brass,
+.kim-jewel .kim-plate,
+.kim-jewel .kim-medal b,
+.kim-jewel .kim-cx-no,
+.kim-jewel .kim-contact-item > i {
+  background-image: var(--sweep), var(--plate);
+  background-size: 240% 100%, 100% 100%;
+  background-repeat: no-repeat;
+  background-position: 160% 0, 0 0;
+  animation: kimSweep 6.4s ease-in-out infinite;
+}
+.kim-jewel .kim-coin {
+  position: relative;
+  background-image: var(--sweep), radial-gradient(circle at 34% 28%, #fdf0c2, #ddb24b 56%, #a47b28);
+  background-size: 240% 100%, 100% 100%;
+  background-repeat: no-repeat;
+  background-position: 160% 0, 0 0;
+  animation: kimSweep 6.4s ease-in-out infinite;
+}
+.kim-jewel .kim-plate {
+  position: relative;
+  animation-delay: 0.9s;
+}
+.kim-jewel .kim-btn-brass {
+  animation-delay: 2.1s;
+}
+.kim-jewel .kim-btn-brass:hover {
+  background-image: var(--sweep), linear-gradient(180deg, #fdf2c6 0%, #f1d684 36%, #dbb04c 70%, #ecce76 100%);
+  animation-duration: 1.5s;
+  animation-delay: 0s;
+}
+.kim-jewel .kim-step:nth-child(2) .kim-coin { animation-delay: 0.5s; }
+.kim-jewel .kim-step:nth-child(3) .kim-coin { animation-delay: 1s; }
+.kim-jewel .kim-medal b {
+  animation-delay: calc(3s + var(--n, 0) * 0.28s);
+}
+/* đồng xu số bước trên thẻ khoá học: loé lần lượt theo thứ tự học, như dãy huy hiệu lộ trình */
+.kim-jewel .kim-cx:nth-child(1) .kim-cx-no { animation-delay: 1s; }
+.kim-jewel .kim-cx:nth-child(2) .kim-cx-no { animation-delay: 1.28s; }
+.kim-jewel .kim-cx:nth-child(3) .kim-cx-no { animation-delay: 1.56s; }
+.kim-jewel .kim-cx:nth-child(4) .kim-cx-no { animation-delay: 1.84s; }
+.kim-jewel .kim-cx:nth-child(5) .kim-cx-no { animation-delay: 2.12s; }
+.kim-jewel .kim-cx:nth-child(6) .kim-cx-no { animation-delay: 2.4s; }
+.kim-jewel .kim-cx:nth-child(7) .kim-cx-no { animation-delay: 2.68s; }
+.kim-jewel .kim-cx:nth-child(8) .kim-cx-no { animation-delay: 2.96s; }
+.kim-jewel .kim-cx:nth-child(9) .kim-cx-no { animation-delay: 3.24s; }
+.kim-jewel .kim-contact-item:nth-child(2) > i { animation-delay: 0.45s; }
+.kim-jewel .kim-contact-item:nth-child(3) > i { animation-delay: 0.9s; }
+@keyframes kimSweep {
+  0%,
+  58% {
+    background-position: 160% 0, 0 0;
+  }
+  100% {
+    background-position: -60% 0, 0 0;
+  }
+}
+
+/* thanh vàng nối tám trạm của lộ trình */
+.kim-jewel .kim-stations::before {
+  background-color: var(--brass);
+  background-image: linear-gradient(90deg, transparent 0 46%, rgba(255, 252, 235, 0.95) 50%, transparent 54% 100%);
+  background-size: 300% 100%;
+  background-repeat: no-repeat;
+  animation: kimBar 7s linear infinite 2s;
+}
+@keyframes kimBar {
+  0% {
+    background-position: 100% 0;
+  }
+  45%,
+  100% {
+    background-position: 0% 0;
+  }
+}
+
+/* ---------- Tám trạm sáng lên lần lượt, đúng thứ tự học ---------- */
+.kim-jewel .kim-medal::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1.5px solid var(--brass);
+  opacity: 0;
+  pointer-events: none;
+  animation: kimRing 8.8s ease-out infinite;
+  animation-delay: calc(2.6s + var(--n, 0) * 0.5s);
+}
+@keyframes kimRing {
+  0% {
+    opacity: 0.95;
+    scale: 0.9;
+  }
+  11% {
+    opacity: 0;
+    scale: 1.38;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.38;
+  }
+}
+.kim-jewel .kim-medal {
+  transition: translate 0.3s var(--ease), border-color 0.3s ease;
+}
+.kim-jewel .kim-station:hover .kim-medal,
+.kim-jewel .kim-gm:hover .kim-medal {
+  translate: 0 -3px;
+  border-color: var(--brass);
+}
+.kim-jewel .kim-gauge-marks {
+  pointer-events: none;
+}
+.kim-jewel .kim-gm-in {
+  pointer-events: auto;
+}
+
+/* ---------- Biển số liệu: hạt kim cương ở vạch ngăn ---------- */
+.kim-jewel .kim-proof > div {
+  position: relative;
+}
+.kim-jewel .kim-proof > div + div::before {
+  content: "";
+  position: absolute;
+  left: -7.5px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  transform: rotate(45deg);
+  border-radius: 2px;
+  background: conic-gradient(from 45deg, #ffffff 0 25%, #c3c9cf 0 50%, #ecd07c 0 75%, #eef0f2 0);
+  border: 1px solid var(--brass-ink);
+  box-shadow: 0 0 0 4px var(--panel);
+}
+
+/* ---------- Tiêu đề khối: một viên đá nhỏ và đường kẻ mảnh phía trên ---------- */
+.kim-jewel .kim-h2 {
+  position: relative;
+}
+.kim-jewel .kim-h2::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: -30px;
+  width: 92px;
+  height: 14px;
+  background: var(--brass-ink);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='92' height='14' viewBox='0 0 92 14' fill='none' stroke='black' stroke-width='1.2' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M1 5 4.2 1h7.6L15 5 8 13z M1 5h14 M4.2 1 6 5l2 8 2-8 1.8-4 M6 5l2-4 2 4'/%3E%3Cpath d='M24 7h68'/%3E%3C/svg%3E") left center / 92px 14px no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='92' height='14' viewBox='0 0 92 14' fill='none' stroke='black' stroke-width='1.2' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M1 5 4.2 1h7.6L15 5 8 13z M1 5h14 M4.2 1 6 5l2 8 2-8 1.8-4 M6 5l2-4 2 4'/%3E%3Cpath d='M24 7h68'/%3E%3C/svg%3E") left center / 92px 14px no-repeat;
+}
+
+/* ---------- Thẻ: viền sáng chạy theo con trỏ ---------- */
+.kim-jewel :is(.kim-sol, .kim-course, .kim-quote, .kim-panel, .kim-proj-cta, .kim-topic-list a, .kim-proof, .kim-contact-item) {
+  position: relative;
+}
+.kim-jewel :is(.kim-sol, .kim-course, .kim-quote, .kim-panel, .kim-proj-cta, .kim-topic-list a, .kim-proof, .kim-contact-item)::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  padding: 1.5px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  background: radial-gradient(300px circle at var(--px, 50%) var(--py, 50%), var(--spot-edge), transparent 64%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.kim-jewel :is(.kim-sol, .kim-course, .kim-quote, .kim-panel, .kim-proj-cta, .kim-topic-list a, .kim-proof, .kim-contact-item):hover::after {
+  opacity: 1;
+}
+.kim-jewel :is(.kim-sol, .kim-course, .kim-quote) {
+  transition: translate 0.4s var(--ease), box-shadow 0.4s var(--ease);
+}
+.kim-jewel :is(.kim-sol, .kim-course, .kim-quote):hover {
+  translate: 0 -4px;
+  box-shadow: 0 1px 0 rgba(36, 39, 43, 0.05), 0 30px 46px -30px rgba(36, 39, 43, 0.6);
+}
+
+/* hai bảng nhôm xước lớn: một vùng sáng đi theo con trỏ, như đèn rọi lên mặt kim loại */
+.kim-jewel :is(.kim-proj, .kim-journey) {
+  position: relative;
+}
+.kim-jewel :is(.kim-proj, .kim-journey)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  background: radial-gradient(520px circle at var(--px, 50%) var(--py, 50%), var(--wash), transparent 62%);
+  mix-blend-mode: soft-light;
+}
+.kim-jewel :is(.kim-proj, .kim-journey):hover::after {
+  opacity: 1;
+}
+
+/* ---------- Sao lấp lánh (KimFx rắc ra) ---------- */
+.kim-star {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--s, 14px);
+  height: var(--s, 14px);
+  margin: calc(var(--s, 14px) / -2) 0 0 calc(var(--s, 14px) / -2);
+  pointer-events: none;
+  opacity: 0;
+  filter: drop-shadow(0 0 3px var(--star-glow));
+  animation: kimTwinkle var(--t, 5s) ease-in-out infinite;
+  animation-delay: var(--d, 0s);
+}
+.kim-star::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, var(--star-core) 0 28%, var(--star-edge) 100%);
+  clip-path: polygon(50% 0, 56% 44%, 100% 50%, 56% 56%, 50% 100%, 44% 56%, 0 50%, 44% 44%);
+}
+/* mỗi sao sáng gần nửa chu kỳ rồi nghỉ; các sao lệch pha nhau nên lúc nào cũng có vài đốm đang sáng */
+@keyframes kimTwinkle {
+  0%,
+  46%,
+  100% {
+    opacity: 0;
+    scale: 0.25;
+    rotate: 0deg;
+  }
+  14% {
+    opacity: 1;
+    scale: 1;
+    rotate: 20deg;
+  }
+  26% {
+    opacity: 0.55;
+    scale: 0.7;
+    rotate: 30deg;
+  }
+  34% {
+    opacity: 0.95;
+    scale: 0.92;
+    rotate: 38deg;
+  }
+}
+.kim-jewel .kim-gauge > .kim-star {
+  z-index: 1;
+}
+
+/* ---------- Viên kim cương ở góc khối liên hệ ---------- */
+/* Khối liên hệ luôn là thép tối dù trang đang sáng hay tối, nên viên đá ở đây luôn
+   dùng bảng màu "đá trên nền nhung đen". Tâm đặt trùng tâm vành đồng hồ của thiết kế. */
+.kim-gem.kim-gem-contact {
+  --gem-hi: #9aa3ab;
+  --gem-lo: #0d0f11;
+  --gem-line: rgba(255, 255, 255, 0.16);
+  --gem-shade: #000000;
+  --gem-depth: 0.6;
+  --gem-fire: #f6dc8e;
+  --star-edge: #f3d98b;
+  --brass: #c99a3a;
+  left: auto;
+  right: -74px;
+  top: -104px;
+  width: 328px;
+  z-index: -1;
+  transform: none;
+}
+@media (max-width: 640px) {
+  .kim-gem.kim-gem-contact {
+    display: none;
+  }
+}
+.kim-jewel .kim-year-dot {
+  position: relative;
+}
+.kim-jewel .kim-contact .kim-star {
+  z-index: -1;
+  --star-edge: #f3d98b;
+  --star-glow: rgba(243, 217, 139, 0.85);
+}
+.kim-jewel .kim-year.is-now .kim-year-dot {
+  box-shadow: 0 0 0 5px var(--panel), 0 0 0 6.5px var(--brass);
+}
+
+/* ---------- Màn hình nhỏ ---------- */
+@media (max-width: 640px) {
+  .kim-jewel .kim-proof > div + div::before {
+    left: 50%;
+    top: -7px;
+    margin: 0 0 0 -7px;
+  }
+  .kim-jewel .kim-h2::before {
+    top: -26px;
+  }
+}
+
+/* ---------- Tôn trọng người tắt hiệu ứng chuyển động ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .kim-jewel [data-rv=""] {
+    opacity: 1;
+  }
+  .kim-star {
+    display: none;
+  }
+}

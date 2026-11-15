@@ -22,6 +22,11 @@
  */
 export const PUBLIC_HOSTS = new Set(["aihoclaptrinh.com", "www.aihoclaptrinh.com"]);
 
+// Chỉ khi chạy dev trên máy: http://public.localhost:3001 đóng vai tên miền công
+// khai, để xem thử trang công khai mà không phải sửa file hosts (trình duyệt tự
+// trỏ mọi tên *.localhost về máy mình). Bản đã triển khai không có dòng này.
+if (process.env.NODE_ENV !== "production") PUBLIC_HOSTS.add("public.localhost");
+
 /** Cắt cổng khỏi header Host ("localhost:3001" → "localhost"). */
 export function hostOf(rawHost: string | null | undefined): string {
   return (rawHost ?? "").toLowerCase().split(":")[0];

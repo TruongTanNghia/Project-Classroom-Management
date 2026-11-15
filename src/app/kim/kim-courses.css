@@ -1,0 +1,407 @@
+/* Khối khoá học viết tay: lưới 9 khoá và hộp "nội dung từng buổi".
+
+   Bản thiết kế có ba thẻ khoá mẫu; trang thật có 8 khoá theo 8 bước của lộ trình và
+   1 khoá riêng (xem KimCourseGrid.tsx). Thẻ vẫn là .kim-course của thiết kế, ở đây
+   chỉ thêm những gì thẻ mẫu không có: số bước, học phí theo buổi, hộp nội dung.
+   Màu lấy hết từ biến của thiết kế nên sáng/tối tự theo, và theo luật màu mệnh Kim. */
+
+/* ---------- Lưới ---------- */
+/* 9 thẻ xếp 3×3. Thiết kế về 1 cột từ 860px; với 9 thẻ thì giữ 2 cột tới 640px để
+   người xem máy tính bảng không phải cuộn qua chín thẻ xếp dọc. */
+.kim-courses.kim-cx-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 1024px) {
+  .kim-courses.kim-cx-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .kim-courses.kim-cx-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- Thẻ ---------- */
+.kim-cx {
+  /* đường dẫn #khoa-… cuộn tới thẻ: chừa chỗ cho thanh mục lục dính ở trên */
+  scroll-margin-top: 110px;
+}
+.kim-cx .kim-course-cover {
+  container-type: inline-size;
+}
+/* Dòng code ở bìa không được xuống dòng giữa chừng. Thẻ hẹp (2 cột trên máy tính bảng)
+   thì chữ nhỏ lại theo bề rộng thẻ; ở bề rộng thiết kế vẫn đúng 12px. */
+.kim-cx .c-code {
+  font-size: clamp(10px, 3.55cqw, 12px);
+  overflow: hidden;
+}
+.kim-cx .c-code .ln {
+  display: block;
+  white-space: pre;
+}
+
+/* đồng xu số bước: cùng chất vàng với số trên huy hiệu của lộ trình */
+.kim-cx-no {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  font-size: 13.5px;
+  font-weight: 750;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: #2e2412;
+  background: var(--plate);
+  border: 1px solid #a9802c;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 0 rgba(36, 39, 43, 0.14);
+}
+/* khoá riêng không có số bước: một viên đá nhỏ thay cho con số */
+.kim-cx-no.is-gem::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 1.5px;
+  background: #2e2412;
+  rotate: 45deg;
+}
+
+.kim-cx-ph {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--brass-ink);
+}
+.kim-cx-sum {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--body);
+  text-wrap: pretty;
+}
+.kim-cx .kim-course-foot {
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.kim-cx-fee {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.kim-cx-per {
+  margin-left: 3px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.kim-cx-fee small {
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+/* "Xem khoá học" trông như liên kết của thiết kế nhưng là nút (nó mở hộp, không đi đâu).
+   Đệm trên dưới để ngón tay bấm trúng, bù lại bằng lề âm nên bố cục không đổi. */
+.kim-cx-open {
+  padding: 12px 0;
+  margin: -12px 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* ---------- Hộp nội dung từng buổi ---------- */
+/* Tailwind preflight xoá margin của mọi phần tử, nên <dialog> mất luôn "margin: auto"
+   mặc định và sẽ dính vào góc trên trái: phải tự căn giữa lại.
+   Bề rộng và chiều cao tối đa tính bằng %: ô chứa của hộp là khung nhìn thật, nên trên
+   màn rộng (cả trang được phóng bằng zoom) hộp to theo trang mà không tràn màn hình. */
+.kim-syl {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(780px, 100% - 32px);
+  max-width: none;
+  height: fit-content;
+  max-height: min(880px, 100% - 48px);
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  border-radius: 22px;
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: 0 44px 90px -34px rgba(12, 14, 16, 0.75), 0 2px 6px rgba(12, 14, 16, 0.18);
+}
+.kim-syl[open] {
+  display: flex;
+  flex-direction: column;
+  animation: kimSylIn 0.34s var(--ease);
+}
+.kim-syl::backdrop {
+  background: rgba(20, 22, 24, 0.6);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+.kim-syl[open]::backdrop {
+  animation: kimSylFade 0.26s ease;
+}
+@keyframes kimSylIn {
+  from {
+    opacity: 0;
+    translate: 0 20px;
+    scale: 0.985;
+  }
+}
+@keyframes kimSylFade {
+  from {
+    opacity: 0;
+  }
+}
+/* hộp đang mở thì trang phía sau đứng yên; giữ nguyên chỗ của thanh cuộn để trang không giật ngang */
+html:has(.kim-syl[open]) {
+  overflow: hidden;
+  scrollbar-gutter: stable;
+}
+
+.kim-syl-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0 16px;
+  align-items: center;
+  padding: 18px 20px 18px 24px;
+  background: var(--panel);
+  background-image: var(--brushed);
+  border-bottom: 1px solid var(--line);
+}
+.kim-syl-head .kim-cx-no {
+  position: static;
+  min-width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  font-size: 16px;
+}
+.kim-syl-head .kim-cx-no.is-gem::before {
+  width: 11px;
+  height: 11px;
+}
+.kim-syl-head h3 {
+  margin: 2px 0 0;
+  font-size: clamp(24px, 3.2vw, 30px);
+  font-weight: 780;
+  font-stretch: 110%;
+  line-height: 1.1;
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+}
+.kim-syl-sum {
+  margin: 0 0 16px;
+  max-width: 66ch;
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--body);
+  text-wrap: pretty;
+}
+.kim-syl-x {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  border: 1px solid var(--line-2);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+.kim-syl-x:hover {
+  border-color: var(--ink);
+}
+
+.kim-syl-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px 24px 10px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-2) transparent;
+}
+.kim-syl-scroll:focus-visible {
+  outline-offset: -3px;
+}
+
+/* ba con số: thời lượng, học phí một buổi, tiền một đợt */
+.kim-syl-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--line);
+}
+.kim-syl-facts > div {
+  padding: 12px 16px 13px;
+  background: var(--surface);
+}
+.kim-syl-facts dt {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--muted);
+}
+.kim-syl-facts dd {
+  margin: 2px 0 0;
+  font-size: 20px;
+  font-weight: 790;
+  font-stretch: 110%;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+}
+.kim-syl-facts dd small {
+  margin-left: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  font-stretch: 100%;
+  color: var(--muted);
+}
+.kim-syl-note {
+  margin: 12px 0 0;
+  padding: 11px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--body);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  text-wrap: pretty;
+}
+
+.kim-syl-h {
+  margin: 24px 0 2px;
+  font-size: 17px;
+  font-weight: 730;
+  font-stretch: 104%;
+  line-height: 1.3;
+}
+.kim-syl-part {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--brass-ink);
+}
+.kim-syl-part::after {
+  content: "";
+  flex: 1;
+  min-width: 24px;
+  height: 1px;
+  background: var(--line);
+}
+.kim-syl-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.kim-syl-list li {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 0 12px;
+  padding: 11px 0;
+  border-top: 1px solid var(--line);
+}
+.kim-syl-h + section .kim-syl-list li:first-child,
+.kim-syl-part + .kim-syl-list li:first-child {
+  border-top: 0;
+}
+.kim-syl-list .n {
+  padding-top: 2px;
+  font-family: var(--font-kim-mono), "JetBrains Mono", ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brass-ink);
+  font-variant-numeric: tabular-nums;
+}
+.kim-syl-list b {
+  display: block;
+  font-size: 15.5px;
+  font-weight: 680;
+  line-height: 1.35;
+}
+.kim-syl-list .d {
+  display: block;
+  margin-top: 2px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
+.kim-syl-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  padding: 14px 20px 14px 24px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+.kim-syl-foot > span {
+  flex: 1 1 240px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.kim-syl-foot .kim-btn {
+  min-height: 46px;
+}
+
+/* Điện thoại: hộp thành tấm trượt lên từ đáy, rộng hết màn hình */
+@media (max-width: 640px) {
+  .kim-syl {
+    width: 100%;
+    max-height: calc(100% - 24px);
+    margin: auto 0 0;
+    border-width: 1px 0 0;
+    border-radius: 20px 20px 0 0;
+  }
+  .kim-syl-head {
+    gap: 0 12px;
+    padding: 14px 14px 14px 16px;
+  }
+  .kim-syl-sum {
+    font-size: 15px;
+  }
+  .kim-syl-scroll {
+    padding: 16px 16px 8px;
+  }
+  /* ba ô không đủ chỗ cho "2.400.000₫": thời lượng và học phí một hàng, tiền một đợt hàng dưới */
+  .kim-syl-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .kim-syl-facts > div:last-child {
+    grid-column: 1 / -1;
+  }
+  .kim-syl-foot {
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .kim-syl-foot .kim-btn {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kim-syl[open],
+  .kim-syl[open]::backdrop {
+    animation: none;
+  }
+}
