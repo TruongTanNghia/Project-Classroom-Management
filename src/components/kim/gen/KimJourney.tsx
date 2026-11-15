@@ -29,7 +29,7 @@ export default function KimJourney({ lang }: { lang: KimLang }) {
           <li className="kim-year">
             <span className="kim-year-n">{"2024"}</span>
             <span className="kim-year-dot" />
-            <p>{t("Hơn 120 trường và trung tâm ứng dụng nền tảng.")}</p>
+            <p>{t("Hơn 120 dự án đã thực hiện.")}</p>
           </li>
           <li className="kim-year is-now">
             <span className="kim-year-n">{t("Hôm nay")}</span>

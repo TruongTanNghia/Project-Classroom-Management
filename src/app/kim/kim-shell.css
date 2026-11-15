@@ -37,6 +37,13 @@ html :where(.kim-canvas) ul {
   list-style: disc;
 }
 
+/* ---------- Thanh số liệu ---------- */
+/* Nhãn hai dòng thì chia đều hai dòng ("khách hàng hài lòng / và tin tưởng"), không để
+   rớt một chữ lẻ xuống dòng dưới. Chỉ đổi chỗ ngắt dòng, không đổi số dòng hay chiều cao. */
+.kim-proof span {
+  text-wrap: balance;
+}
+
 /* ---------- Màn hình rộng ---------- */
 /* Bản thiết kế khoá nội dung ở 1240px. Trên màn 1920 trở lên hai bên trống nhiều,
    anh Nghĩa đã dặn trang công khai phải đầy đặn. Phóng đều cả trang (chữ, hình,
