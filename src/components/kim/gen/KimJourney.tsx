@@ -1,5 +1,6 @@
 /* TỆP SINH TỰ ĐỘNG từ bản thiết kế "Xưởng Kim" (kim-convert.py). Đừng sửa tay. */
 import { tKim, type KimLang } from "../i18n-kim";
+import KimYears from "../KimYears";
 
 export default function KimJourney({ lang }: { lang: KimLang }) {
   const t = (s: string) => tKim(lang, s);
@@ -8,35 +9,9 @@ export default function KimJourney({ lang }: { lang: KimLang }) {
       <div className="kim-journey">
         <div className="kim-head">
           <h2 className="kim-h2" id="kim-journey-h">{t("Chặng đường đã qua")}</h2>
-          <p className="kim-note">{t("Từ dòng code đầu tiên đến hôm nay.")}</p>
+          <p className="kim-note">{t("Kim cương không sinh ra đã sáng. Nó thành hình dưới áp lực.")}</p>
         </div>
-        <ol className="kim-years">
-          <li className="kim-year">
-            <span className="kim-year-n">{"2017"}</span>
-            <span className="kim-year-dot" />
-            <p>{t("Bắt đầu hành trình lập trình và nghiên cứu AI.")}</p>
-          </li>
-          <li className="kim-year">
-            <span className="kim-year-n">{"2020"}</span>
-            <span className="kim-year-dot" />
-            <p>{t("Đưa AI vào giảng dạy, kèm lứa học viên đầu tiên.")}</p>
-          </li>
-          <li className="kim-year">
-            <span className="kim-year-n">{"2022"}</span>
-            <span className="kim-year-dot" />
-            <p>{t("Sáng lập AIhoclaptrinh, nền tảng dạy và ứng dụng AI.")}</p>
-          </li>
-          <li className="kim-year">
-            <span className="kim-year-n">{"2024"}</span>
-            <span className="kim-year-dot" />
-            <p>{t("Hơn 120 dự án đã thực hiện.")}</p>
-          </li>
-          <li className="kim-year is-now">
-            <span className="kim-year-n">{t("Hôm nay")}</span>
-            <span className="kim-year-dot" />
-            <p>{t("Xây AI agent và automation cho doanh nghiệp và lớp học.")}</p>
-          </li>
-        </ol>
+        <KimYears lang={lang} />
         <div className="kim-motto">
           <strong>{t("Never give up.")}</strong>
           <span>{t("Phương châm của AIhoclaptrinh")}</span>

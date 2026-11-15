@@ -512,16 +512,10 @@
     display: none;
   }
 }
-.kim-jewel .kim-year-dot {
-  position: relative;
-}
 .kim-jewel .kim-contact .kim-star {
   z-index: -1;
   --star-edge: #f3d98b;
   --star-glow: rgba(243, 217, 139, 0.85);
-}
-.kim-jewel .kim-year.is-now .kim-year-dot {
-  box-shadow: 0 0 0 5px var(--panel), 0 0 0 6.5px var(--brass);
 }
 
 /* ---------- Màn hình nhỏ ---------- */

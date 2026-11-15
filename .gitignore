@@ -43,3 +43,7 @@ next-env.d.ts
 # secrets
 *.key
 *.p12
+
+# mô hình 3D gốc anh Nghĩa đưa (29 MB). Bản đã giản lược cho web nằm ở public/kim/models,
+# sinh bằng UI/aihoclaptrinh-design-mcp/scripts/glb-optimize.mjs
+/models-3D/

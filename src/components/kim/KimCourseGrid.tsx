@@ -1,8 +1,8 @@
 import type { CSSProperties } from "react";
 
 import KimSyllabus from "./KimSyllabus";
-import { COURSES, CYCLE, countSessions, dong, tx, type Course, type Cover, type L } from "./courses-data";
-import { tKim, type KimLang } from "./i18n-kim";
+import { COURSES, CYCLE, countSessions, dong, type Course, type Cover } from "./courses-data";
+import { tKim, tx, type KimLang, type L } from "./i18n-kim";
 
 /* Lưới khoá học + hộp "nội dung từng buổi" của mỗi khoá.
 

@@ -84,8 +84,10 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Bỏ qua file tĩnh để không tốn công xử lý
+  // Bỏ qua file tĩnh để không tốn công xử lý. Đuôi nào không có trong danh sách này sẽ đi qua
+  // bộ lọc ở trên và bị đẩy về "/" — thêm loại file tĩnh mới vào public/ thì phải thêm đuôi vào
+  // đây (glb: mô hình 3D của trang công khai, public/kim/models).
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\.(?:webp|jpg|jpeg|png|gif|svg|ico|woff|woff2|ttf|css|js|map|txt|xml|json)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\.(?:webp|jpg|jpeg|png|gif|svg|ico|woff|woff2|ttf|css|js|map|txt|xml|json|glb)$).*)",
   ],
 };

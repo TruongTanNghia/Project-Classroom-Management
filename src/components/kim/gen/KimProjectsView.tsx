@@ -2,6 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 import type { CSSProperties } from "react";
 import { tKim, type KimLang } from "../i18n-kim";
+import KimOrganScan from "../KimOrganScan";
 
 export default function KimProjectsView({ lang, enterP, hid, holdClass, leaveP, nextP, pick, prevP, sel }: { lang: KimLang; enterP: () => void; hid: (id: string) => string; holdClass: string; leaveP: () => void; nextP: () => void; pick: (id: string) => () => void; prevP: () => void; sel: (id: string) => boolean }) {
   const t = (s: string) => tKim(lang, s);
@@ -777,66 +778,7 @@ export default function KimProjectsView({ lang, enterP, hid, holdClass, leaveP, 
                     <b>{t("LungVision 3D")}</b>
                     <span>{t("Bản nghiên cứu")}</span>
                   </div>
-                  <div className="kim-win-body m-lung">
-                    <div className="m-ct">
-                      <div className="m-ct-h">
-                        <span>{t("Lát cắt ngang")}</span>
-                        <span>{t("Ảnh CT")}</span>
-                      </div>
-                      <svg viewBox="0 0 200 170" aria-hidden="true" fontFamily="Archivo, ui-sans-serif, sans-serif">
-                        <ellipse cx="100" cy="88" rx="88" ry="70" fill="#5A6066" />
-                        <ellipse cx="100" cy="88" rx="81" ry="63" fill="#3B4045" />
-                        <path d="M92 40 C 70 32, 40 44, 33 70 C 27 94, 36 122, 58 130 C 76 136, 90 126, 92 110 Z" fill="#0B0C0E" />
-                        <path d="M108 40 C 130 32, 160 44, 167 70 C 173 94, 164 122, 142 130 C 124 136, 110 126, 108 110 Z" fill="#0B0C0E" />
-                        <path d="M60 60 C 66 72, 64 90, 70 104 M48 86 C 58 92, 70 96, 82 94 M140 60 C 134 72, 136 90, 130 104 M152 86 C 142 92, 130 96, 118 94" fill="none" stroke="#2A2E33" strokeWidth="1.4" />
-                        <ellipse cx="114" cy="100" rx="21" ry="18" fill="#6A7077" />
-                        <circle cx="100" cy="62" r="6" fill="#0B0C0E" stroke="#6A7077" strokeWidth="1.5" />
-                        <circle cx="100" cy="141" r="10" fill="#C8CCCF" />
-                        <circle cx="100" cy="141" r="5" fill="#8A9096" />
-                        <circle cx="56" cy="62" r="4" fill="#E2E4E5" />
-                        <circle cx="56" cy="62" r="10" fill="none" stroke="#E3BA55" strokeWidth="1.6" />
-                        <path d="M56 46 v6 M56 72 v6 M40 62 h6 M66 62 h6" stroke="#E3BA55" strokeWidth="1.4" />
-                        <text x="70" y="50" fontSize="9" fontWeight="700" fill="#E3BA55">{t("Nốt 1")}</text>
-                        <text x="8" y="14" fontSize="8" fill="#8A9096">{t("P")}</text>
-                        <text x="186" y="14" fontSize="8" fill="#8A9096">{t("T")}</text>
-                      </svg>
-                      <div className="m-slider">
-                        <em>{t("Lát 142")}</em>
-                        <span />
-                        <em>{"310"}</em>
-                      </div>
-                    </div>
-                    <div className="m-3d">
-                      <svg viewBox="0 0 360 270" aria-hidden="true">
-                        <defs>
-                          <radialGradient id="kimLung" cx="45%" cy="40%" r="70%">
-                            <stop offset="0" stopColor="#4B5158" />
-                            <stop offset="1" stopColor="#23272B" />
-                          </radialGradient>
-                        </defs>
-                        <path d="M168 52 C 130 30, 70 70, 62 140 C 56 196, 86 236, 128 232 C 156 229, 168 205, 168 180 Z" fill="url(#kimLung)" stroke="#6A7077" strokeWidth="1.5" />
-                        <path d="M192 52 C 230 30, 290 70, 298 140 C 304 196, 274 236, 232 232 C 204 229, 192 205, 192 180 Z" fill="url(#kimLung)" stroke="#6A7077" strokeWidth="1.5" />
-                        <path d="M74 110 C 100 100, 140 104, 166 112 M66 150 C 98 140, 140 146, 168 154 M80 196 C 106 186, 140 190, 166 196 M122 44 C 106 100, 104 170, 116 232 M90 76 C 84 120, 84 180, 98 222 M286 110 C 260 100, 220 104, 194 112 M294 150 C 262 140, 220 146, 192 154 M280 196 C 254 186, 220 190, 194 196 M238 44 C 254 100, 256 170, 244 232 M270 76 C 276 120, 276 180, 262 222" fill="none" stroke="#5A6066" strokeWidth="1" opacity="0.7" />
-                        <path d="M180 12 V70" stroke="#A9AEB3" strokeWidth="8" strokeLinecap="round" />
-                        <path d="M180 70 C 170 82, 158 88, 150 93 M180 70 C 190 82, 202 88, 210 93" fill="none" stroke="#A9AEB3" strokeWidth="5" strokeLinecap="round" />
-                        <path d="M150 93 C 140 110, 128 120, 112 128 M150 93 C 146 116, 146 136, 140 158 M140 98 C 128 96, 118 90, 108 82 M210 93 C 220 110, 232 120, 248 128 M210 93 C 214 116, 214 136, 220 158 M220 98 C 232 96, 242 90, 252 82" fill="none" stroke="#8A9096" strokeWidth="2.4" strokeLinecap="round" />
-                        <circle cx="112" cy="92" r="17" fill="none" stroke="#E3BA55" strokeWidth="1.2" opacity="0.6" />
-                        <circle cx="112" cy="92" r="9" fill="#E3BA55" stroke="#8E6A22" strokeWidth="1.5" />
-                        <circle cx="109" cy="89" r="2.6" fill="#F6E3B0" />
-                        <path d="M124 84 L246 30" stroke="#E3BA55" strokeWidth="1.2" strokeDasharray="4 3" />
-                      </svg>
-                      <div className="m-callout">
-                        <b>{t("Nốt nghi ngờ số 1")}</b>
-                        <span>{t("Thuỳ trên phổi phải")}</span>
-                        <span>{t("Đánh dấu ở lát 142")}</span>
-                      </div>
-                      <div className="m-tools">
-                        <span className="on">{t("Xoay")}</span>
-                        <span>{t("Thu phóng")}</span>
-                        <span>{t("Ẩn mạch máu")}</span>
-                      </div>
-                    </div>
-                  </div>
+                  <KimOrganScan lang={lang} />
                 </div>
               </div>
               <div className="kim-panel-body">

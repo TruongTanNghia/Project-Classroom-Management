@@ -150,16 +150,7 @@ const EN: Record<string, string> = {
   "Công nghiệp": "Industry",
   "Đếm thời gian máy chạy và dừng từ camera RTSP có sẵn trong xưởng, không cần GPU, có dashboard theo dõi nhiều máy.": "Measures machine run and stop time from the shop's existing RTSP cameras, no GPU needed, with a dashboard for several machines.",
   "Bản nghiên cứu": "Research build",
-  "Lát cắt ngang": "Axial slice",
-  "Ảnh CT": "CT scan",
-  "Nốt 1": "Nodule 1",
-  "Lát 142": "Slice 142",
-  "Nốt nghi ngờ số 1": "Suspicious nodule 1",
-  "Thuỳ trên phổi phải": "Right upper lobe",
-  "Đánh dấu ở lát 142": "Marked on slice 142",
-  "Xoay": "turn",
-  "Thu phóng": "Zoom",
-  "Ẩn mạch máu": "Hide vessels",
+  // chữ trong thân cửa sổ LungVision 3D (lát cắt, khung chú thích, nút) nằm ở KimOrganScan.tsx
   "Y tế, ảnh CT": "Healthcare, CT imaging",
   "Phát hiện nốt phổi trên ảnh CT bằng U-Net và hiển thị vị trí trên mô hình phổi 3D tương tác.": "Detects lung nodules in CT scans with U-Net and places them on an interactive 3D lung model.",
   "Chạy trên trình duyệt": "Runs in the browser",
@@ -265,13 +256,8 @@ const EN: Record<string, string> = {
 
   // KimJourney
   "Chặng đường đã qua": "The road so far",
-  "Từ dòng code đầu tiên đến hôm nay.": "From the first line of code to today.",
-  "Bắt đầu hành trình lập trình và nghiên cứu AI.": "Started programming and researching AI.",
-  "Đưa AI vào giảng dạy, kèm lứa học viên đầu tiên.": "Brought AI into teaching and coached the first cohort.",
-  "Sáng lập AIhoclaptrinh, nền tảng dạy và ứng dụng AI.": "Founded AIhoclaptrinh, a platform for teaching and applying AI.",
-  "Hơn 120 dự án đã thực hiện.": "More than 120 projects delivered.",
-  "Hôm nay": "Today",
-  "Xây AI agent và automation cho doanh nghiệp và lớp học.": "Building AI agents and automation for businesses and classrooms.",
+  "Kim cương không sinh ra đã sáng. Nó thành hình dưới áp lực.": "A diamond is not born brilliant. It takes shape under pressure.",
+  // các mốc của dòng thời gian (năm, nhãn, chữ) nằm ở KimYears.tsx, dịch ngay tại đó
   "Phương châm của AIhoclaptrinh": "The AIhoclaptrinh motto",
   "Công cụ dùng hằng ngày": "Tools I use every day",
 
@@ -312,3 +298,9 @@ export function tKim(lang: KimLang, vi: string): string {
   if (lang === "vi") return vi;
   return EN[vi] ?? vi;
 }
+
+/* Cách thứ hai, cho những khối viết tay có nhiều nội dung (khoá học, chặng đường): bản dịch
+   nằm ngay cạnh câu gốc thành cặp [Việt, Anh], không qua từ điển ở trên. Chuỗi viết một
+   lần nghĩa là hai ngôn ngữ dùng chung (tên riêng, thuật ngữ, code). */
+export type L = string | readonly [vi: string, en: string];
+export const tx = (lang: KimLang, l: L): string => (typeof l === "string" ? l : l[lang === "en" ? 1 : 0]);

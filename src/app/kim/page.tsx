@@ -1,6 +1,8 @@
 import "./kim.css";
 import "./kim-shell.css";
 import "./kim-courses.css";
+import "./kim-journey.css";
+import "./kim-organ-scan.css";
 import "./kim-diamond.css";
 
 import { cookies } from "next/headers";

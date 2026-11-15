@@ -1,4 +1,4 @@
-import type { KimLang } from "./i18n-kim";
+import type { L } from "./i18n-kim";
 
 /* Các khoá học hiện trên trang công khai: tên, học phí, nội dung từng buổi.
 
@@ -20,8 +20,6 @@ import type { KimLang } from "./i18n-kim";
 
    Chuỗi viết một lần nếu hai ngôn ngữ giống nhau, hoặc cặp [Việt, Anh]. */
 
-export type L = string | readonly [vi: string, en: string];
-export const tx = (lang: KimLang, l: L): string => (typeof l === "string" ? l : l[lang === "en" ? 1 : 0]);
 
 /** một mẩu trên dòng code ở bìa thẻ: chữ thường, hoặc [chữ, kiểu] với k = từ khoá, s = chuỗi */
 export type Tok = string | readonly [text: L, cls: "k" | "s"];

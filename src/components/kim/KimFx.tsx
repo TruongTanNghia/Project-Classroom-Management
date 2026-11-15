@@ -112,8 +112,9 @@ export default function KimFx() {
         made.push(star(motto, "57%", "2%", 16, 2.2, 6.4));
         made.push(star(motto, "98.5%", "66%", 26, 3.6, 5.9));
       }
-      const now = root.querySelector(".kim-year.is-now .kim-year-dot");
-      if (now) made.push(star(now, "50%", "50%", 20, 0.8, 4.2));
+      // viên kim cương ở mốc "Hôm nay" của dòng thời gian: một tia loé ở mép trên phải
+      const now = root.querySelector(".kim-year.is-now .kim-jr-gem");
+      if (now) made.push(star(now, "84%", "14%", 24, 0.8, 4.2));
       // bụi kim cương quanh mặt đồng hồ: nằm trên vành vạch chia, tránh chỗ tám huy hiệu
       const gauge = root.querySelector(".kim-gauge");
       if (gauge) {

@@ -1,0 +1,248 @@
+/* Thân cửa sổ "LungVision 3D" (KimOrganScan.tsx): lát cắt 2D + mô hình 3D quét tìm khối u.
+
+   Bố cục và màu nền vẫn là .m-lung, .m-ct, .m-3d, .m-callout, .m-tools của bản thiết kế. Ở đây
+   chỉ có phần thêm: canvas 3D, dòng trạng thái, đường chỉ dẫn, và việc các phần tử hiện ra
+   theo từng pha của kịch bản quét (thuộc tính data-phase trên .kim-os:
+   load → scan → hit → after → build → found).
+
+   Màu trong cửa sổ trình diễn là màu cố định, không theo sáng/tối của trang: bản thiết kế
+   dựng các cửa sổ này "luôn như ảnh chụp sản phẩm". Vẫn theo luật mệnh Kim: thép, bạc, vàng. */
+
+.kim-os .m-3d {
+  overflow: hidden;
+}
+.kim-os-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* kéo ngang để xoay mô hình; vuốt dọc vẫn cuộn trang như thường */
+  touch-action: pan-y;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.kim-os-canvas:active {
+  cursor: grabbing;
+}
+.kim-os[data-ready="1"] .kim-os-canvas {
+  opacity: 1;
+}
+
+/* đường chỉ dẫn từ khối u tới khung chú thích. Thiết kế có luật ".m-3d svg { width: 94% }"
+   cho hình vẽ cũ, phải ghi đè cho lớp phủ này. */
+.kim-os .m-3d .kim-os-lead {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  overflow: visible;
+  pointer-events: none;
+}
+.kim-os-lead line {
+  stroke: #e3ba55;
+  stroke-width: 1.2;
+  stroke-dasharray: 4 3;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* ---------- dòng trạng thái ---------- */
+.kim-os-status {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 9px 5px 8px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #d0d3d4;
+  background: rgba(36, 39, 43, 0.88);
+  border: 1px solid #3a3f45;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+.kim-os-status::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #8a9096;
+}
+.kim-os-count {
+  color: #a4aab0;
+}
+.kim-os:not([data-phase="scan"], [data-phase="after"]) .kim-os-count {
+  display: none;
+}
+.kim-os:is([data-phase="scan"], [data-phase="after"]) .kim-os-status::before {
+  background: #e3ba55;
+  animation: kimOsBlink 0.9s steps(2, jump-none) infinite;
+}
+.kim-os:is([data-phase="hit"], [data-phase="build"], [data-phase="found"]) .kim-os-status {
+  color: #f0d488;
+  border-color: #8e6a22;
+}
+.kim-os:is([data-phase="hit"], [data-phase="build"], [data-phase="found"]) .kim-os-status::before {
+  background: #e3ba55;
+  box-shadow: 0 0 0 3px rgba(227, 186, 85, 0.25);
+}
+@keyframes kimOsBlink {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.25;
+  }
+}
+/* nói rõ đây là mô phỏng, không phải kết quả chẩn đoán */
+.kim-os-sim {
+  position: absolute;
+  left: 13px;
+  top: 44px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #7d858c;
+  pointer-events: none;
+}
+
+/* ---------- khung chú thích: chỉ mở ra khi đã đánh dấu xong ---------- */
+.kim-os .m-callout {
+  opacity: 0;
+  translate: 0 -6px;
+  transition: opacity 0.45s ease, translate 0.45s var(--ease);
+  pointer-events: none;
+}
+.kim-os[data-phase="found"] .m-callout {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* ---------- nút đổi cơ quan / quét lại ---------- */
+.kim-os .m-tools {
+  z-index: 1;
+}
+.kim-os .m-tools button {
+  padding: 4px 9px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #d0d3d4;
+  background: #24272b;
+  border: 1px solid #3a3f45;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+.kim-os .m-tools button:hover {
+  color: #ffffff;
+  border-color: #8a9096;
+}
+.kim-os .m-tools button.on {
+  color: #24272b;
+  background: #e3ba55;
+  border-color: #e3ba55;
+  cursor: default;
+}
+.kim-os .m-tools button[data-rescan] {
+  margin-left: 6px;
+}
+
+/* ---------- ghi công mô hình (bắt buộc theo CC BY 4.0) ---------- */
+.kim-os-credit {
+  position: absolute;
+  right: 12px;
+  bottom: 13px;
+  font-size: 9.5px;
+  line-height: 1.3;
+  color: #7d858c;
+  white-space: nowrap;
+  /* chữ nằm đè lên mô hình: viền tối mỏng cho dễ đọc */
+  text-shadow: 0 0 3px #16181b, 0 0 6px #16181b;
+}
+.kim-os-sim-inline {
+  display: none;
+}
+.kim-os .kim-os-credit a {
+  color: #a4aab0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.kim-os .kim-os-credit a:hover {
+  color: #e3ba55;
+}
+
+/* ---------- khung lát cắt 2D ---------- */
+.kim-os .m-ct [data-img] {
+  transition: opacity 0.2s ease;
+}
+.kim-os .m-ct [data-mark] {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.kim-os:is([data-phase="hit"], [data-phase="build"], [data-phase="found"]) .m-ct [data-mark] {
+  opacity: 1;
+}
+/* đã ghi nhận nhưng còn đang quét các lát khác: dấu mờ đi, chờ quay lại đúng lát đó */
+.kim-os[data-phase="after"] .m-ct [data-mark] {
+  opacity: 0.4;
+}
+.kim-os .m-slider b {
+  font-weight: inherit;
+}
+/* con trượt chạy theo lát đang quét (thiết kế đặt cứng ở 58%) */
+.kim-os .m-slider span::after {
+  left: calc(var(--p, 0.46) * (100% - 11px));
+}
+
+/* ---------- thẻ dự án hẹp (điện thoại): chỉ còn khung 3D ---------- */
+@container (max-width: 680px) {
+  .kim-os .m-tools button {
+    padding: 6px 11px;
+    font-size: 11.5px;
+  }
+  /* Khung 3D chỉ còn rộng chừng 280px, không đủ chỗ cho mọi lớp chữ như ở màn rộng:
+     - dòng ghi công lên trên hàng nút, được xuống dòng, và gánh luôn chữ "mô phỏng minh hoạ"
+     - khung chú thích sang góc trên trái, thế chỗ dòng trạng thái khi đã đánh dấu xong */
+  .kim-os-credit {
+    left: 12px;
+    right: 12px;
+    bottom: 48px;
+    white-space: normal;
+  }
+  .kim-os-sim {
+    display: none;
+  }
+  .kim-os-sim-inline {
+    display: inline;
+  }
+  .kim-os-status {
+    max-width: calc(100% - 24px);
+    transition: opacity 0.3s ease;
+  }
+  .kim-os[data-phase="found"] .kim-os-status {
+    opacity: 0;
+  }
+  .kim-os .m-callout {
+    left: 10px;
+    right: auto;
+    top: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kim-os:is([data-phase="scan"], [data-phase="after"]) .kim-os-status::before {
+    animation: none;
+  }
+}
