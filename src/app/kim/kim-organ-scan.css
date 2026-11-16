@@ -206,6 +206,12 @@
   left: calc(var(--p, 0.46) * (100% - 11px));
 }
 
+/* Thẻ LungVision dừng 11 giây thay vì 7 (KimProjects.tsx: DWELL_OF) để kịch bản quét kịp chạy
+   hết; thanh tiến độ dưới thẻ phải chạy cùng nhịp, không thì đầy sớm 4 giây. */
+#kim-tab-lung[aria-selected="true"] .bar i {
+  animation-duration: 11s;
+}
+
 /* ---------- thẻ dự án hẹp (điện thoại): chỉ còn khung 3D ---------- */
 @container (max-width: 680px) {
   .kim-os .m-tools button {

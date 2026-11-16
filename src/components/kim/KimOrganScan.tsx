@@ -222,7 +222,12 @@ export default function KimOrganScan({ lang }: { lang: KimLang }) {
     };
   }, []);
 
+  /* Người xem đã chạm vào khung quét: báo cho băng chuyền dự án (KimProjects) đứng lại ở thẻ này,
+     không tự chuyển sang dự án khác giữa lúc họ đang xem. */
+  const pin = () => root.current?.dispatchEvent(new CustomEvent("kim-proj-pin", { bubbles: true }));
+
   const pick = (o: Organ) => {
+    pin();
     if (o === organ) return;
     organRef.current = o;
     setOrgan(o);
@@ -253,7 +258,7 @@ export default function KimOrganScan({ lang }: { lang: KimLang }) {
       </div>
 
       <div className="m-3d">
-        <canvas className="kim-os-canvas" ref={canvas} />
+        <canvas className="kim-os-canvas" ref={canvas} onPointerDown={pin} />
         <svg className="kim-os-lead" aria-hidden="true">
           <line ref={lead} />
         </svg>
@@ -278,7 +283,15 @@ export default function KimOrganScan({ lang }: { lang: KimLang }) {
               {x(TXT[o].name)}
             </button>
           ))}
-          <button type="button" tabIndex={-1} data-rescan onClick={() => api.current?.restart()}>
+          <button
+            type="button"
+            tabIndex={-1}
+            data-rescan
+            onClick={() => {
+              pin();
+              api.current?.restart();
+            }}
+          >
             {x(["Quét lại", "Rescan"])}
           </button>
         </div>
