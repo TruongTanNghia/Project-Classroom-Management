@@ -453,6 +453,7 @@ export function createOrganScan(canvas: HTMLCanvasElement, opts: { organ: Organ;
   let lastSlice = -1;
   let token = 0;
   let hiddenAt = -1e9; // lúc khung khuất khỏi màn hình lần gần nhất
+  let loading = false; // đang tải mô hình của cơ quan vừa được chọn
 
   const SCAN_START = 0.3;
   const SCAN_LEN = 3.1;
@@ -485,16 +486,23 @@ export function createOrganScan(canvas: HTMLCanvasElement, opts: { organ: Organ;
   async function show(next: Organ) {
     const my = ++token;
     organ = next;
+    // Trong lúc chờ mô hình mới, vòng vẽ không được chạy tiếp kịch bản của mô hình cũ: nếu không,
+    // pha sẽ nhảy lại về "found" và khung hiện mô hình cũ kèm chú thích của cơ quan mới.
+    loading = true;
     setPhase("load");
     events.onProject?.(0, 0, false);
     let loaded: Loaded;
     try {
       loaded = await load(next);
     } catch (err) {
-      if (!disposed) events.onError?.(err);
+      if (!disposed && my === token) {
+        loading = false;
+        events.onError?.(err);
+      }
       return;
     }
     if (disposed || my !== token) return;
+    loading = false;
     if (cur) pivot.remove(cur.root);
     for (const u of lobeUniforms.values()) u.value = 0;
     cur = loaded;
@@ -519,7 +527,8 @@ export function createOrganScan(canvas: HTMLCanvasElement, opts: { organ: Organ;
     t = reduce ? 99 : 0;
     lastSlice = -1;
     marker.visible = false;
-    if (cur) setPhase(reduce ? "found" : "scan");
+    // đang tải mô hình khác thì giữ pha "load"; tải xong show() sẽ gọi lại hàm này
+    if (cur && !loading) setPhase(reduce ? "found" : "scan");
     kick();
   }
 
@@ -531,7 +540,13 @@ export function createOrganScan(canvas: HTMLCanvasElement, opts: { organ: Organ;
     if (disposed || !active) return;
     const dt = Math.min(0.05, (now - last) / 1000 || 0);
     last = now;
-    if (cur) {
+    if (loading) {
+      // mô hình cũ mờ dần đi, mọi dấu đánh tắt hết, chờ mô hình mới
+      shared.uReveal.value = Math.max(0, shared.uReveal.value - dt * 5);
+      shared.uScanAmt.value = 0;
+      planeMat.uniforms.uAmt.value = 0;
+      marker.visible = false;
+    } else if (cur) {
       t += dt;
       const cfg = ORGANS[organ];
       const hitFrac = (cfg.hitSlice - 1) / (cfg.slices - 1);
