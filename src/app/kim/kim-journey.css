@@ -15,9 +15,10 @@
   --jr-hi: #ffffff;
   --jr-lo: #98a0a7;
   --jr-edge: #7d858c;
-  /* cột cuối rộng hơn để chữ "Hôm nay" nằm gọn một dòng. Ở bản thiết kế nó rớt thành hai
-     dòng và đẩy chấm của nó lệch khỏi đường kẻ. */
-  grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.3fr);
+  /* Cột cuối rộng hơn hẳn: nó là hộp trưng bày của mốc "Hôm nay" (xem cuối file), và chữ
+     "Hôm nay" phải nằm gọn một dòng. Ở bản thiết kế nó rớt thành hai dòng và đẩy chấm của nó
+     lệch khỏi đường kẻ. */
+  grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.75fr);
 }
 .kim-canvas.dark .kim-years.kim-jr {
   --jr-hi: #f1f2ef;
@@ -68,9 +69,6 @@
   border-radius: 4px;
   background: var(--line-2);
   transform-origin: 0 50%;
-}
-.kim-jr .kim-year:last-child::before {
-  display: none;
 }
 /* 2023 → 2024: bạc sẫm dần thành thép */
 .kim-jr .kim-year[data-stage="2"]::before {
@@ -331,4 +329,235 @@ html :where(.kim-canvas) .kim-jr-gem svg {
   animation:
     kimRise 0.6s var(--ease) backwards calc(0.4s + var(--rv-i, 0) * 0.22s),
     kimSweep 6.4s ease-in-out infinite 3.4s;
+}
+
+/* ============================================================
+   Mốc "Hôm nay": viên kim cương đã thành, đặt trong hộp trưng bày
+   ============================================================ */
+/* Một tấm nền tối như nhung của tiệm kim hoàn nằm sau cả cột cuối: trên nền sáng của khối,
+   đây là chỗ mắt dừng lại, và trên nền tối thì ánh của viên đá mới nổi. Tấm nền là ::after
+   của mốc, không phải một lớp bọc, nên vị trí chữ và viên đá không đổi so với các mốc khác. */
+.kim-years.kim-jr {
+  /* gom các lớp của dòng thời gian vào một nhóm riêng, để xếp được: tia sáng chạy dọc đường ray
+     nằm DƯỚI hộp "Hôm nay" (tia đi tới mép hộp thì khuất, viên kim cương bên trong loé lên) */
+  isolation: isolate;
+}
+.kim-jr .kim-year.is-now {
+  z-index: 1;
+  grid-template-rows: auto var(--jr-rail) auto 1fr;
+  grid-template-areas:
+    "year year"
+    "gem stage"
+    "text text"
+    "fields fields";
+}
+.kim-jr .kim-year.is-now::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -18px -20px -20px -18px;
+  border-radius: 22px;
+  background: radial-gradient(130% 95% at 14% 42%, #3d444b 0%, #25282c 44%, #141618 100%);
+  border: 1px solid #a9802c;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), inset 0 0 0 1px rgba(236, 200, 105, 0.12), 0 26px 44px -28px rgba(12, 14, 16, 0.85);
+}
+/* đoạn vàng chạy tiếp vào trong hộp, tới đúng viên đá (đoạn nối của mốc 2026 bị hộp che mất khúc cuối) */
+.kim-jr .kim-year.is-now::before {
+  left: -18px;
+  right: auto;
+  width: calc(18px + var(--sz) / 2);
+  height: 3px;
+  margin-top: -1.5px;
+  background: var(--brass-2);
+}
+.kim-jr .kim-year.is-now .kim-year-n {
+  color: #ecc869;
+}
+.kim-jr .kim-year.is-now p {
+  color: #c9ced2;
+}
+.kim-jr .kim-year.is-now p b {
+  color: #ffffff;
+}
+.kim-jr .kim-year.is-now .kim-jr-gem {
+  filter: drop-shadow(0 0 12px rgba(236, 200, 105, 0.9)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+/* tám mảng AI */
+.kim-jr-fields {
+  grid-area: fields;
+  align-self: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.kim-jr-fields li {
+  padding: 3px 9px 4px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  color: #f0d488;
+  background: rgba(236, 200, 105, 0.09);
+  border: 1px solid rgba(236, 200, 105, 0.42);
+}
+
+/* lớp ánh sáng trên từng mặt cắt của viên "Hôm nay": tắt khi không có lớp kim cương */
+.kim-jr-gem .sp {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .kim-jr .kim-year.is-now {
+    grid-template-rows: auto auto auto auto;
+    grid-template-areas:
+      "gem year"
+      "gem stage"
+      "gem text"
+      "gem fields";
+    padding-bottom: 0;
+    margin-top: 6px;
+  }
+  .kim-jr .kim-year.is-now::after {
+    inset: -14px -14px -16px -8px;
+    border-radius: 20px;
+  }
+  /* đoạn vàng dọc đi tiếp từ mép trên của hộp xuống tới viên đá */
+  .kim-jr .kim-year.is-now::before {
+    left: calc(var(--jr-rail) / 2);
+    top: -14px;
+    bottom: auto;
+    width: 3px;
+    height: calc(14px + var(--sz) / 2);
+    margin: 0 0 0 -1.5px;
+    background: var(--brass-2);
+  }
+}
+
+/* ---------- chuyển động của mốc "Hôm nay" và của cả đường ray: chỉ khi có lớp kim cương ---------- */
+/* chữ "Hôm nay" bằng vàng, có vệt sáng lướt qua như tên ở đầu trang */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .kim-jewel .kim-jr .kim-year.is-now .kim-year-n {
+    background-color: #ecc869;
+    background-image: linear-gradient(104deg, transparent 0 44%, #fffbe6 50%, transparent 56% 100%);
+    background-size: 300% 100%;
+    background-repeat: no-repeat;
+    background-position: 100% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    animation: kimTextSweep 5.5s ease-in-out infinite 1.2s;
+  }
+}
+
+/* ánh sáng xoay quanh viên kim cương: mỗi mặt cắt loé lên khi tia đèn quét tới góc của nó
+   (độ trễ của từng mặt tính sẵn trong KimYears.tsx, một vòng 3,6 giây) */
+.kim-jewel .kim-jr-gem .sp {
+  display: inline;
+  fill: #ffffff;
+  stroke: none;
+  opacity: 0;
+  animation: kimJrFacet 3.6s linear infinite;
+}
+.kim-jewel .kim-jr-gem .sp.t {
+  animation-name: kimJrTable;
+}
+@keyframes kimJrFacet {
+  0%,
+  22%,
+  100% {
+    opacity: 0;
+  }
+  7% {
+    opacity: 0.95;
+  }
+}
+@keyframes kimJrTable {
+  0%,
+  60%,
+  100% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.55;
+  }
+}
+
+/* tám mảng AI bật ra lần lượt theo thứ tự học, sau khi viên đá đã yên vị */
+.kim-jewel .kim-jr .kim-year[data-rv="in"] .kim-jr-fields li {
+  animation: kimPop 0.5s var(--ease) backwards;
+  animation-delay: calc(1.5s + var(--k, 0) * 80ms);
+}
+
+/* Một tia sáng chạy dọc cả hành trình, từ 2022 tới hôm nay, 7 giây một lượt; nó đi tới viên
+   đá nào thì viên đó loé lên. Tia là một đốm nền trượt trong một dải mỏng phủ suốt đường ray
+   (chỉ vẽ lại, không dàn lại trang). Độ trễ của từng viên = quãng đường tia phải đi tới nó. */
+.kim-jewel .kim-years.kim-jr::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(clamp(30px, 3.2vw, 44px) + 10px + var(--jr-rail) / 2 - 8px);
+  height: 16px;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(closest-side, rgba(255, 250, 228, 0.98), rgba(236, 200, 105, 0.6) 45%, transparent 72%) no-repeat;
+  background-size: 120px 16px;
+  background-position: -120px 0;
+  animation: kimJrSpark 7s linear infinite 2.6s;
+}
+@keyframes kimJrSpark {
+  0% {
+    background-position: -120px 0;
+  }
+  62%,
+  100% {
+    background-position: calc(100% + 120px) 0;
+  }
+}
+.kim-jewel .kim-jr-gem svg {
+  animation: kimJrFlash 7s linear infinite;
+  animation-delay: calc(2.6s + 0.04s + var(--jr-i, 0) * 0.73s);
+}
+@keyframes kimJrFlash {
+  0%,
+  8%,
+  100% {
+    filter: none;
+    scale: 1;
+  }
+  3% {
+    filter: brightness(1.55) drop-shadow(0 0 5px rgba(255, 240, 196, 0.95));
+    scale: 1.16;
+  }
+}
+@media (max-width: 1024px) {
+  .kim-jewel .kim-years.kim-jr::after {
+    left: calc(var(--jr-rail) / 2 - 8px);
+    right: auto;
+    top: 0;
+    bottom: 0;
+    width: 16px;
+    height: auto;
+    background-size: 16px 120px;
+    background-position: 0 -120px;
+    animation-name: kimJrSparkDown;
+  }
+  .kim-jewel .kim-jr-gem svg {
+    animation-delay: calc(2.6s + 0.13s + var(--jr-i, 0) * 0.79s);
+  }
+}
+@keyframes kimJrSparkDown {
+  0% {
+    background-position: 0 -120px;
+  }
+  62%,
+  100% {
+    background-position: 0 calc(100% + 120px);
+  }
 }

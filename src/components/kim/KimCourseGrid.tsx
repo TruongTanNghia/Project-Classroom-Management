@@ -178,7 +178,8 @@ export default function KimCourseGrid({ lang }: { lang: KimLang }) {
 
             <footer className="kim-syl-foot">
               <span>{cycleRule}</span>
-              <a className="kim-btn kim-btn-brass" href="#kim-contact" data-syl-close>
+              {/* địa chỉ của khối liên hệ; KimRouter chặn cú bấm và cuộn tới đó, không tải lại trang */}
+              <a className="kim-btn kim-btn-brass" href="/contact" data-syl-close>
                 {t("Hỏi lịch học")}
               </a>
             </footer>

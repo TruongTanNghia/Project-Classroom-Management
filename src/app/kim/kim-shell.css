@@ -37,6 +37,13 @@ html :where(.kim-canvas) ul {
   list-style: disc;
 }
 
+/* ---------- Khối được cuộn tới bằng mục lục ---------- */
+/* KimRouter đặt tiêu điểm vào khối vừa tới (để phím Tab đi tiếp từ đó). Khối là cả một vùng lớn,
+   không phải nút bấm, nên không vẽ viền tiêu điểm quanh nó. */
+.kim-canvas :is(.kim-sec, .kim-contact):focus {
+  outline: none;
+}
+
 /* ---------- Thanh số liệu ---------- */
 /* Nhãn hai dòng thì chia đều hai dòng ("khách hàng hài lòng / và tin tưởng"), không để
    rớt một chữ lẻ xuống dòng dưới. Chỉ đổi chỗ ngắt dòng, không đổi số dòng hay chiều cao. */

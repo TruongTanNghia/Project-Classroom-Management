@@ -1,0 +1,195 @@
+/* Khối "Học viên và khách hàng nói gì" (KimQuoteWall.tsx), viết tay.
+
+   Bản thiết kế: ba thẻ đứng yên thành một hàng. Ở đây: một dải ba ý được nhắc nhiều nhất, rồi
+   hai hàng thẻ tự trôi ngang ngược chiều nhau. Thẻ vẫn là .kim-quote của thiết kế (cùng chữ,
+   cùng viền, cùng viền sáng theo chuột), chỉ thêm bề rộng cố định và khúc chữ tô nổi.
+   Màu theo luật mệnh Kim: bạc, thép, vàng, nâu đất. */
+
+/* .kim-quotes của thiết kế là lưới 3 cột: bỏ, vì ở đây nó là khung chứa nhiều tầng */
+.kim-quotes.kim-qw {
+  display: block;
+}
+
+/* ---------- ba ý được nhắc nhiều nhất ---------- */
+.kim-qw-cap {
+  margin: 0 0 12px;
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--brass-ink);
+}
+.kim-qw-pillars {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--panel);
+  background-image: var(--brushed);
+  border: 1px solid var(--line);
+}
+.kim-qw-pillars li {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 2px 14px;
+  align-items: baseline;
+  padding: 22px 26px 24px;
+  border-left: 1px solid var(--line-2);
+}
+.kim-qw-pillars li:first-child {
+  border-left: 0;
+}
+.kim-qw-pillars .n {
+  font-family: var(--font-kim-mono), "JetBrains Mono", ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brass-ink);
+}
+.kim-qw-pillars strong {
+  font-size: clamp(26px, 2.7vw, 36px);
+  font-weight: 830;
+  font-stretch: 120%;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+.kim-qw-pillars p {
+  grid-column: 2;
+  margin: 6px 0 0;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--body);
+  text-wrap: pretty;
+}
+
+/* ---------- nút tạm dừng ---------- */
+.kim-qw-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin: 18px 0 10px;
+}
+.kim-qw-pause {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 12px 0 10px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.kim-qw-pause:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+/* ---------- hai hàng thẻ tự trôi ---------- */
+/* Hai hàng xếp trong một cột flex: lề âm của từng hàng (xem dưới) được tính gọn trong cột này,
+   không "lọt" ra ngoài kéo khối bên dưới lên như khi các hàng là khối thường. */
+.kim-qw-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.kim-qw-row {
+  --gap: 22px;
+  display: flex;
+  gap: var(--gap);
+  /* Thẻ nhấc lên khi rê chuột và có bóng đổ; hàng lại phải cắt phần tràn ngang. Nên chừa chỗ
+     trên dưới bằng đệm, rồi trừ lại đúng bằng lề âm: bố cục vẫn như thể hàng chỉ cao bằng thẻ. */
+  padding: 8px 0 22px;
+  margin: -8px 0 -22px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  /* hai đầu mờ dần, thẻ như trôi ra từ sau mép */
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 64px, #000 calc(100% - 64px), transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 64px, #000 calc(100% - 64px), transparent 100%);
+}
+.kim-qw-row::-webkit-scrollbar {
+  display: none;
+}
+.kim-qw-track {
+  display: flex;
+  flex: none;
+  gap: var(--gap);
+  /* trượt đúng một lượt danh sách (bề rộng của chính nó + một khe): bản in thứ hai vào đúng chỗ bản đầu */
+  animation: kimQwSlide 64s linear infinite;
+}
+.kim-qw-row.is-rev .kim-qw-track {
+  animation-duration: 76s;
+  animation-direction: reverse;
+}
+@keyframes kimQwSlide {
+  to {
+    translate: calc(-100% - var(--gap)) 0;
+  }
+}
+.kim-qw-row:hover .kim-qw-track,
+.kim-qw[data-paused="1"] .kim-qw-track {
+  animation-play-state: paused;
+}
+
+.kim-qw-card {
+  flex: none;
+  width: 384px;
+}
+/* khúc chữ tô nổi: nét bút dạ quang vàng nằm dưới chân chữ */
+.kim-qw-hl {
+  font-style: normal;
+  font-weight: 650;
+  background: linear-gradient(transparent 62%, color-mix(in srgb, var(--brass-2) 55%, transparent) 62% 94%, transparent 94%);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+@media (max-width: 860px) {
+  .kim-qw-pillars {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .kim-qw-pillars li {
+    padding: 18px 20px 20px;
+    border-left: 0;
+    border-top: 1px solid var(--line-2);
+  }
+  .kim-qw-pillars li:first-child {
+    border-top: 0;
+  }
+}
+@media (max-width: 640px) {
+  .kim-qw-row {
+    --gap: 14px;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 22px, #000 calc(100% - 22px), transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 22px, #000 calc(100% - 22px), transparent 100%);
+  }
+  .kim-qw-card {
+    width: 296px;
+    padding: 20px;
+  }
+}
+
+/* Máy đặt "giảm chuyển động": kim.css đã tắt mọi animation trong trang. Khi đó hàng thẻ đứng
+   yên, bỏ bản in thứ hai và để người xem tự vuốt ngang từng thẻ. */
+@media (prefers-reduced-motion: reduce) {
+  .kim-qw-track[aria-hidden="true"] {
+    display: none;
+  }
+  .kim-qw-row {
+    scroll-snap-type: x proximity;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .kim-qw-card {
+    scroll-snap-align: start;
+  }
+  .kim-qw-bar {
+    display: none;
+  }
+}

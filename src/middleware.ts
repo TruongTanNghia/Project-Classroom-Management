@@ -1,12 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { isPublicHost } from "@/lib/hosts";
+import { parsePublicPath } from "@/lib/public-sections";
 
 /**
  * Tách hai mặt của cùng một ứng dụng theo TÊN MIỀN:
  *
  *   www.aihoclaptrinh.com     → trang công khai, CHỈ có trang Giới thiệu.
  *                               "/" hiện luôn nội dung Giới thiệu (không đổi URL).
+ *                               /path, /projects, /courses/hoc-may… là địa chỉ của từng
+ *                               khối trong chính trang đó (cũng không đổi URL).
  *                               Mọi đường dẫn quản trị đều bị đẩy về "/".
  *
  *   admin.aihoclaptrinh.com   → ứng dụng quản trị đầy đủ, có cổng đăng nhập.
@@ -59,8 +62,10 @@ export function middleware(request: NextRequest) {
     return res;
   }
 
-  // Trang chủ của tên miền công khai = trang "Xưởng Kim", giữ nguyên URL "/"
-  if (pathname === "/") {
+  // Trang chủ của tên miền công khai = trang "Xưởng Kim", giữ nguyên URL "/".
+  // Địa chỉ của từng khối (/path, /courses, /courses/hoc-may…) cũng hiện đúng trang đó; phần
+  // cuộn tới khối do KimRouter lo ở trình duyệt. Danh sách khối: src/lib/public-sections.ts
+  if (pathname === "/" || parsePublicPath(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = PUBLIC_HOME;
     return NextResponse.rewrite(url);

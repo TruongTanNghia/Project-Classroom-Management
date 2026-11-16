@@ -26,7 +26,10 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Trương Tấn Nghĩa — Co-Founder & CEO AIhoclaptrinh",
+  title: "Trương Tấn Nghĩa — Co-Founder AIhoclaptrinh",
+  // /path, /projects, /courses/hoc-may… đều hiện cùng một trang (xem src/lib/public-sections.ts).
+  // Báo cho máy tìm kiếm biết địa chỉ gốc là "/", kẻo chúng coi là chín trang trùng nội dung.
+  alternates: { canonical: "https://www.aihoclaptrinh.com/" },
   description:
     "Trương Tấn Nghĩa làm mọi thứ về AI, từ mô hình học máy đến robot chạy ngoài đời thật: AI agent, chatbot, thị giác máy tính, Edge AI, robotics và đào tạo lập trình AI.",
 };

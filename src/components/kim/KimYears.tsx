@@ -6,13 +6,17 @@ import { tx, type KimLang, type L } from "./i18n-kim";
 
    Bản thiết kế ghi 2017 → 2020 → 2022 → 2024, là số bịa của bản mẫu. Mốc thật anh Nghĩa
    đưa ngày 15/11/2026: bắt đầu 2022, tốt nghiệp 2023, nhập ngũ 2024 (trong quân ngũ vẫn
-   chịu khó học tập), xuất ngũ 2026 rồi gây dựng mọi thứ. Anh dặn "làm cho wow lên".
+   chịu khó học tập), xuất ngũ 2026 rồi gây dựng mọi thứ. Anh dặn "làm cho wow lên", rồi dặn
+   thêm (16/11): hôm nay anh làm AI ở mọi tầng chứ không chỉ AI agent và automation.
 
    Ý tưởng: anh mệnh Kim và muốn hình ảnh của mình là thứ quý đã qua tôi luyện, nên dòng
    thời gian kể đúng chuyện đó — một viên đá thô thành kim cương. Mỗi mốc là một giai đoạn
    của viên đá (hình vẽ to dần, nhiều mặt cắt dần), và đường nối đổi chất liệu theo chặng:
-   bạc, rồi thép dày ở hai năm quân ngũ, rồi vàng. Chữ chỉ nói điều anh đã kể; phần ví von
-   nằm ở hình và ở năm cái nhãn nhỏ.
+   bạc, rồi thép dày ở hai năm quân ngũ, rồi vàng. Mốc "Hôm nay" là viên đã thành, đặt
+   trong một hộp trưng bày tối như nền nhung của tiệm kim hoàn, kèm đủ tám mảng AI anh làm
+   (đúng tám mảng và đúng thứ tự của khối Lộ trình ở đầu trang).
+
+   Chữ chỉ nói điều anh đã kể; phần ví von nằm ở hình và ở năm cái nhãn nhỏ.
 
    Giữ nguyên class của thiết kế (.kim-years, .kim-year, .kim-year-n) để chữ số năm và kiểu
    chữ không đổi; phần thêm ở kim-journey.css. */
@@ -56,21 +60,37 @@ const MILESTONES: readonly Milestone[] = [
     year: ["Hôm nay", "Today"],
     stage: 5,
     label: ["Toả sáng", "Brilliant"],
-    lead: ["Làm thật, dạy thật.", "Real work, real teaching."],
-    text: ["Xây AI agent và automation cho doanh nghiệp và lớp học.", "Building AI agents and automation for businesses and classrooms."],
+    lead: ["AI ở mọi tầng.", "AI at every layer."],
+    text: [
+      "Từ mô hình học máy đến robot chạy ngoài đời thật: làm thật, rồi dạy lại đúng những gì đã làm.",
+      "From machine-learning models to robots out in the real world: building it for real, then teaching exactly what was built.",
+    ],
     now: true,
   },
+];
+
+/** Tám mảng AI của khối Lộ trình, đúng tên và đúng thứ tự học ở đó. */
+const FIELDS: readonly L[] = [
+  ["Học máy", "Machine learning"],
+  ["Học sâu", "Deep learning"],
+  ["Học tăng cường", "Reinforcement learning"],
+  ["Thị giác máy tính", "Computer vision"],
+  "NLP & LLM",
+  "Edge AI",
+  "Harness AI",
+  "Robotics",
 ];
 
 /* ---------- hình viên đá ở năm giai đoạn ---------- */
 /* Nhìn từ trên xuống một viên giác tròn, cùng hình học với viên lớn ở đầu trang (KimGem):
    mặt bàn 8 cạnh, 8 mặt sao, 8 mặt diều, 16 mặt vành trên. Giai đoạn đầu chưa có mặt cắt
    nào; mỗi giai đoạn sau thêm một lớp, tới giai đoạn 4 thì đủ 33 mặt. */
+type Pt = [number, number];
 const C = 50;
 const RT = 21; // mặt bàn
 const RS = 32; // đỉnh mặt sao
 const RG = 46; // vành
-const pt = (r: number, deg: number): [number, number] => {
+const pt = (r: number, deg: number): Pt => {
   const a = (deg * Math.PI) / 180;
   return [C + r * Math.cos(a), C + r * Math.sin(a)];
 };
@@ -78,33 +98,36 @@ const T = (k: number) => pt(RT, 45 * k);
 const S = (k: number) => pt(RS, 45 * k + 22.5);
 const G = (k: number) => pt(RG, 45 * k);
 const H = (k: number) => pt(RG, 45 * k + 22.5);
-const poly = (ps: [number, number][]) => ps.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
-
-/** Đèn rọi từ góc trên trái. Trả về 0..1: mặt quay về phía đèn thì sáng. */
-const LIGHT = (-135 * Math.PI) / 180;
-function tone(ps: [number, number][], base: number, depth: number) {
+const poly = (ps: Pt[]) => ps.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+/** góc của tâm mặt cắt quanh tâm viên đá, 0..360 độ */
+const angleOf = (ps: Pt[]) => {
   const cx = ps.reduce((s, p) => s + p[0], 0) / ps.length - C;
   const cy = ps.reduce((s, p) => s + p[1], 0) / ps.length - C;
-  const facing = Math.cos(Math.atan2(cy, cx) - LIGHT); // -1..1
+  return ((Math.atan2(cy, cx) * 180) / Math.PI + 360) % 360;
+};
+
+/** Đèn rọi từ góc trên trái. Trả về 0..1: mặt quay về phía đèn thì sáng. */
+const LIGHT = -135;
+function tone(ps: Pt[], base: number, depth: number) {
+  const facing = Math.cos(((angleOf(ps) - LIGHT) * Math.PI) / 180); // -1..1
   return Math.max(0, Math.min(1, base + depth * facing));
 }
-type Facet = { points: string; tone: number; gold?: boolean };
+type Facet = { ps: Pt[]; tone: number; gold?: boolean; table?: boolean };
 
 function facets(stage: Stage): Facet[] {
   const K = [0, 1, 2, 3, 4, 5, 6, 7];
-  const table: [number, number][] = K.map(T);
   const out: Facet[] = [];
   if (stage === 2) {
     // mới mài phẳng mặt trên: một vành thô quanh mặt bàn
     K.forEach((k) => {
       const q = [T(k), T(k + 1), G(k + 1), G(k)];
-      out.push({ points: poly(q), tone: tone(q, 0.5, 0.2) });
+      out.push({ ps: q, tone: tone(q, 0.5, 0.2) });
     });
   } else if (stage === 3) {
     // tám mặt chính đã rõ, tương phản mạnh: viên đá đang chịu lực
     K.forEach((k) => {
       const q = [T(k), T(k + 1), G(k + 1), H(k), G(k)];
-      out.push({ points: poly(q), tone: tone(q, 0.42, 0.42) });
+      out.push({ ps: q, tone: tone(q, 0.42, 0.42) });
     });
   } else {
     K.forEach((k) => {
@@ -113,22 +136,25 @@ function facets(stage: Stage): Facet[] {
       const u1 = [S(k), G(k), H(k)];
       const u2 = [S(k), H(k), G(k + 1)];
       // giai đoạn 5: các mặt sao bắt ánh vàng, xen kẽ, như viên đá đã lên nước
-      out.push({ points: poly(star), tone: tone(star, 0.72, 0.28), gold: stage === 5 && k % 2 === 0 });
-      out.push({ points: poly(kite), tone: tone(kite, 0.55, 0.42) });
-      out.push({ points: poly(u1), tone: tone(u1, 0.5, 0.46) });
-      out.push({ points: poly(u2), tone: tone(u2, 0.44, 0.46) });
+      out.push({ ps: star, tone: tone(star, 0.72, 0.28), gold: stage === 5 && k % 2 === 0 });
+      out.push({ ps: kite, tone: tone(kite, 0.55, 0.42) });
+      out.push({ ps: u1, tone: tone(u1, 0.5, 0.46) });
+      out.push({ ps: u2, tone: tone(u2, 0.44, 0.46) });
     });
   }
-  out.push({ points: poly(table), tone: stage >= 4 ? 0.96 : stage === 3 ? 0.62 : 0.74 });
+  out.push({ ps: K.map(T), tone: stage >= 4 ? 0.96 : stage === 3 ? 0.62 : 0.74, table: true });
   return out;
 }
 
 /** viên đá thô: một khối méo, chưa có mặt cắt, chỉ vài vết nứt */
 const ROUGH = "50,7 76,13 93,39 86,70 60,93 28,87 8,60 15,27";
 const CRACKS = ["M50 7 L46 38 L15 27", "M46 38 L62 60 L86 70", "M62 60 L60 93"];
+/** một vòng ánh sáng quét quanh viên kim cương của mốc "Hôm nay" (giây); khớp với kim-journey.css */
+const GLINT = 3.6;
 
 function Gem({ stage }: { stage: Stage }) {
   const fill = (t: number) => `color-mix(in srgb, var(--jr-hi) ${Math.round(t * 100)}%, var(--jr-lo))`;
+  const fs = stage === 1 ? [] : facets(stage);
   return (
     <svg viewBox="0 0 100 100" aria-hidden="true">
       {stage === 1 ? (
@@ -141,10 +167,21 @@ function Gem({ stage }: { stage: Stage }) {
           ))}
         </>
       ) : (
-        facets(stage).map((f, i) => (
-          <polygon className={f.gold ? "f g" : "f"} points={f.points} style={f.gold ? undefined : { fill: fill(f.tone) }} key={i} />
+        fs.map((f, i) => (
+          <polygon className={f.gold ? "f g" : "f"} points={poly(f.ps)} style={f.gold ? undefined : { fill: fill(f.tone) }} key={i} />
         ))
       )}
+      {/* Viên đã thành: mỗi mặt cắt loé trắng một thoáng khi "tia đèn" quét qua góc của nó, nên
+          ánh sáng trông như đang xoay quanh viên đá. Mặt bàn ở giữa loé chậm hơn, nhẹ hơn. */}
+      {stage === 5 &&
+        fs.map((f, i) => (
+          <polygon
+            className={f.table ? "sp t" : "sp"}
+            points={poly(f.ps)}
+            style={{ animationDelay: `${(f.table ? GLINT * 0.5 : (angleOf(f.ps) / 360) * GLINT).toFixed(2)}s` }}
+            key={"s" + i}
+          />
+        ))}
     </svg>
   );
 }
@@ -165,6 +202,15 @@ export default function KimYears({ lang }: { lang: KimLang }) {
           <p>
             <b>{x(m.lead)}</b> {x(m.text)}
           </p>
+          {m.now && (
+            <ul className="kim-jr-fields" aria-label={x(["Tám mảng AI đang làm", "The eight areas of AI I work in"])}>
+              {FIELDS.map((f, k) => (
+                <li style={{ "--k": k } as CSSProperties} key={k}>
+                  {x(f)}
+                </li>
+              ))}
+            </ul>
+          )}
         </li>
       ))}
     </ol>

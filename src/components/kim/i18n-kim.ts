@@ -10,7 +10,7 @@ export type KimLang = "vi" | "en";
 
 const EN: Record<string, string> = {
   // KimHero
-  "Co-Founder & CEO của AIhoclaptrinh": "Co-Founder & CEO of AIhoclaptrinh",
+  "Co-Founder của AIhoclaptrinh": "Co-Founder of AIhoclaptrinh",
   "Làm mọi thứ về AI, từ mô hình học máy đến robot chạy ngoài đời thật.": "I work across the whole of AI, from machine-learning models to robots out in the real world.",
   "Tôi xây AI agent, chatbot, hệ thống camera thông minh, mô hình chạy trên thiết bị nhỏ và robot. Rồi tôi dạy lại cho người muốn học theo đúng thứ tự: vững nền tảng trước, đi xa sau. Ai cũng có thể ứng dụng AI nếu được kèm đúng cách, đúng lúc.": "I build AI agents, chatbots, smart camera systems, models that run on small devices, and robots. Then I teach it to people who want to learn in the right order: solid foundations first, going further after. Anyone can put AI to work with the right guidance at the right time.",
   "Gửi email hợp tác": "Email me to collaborate",
@@ -264,16 +264,6 @@ const EN: Record<string, string> = {
   // KimQuotes
   "Học viên và khách hàng nói gì": "What students and clients say",
   "Ví dụ minh hoạ, đang cập nhật nhận xét thật kèm tên và đơn vị.": "Illustrative examples; real reviews with names and organisations are being added.",
-  "5 trên 5 sao": "5 out of 5 stars",
-  "Minh hoạ": "Illustrative",
-  "Thầy Nghĩa dạy dễ hiểu, làm được ngay. Automation giúp trung tâm em tiết kiệm hàng giờ mỗi ngày.": "Nghia teaches in a way you can act on immediately. The automation saves our centre hours every day.",
-  "Chị Lan": "Ms. Lan",
-  "Chủ trung tâm": "Centre owner",
-  "Chatbot AI thầy xây cho shop mình chốt đơn rất tốt, khách khen phản hồi nhanh.": "The AI chatbot he built for my shop closes orders really well, and customers praise how fast it replies.",
-  "Anh Minh": "Mr. Minh",
-  "Chủ shop online": "Online shop owner",
-  "Từ mất gốc, sau khoá học em đã tự làm được AI agent cho công việc của mình.": "I started from nothing and finished the course able to build an AI agent for my own job.",
-  "Bạn Hà": "Ha",
 
   // KimContact
   "Hợp tác cùng AIhoclaptrinh": "Work with AIhoclaptrinh",

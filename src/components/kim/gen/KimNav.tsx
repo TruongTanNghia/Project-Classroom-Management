@@ -5,14 +5,14 @@ export default function KimNav({ lang }: { lang: KimLang }) {
   const t = (s: string) => tKim(lang, s);
   return (
     <nav className="kim-nav" aria-label={t("Mục lục trang")}>
-      <a href="#kim-path">{t("Lộ trình")}</a>
-      <a href="#kim-projects">{t("Dự án")}</a>
-      <a href="#kim-solutions">{t("Giải pháp")}</a>
-      <a href="#kim-process">{t("Cách làm việc")}</a>
-      <a href="#kim-courses">{t("Khoá học")}</a>
-      <a href="#kim-journey">{t("Hành trình")}</a>
-      <a href="#kim-quotes">{t("Cảm nhận")}</a>
-      <a className="is-cta" href="#kim-contact">{t("Liên hệ")}</a>
+      <a href="/path">{t("Lộ trình")}</a>
+      <a href="/projects">{t("Dự án")}</a>
+      <a href="/solutions">{t("Giải pháp")}</a>
+      <a href="/process">{t("Cách làm việc")}</a>
+      <a href="/courses">{t("Khoá học")}</a>
+      <a href="/journey">{t("Hành trình")}</a>
+      <a href="/quotes">{t("Cảm nhận")}</a>
+      <a className="is-cta" href="/contact">{t("Liên hệ")}</a>
     </nav>
   );
 }

@@ -10,7 +10,7 @@ export default function KimHero({ lang }: { lang: KimLang }) {
   return (
     <section className="kim-hero" aria-labelledby="kim-name">
       <div className="kim-hero-copy">
-        <span className="kim-plate">{t("Co-Founder & CEO của AIhoclaptrinh")}</span>
+        <span className="kim-plate">{t("Co-Founder của AIhoclaptrinh")}</span>
         <h1 className="kim-name" id="kim-name">
           {t("Trương Tấn")}
           <br />

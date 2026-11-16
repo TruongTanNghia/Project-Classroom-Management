@@ -3,6 +3,7 @@ import "./kim-shell.css";
 import "./kim-courses.css";
 import "./kim-journey.css";
 import "./kim-organ-scan.css";
+import "./kim-quotes.css";
 import "./kim-diamond.css";
 
 import { cookies } from "next/headers";
@@ -10,6 +11,7 @@ import { cookies } from "next/headers";
 import KimControls from "@/components/kim/KimControls";
 import KimFx from "@/components/kim/KimFx";
 import KimProjects from "@/components/kim/KimProjects";
+import KimRouter from "@/components/kim/KimRouter";
 import type { KimLang } from "@/components/kim/i18n-kim";
 import KimContact from "@/components/kim/gen/KimContact";
 import KimCourses from "@/components/kim/gen/KimCourses";
@@ -50,6 +52,7 @@ export default async function KimPage({ searchParams }: { searchParams: Promise<
         <KimQuotes lang={lang} />
         <KimContact lang={lang} />
       </main>
+      <KimRouter />
       {jewel && <KimFx />}
     </div>
   );
