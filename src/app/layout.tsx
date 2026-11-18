@@ -22,7 +22,11 @@ const beVietnam = Be_Vietnam_Pro({
 export const metadata: Metadata = {
   title: "AIhoclaptrinh — EduFlow AI",
   description: "Bảng điều khiển quản lý lớp học AI/lập trình của AIhoclaptrinh",
-  icons: { icon: "/uploads/Logo.jpeg" },
+  // Biểu tượng tab: các file favicon.ico, icon.png, apple-icon.png ngay trong src/app (quy ước
+  // file của Next.js, áp cho mọi trang, cả trang công khai lẫn khu quản trị). Chúng được cắt
+  // từ assets/logo.jpeg bằng UI/aihoclaptrinh-design-mcp/scripts/make-icons.py. Đừng khai
+  // thêm "icons" ở đây: trước đây có, nhưng file favicon.ico mặc định của Next vẫn thắng và
+  // tab hiện hình tam giác thay vì logo.
 };
 
 export default async function RootLayout({

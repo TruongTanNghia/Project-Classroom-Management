@@ -9,7 +9,7 @@ export default function KimCourses({ lang }: { lang: KimLang }) {
       <div className="kim-head">
         <h2 className="kim-h2" id="kim-courses-h">{t("Khoá học: học đến đâu, làm được đến đó")}</h2>
         <p className="kim-note">
-          {t("Mỗi bước của lộ trình ở trên là một khoá, học theo đúng thứ tự đó. Học phí tính theo buổi, đóng theo đợt 8 buổi.")}
+          {t("Mỗi bước của lộ trình ở trên là một khoá, học theo đúng thứ tự đó, 2 buổi mỗi tuần. Buổi nào cũng có thực hành. Học phí tính theo buổi, đóng theo đợt 8 buổi.")}
         </p>
       </div>
       <KimCourseGrid lang={lang} />

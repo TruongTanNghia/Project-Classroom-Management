@@ -1,8 +1,19 @@
 import type { CSSProperties } from "react";
 
 import KimSyllabus from "./KimSyllabus";
-import { COURSES, CYCLE, countSessions, dong, type Course, type Cover } from "./courses-data";
+import { COURSES, CYCLE, PER_WEEK, countSessions, dong, type Course, type Cover } from "./courses-data";
 import { tKim, tx, type KimLang, type L } from "./i18n-kim";
+
+/* biểu tượng nhỏ đứng trước con số thời lượng / thực hành */
+const CLOCK = "M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z";
+const WRENCH = "M14.7 6.3a4 4 0 0 0-5.4 5.2L3.5 17.3a1.8 1.8 0 0 0 2.5 2.5l5.8-5.8a4 4 0 0 0 5.2-5.4l-2.5 2.5-2.3-.6-.6-2.3z";
+function Ico({ d }: { d: string }) {
+  return (
+    <svg className="kim-cx-ico" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={d} />
+    </svg>
+  );
+}
 
 /* Lưới khoá học + hộp "nội dung từng buổi" của mỗi khoá.
 
@@ -84,9 +95,20 @@ export default function KimCourseGrid({ lang }: { lang: KimLang }) {
             <div className="kim-course-body">
               <span className="kim-cx-ph">{label(c)}</span>
               <h3>{x(c.name)}</h3>
-              <span className="kim-course-meta">
-                {countSessions(c)} {t("buổi")} · {t("giảng viên Trương Tấn Nghĩa")}
-              </span>
+              {/* hai con số người xem cần biết ngay: học bao lâu, thực hành bao nhiêu */}
+              <ul className="kim-cx-facts">
+                <li className="is-time">
+                  <Ico d={CLOCK} />
+                  <b>{x(c.months)}</b>
+                  <span>
+                    · {countSessions(c)} {t("buổi")}
+                  </span>
+                </li>
+                <li className="is-lab">
+                  <Ico d={WRENCH} />
+                  <b>{x(c.practice)}</b>
+                </li>
+              </ul>
               <p className="kim-cx-sum">{x(c.sum)}</p>
               <div className="kim-course-foot">
                 <span className="kim-cx-fee">
@@ -123,6 +145,7 @@ export default function KimCourseGrid({ lang }: { lang: KimLang }) {
               <div>
                 <span className="kim-cx-ph">{label(c)}</span>
                 <h3 id={"kim-syl-h-" + c.slug}>{x(c.name)}</h3>
+                <span className="kim-syl-by">{t("giảng viên Trương Tấn Nghĩa")}</span>
               </div>
               <button type="button" className="kim-syl-x" data-syl-close aria-label={t("Đóng")}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
@@ -136,12 +159,30 @@ export default function KimCourseGrid({ lang }: { lang: KimLang }) {
                   để nó thấp thì trên điện thoại còn chỗ cho danh sách buổi */}
               <p className="kim-syl-sum">{x(c.sum)}</p>
               <dl className="kim-syl-facts">
-                <div>
-                  <dt>{t("Thời lượng")}</dt>
-                  <dd>
-                    {countSessions(c)}
-                    <small>{t("buổi")}</small>
+                <div className="is-time">
+                  <dt>
+                    <Ico d={CLOCK} />
+                    {t("Thời lượng")}
+                  </dt>
+                  <dd>{x(c.months)}</dd>
+                  <dd className="sub">
+                    {countSessions(c)} {t("buổi")} · {c.weeks} {en ? "weeks" : "tuần"} · {PER_WEEK} {en ? "per week" : "buổi/tuần"}
+                    {c.hours && (
+                      <>
+                        {" · "}
+                        {x(c.hours)}
+                        {t("/buổi")}
+                      </>
+                    )}
                   </dd>
+                </div>
+                <div className="is-lab">
+                  <dt>
+                    <Ico d={WRENCH} />
+                    {x(["Thực hành", "Hands-on"])}
+                  </dt>
+                  <dd>{x(c.practice)}</dd>
+                  <dd className="sub">{x(c.practiceMore)}</dd>
                 </div>
                 <div>
                   <dt>{t("Học phí")}</dt>
@@ -153,8 +194,23 @@ export default function KimCourseGrid({ lang }: { lang: KimLang }) {
                 <div>
                   <dt>{cycleLong}</dt>
                   <dd>{dong(c.fee * CYCLE)}</dd>
+                  <dd className="sub">{x([`đóng một lần, khoảng ${CYCLE / PER_WEEK} tuần học`, `paid once, about ${CYCLE / PER_WEEK} weeks of classes`])}</dd>
                 </div>
               </dl>
+
+              {/* học xong làm ra được gì: thứ người xem muốn biết nhất sau thời lượng và học phí */}
+              <div className="kim-syl-final">
+                <span className="kim-syl-final-ico" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round">
+                    <path d="M6 3h12l3 5-9 13L3 8z" />
+                    <path d="M3 8h18M9 3l3 5 3-5M12 8v13" />
+                  </svg>
+                </span>
+                <div>
+                  <b>{x(["Sản phẩm cuối khoá", "What you finish with"])}</b>
+                  <p>{x(c.final)}</p>
+                </div>
+              </div>
               {c.note && <p className="kim-syl-note">{x(c.note)}</p>}
 
               <h4 className="kim-syl-h">{t("Nội dung từng buổi")}</h4>
@@ -162,12 +218,34 @@ export default function KimCourseGrid({ lang }: { lang: KimLang }) {
                 <section key={pi}>
                   {part.name && <h5 className="kim-syl-part">{x(part.name)}</h5>}
                   <ol className="kim-syl-list" start={before[pi] + 1}>
-                    {part.sessions.map(([title, desc], si) => (
+                    {part.sessions.map(([title, desc, lab], si) => (
                       <li key={si}>
                         <span className="n">{String(before[pi] + si + 1).padStart(2, "0")}</span>
                         <div>
                           <b>{x(title)}</b>
-                          <span className="d">{x(desc)}</span>
+                          {desc && <span className="d">{x(desc)}</span>}
+                          {lab && (
+                            <span className="kim-syl-lab">
+                              <span className="tag">
+                                <Ico d={WRENCH} />
+                                {x(["Thực hành", "Hands-on"])}
+                              </span>
+                              <span className="txt">
+                                {x(lab.d)}
+                                {lab.ex ? (
+                                  <span className="ex">
+                                    {" · "}
+                                    {lab.ex} {x(["bài tập", lab.ex === 1 ? "exercise" : "exercises"])}
+                                  </span>
+                                ) : null}
+                              </span>
+                              {lab.pj && (
+                                <span className="pj">
+                                  <b>{x(["Dự án", "Project"])}</b> {x(lab.pj)}
+                                </span>
+                              )}
+                            </span>
+                          )}
                         </div>
                       </li>
                     ))}

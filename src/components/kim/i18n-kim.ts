@@ -231,8 +231,8 @@ const EN: Record<string, string> = {
 
   // KimCourses
   "Khoá học: học đến đâu, làm được đến đó": "Courses: whatever you learn, you can build",
-  "Mỗi bước của lộ trình ở trên là một khoá, học theo đúng thứ tự đó. Học phí tính theo buổi, đóng theo đợt 8 buổi.":
-    "Each step of the roadmap above is a course, taken in that same order. Tuition is charged per session and paid in blocks of 8 sessions.",
+  "Mỗi bước của lộ trình ở trên là một khoá, học theo đúng thứ tự đó, 2 buổi mỗi tuần. Buổi nào cũng có thực hành. Học phí tính theo buổi, đóng theo đợt 8 buổi.":
+    "Each step of the roadmap above is a course, taken in that same order, two sessions a week. Every session includes hands-on work. Tuition is charged per session and paid in blocks of 8 sessions.",
   // lưới khoá học + hộp nội dung từng buổi (KimCourseGrid; tên khoá và từng buổi nằm ở courses-data.ts)
   "Bước": "Step",
   "buổi": "sessions",

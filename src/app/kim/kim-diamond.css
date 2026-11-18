@@ -242,6 +242,9 @@
 .kim-jewel .kim-plate,
 .kim-jewel .kim-medal b,
 .kim-jewel .kim-cx-no,
+.kim-jewel .kim-cx-facts .is-time,
+.kim-jewel .kim-syl-lab .tag,
+.kim-jewel .kim-syl-final-ico,
 .kim-jewel .kim-contact-item > i {
   background-image: var(--sweep), var(--plate);
   background-size: 240% 100%, 100% 100%;
@@ -284,6 +287,16 @@
 .kim-jewel .kim-cx:nth-child(7) .kim-cx-no { animation-delay: 2.68s; }
 .kim-jewel .kim-cx:nth-child(8) .kim-cx-no { animation-delay: 2.96s; }
 .kim-jewel .kim-cx:nth-child(9) .kim-cx-no { animation-delay: 3.24s; }
+/* thời lượng trên thẻ loé ngay sau đồng xu số bước của thẻ đó */
+.kim-jewel .kim-cx:nth-child(1) .kim-cx-facts .is-time { animation-delay: 1.4s; }
+.kim-jewel .kim-cx:nth-child(2) .kim-cx-facts .is-time { animation-delay: 1.68s; }
+.kim-jewel .kim-cx:nth-child(3) .kim-cx-facts .is-time { animation-delay: 1.96s; }
+.kim-jewel .kim-cx:nth-child(4) .kim-cx-facts .is-time { animation-delay: 2.24s; }
+.kim-jewel .kim-cx:nth-child(5) .kim-cx-facts .is-time { animation-delay: 2.52s; }
+.kim-jewel .kim-cx:nth-child(6) .kim-cx-facts .is-time { animation-delay: 2.8s; }
+.kim-jewel .kim-cx:nth-child(7) .kim-cx-facts .is-time { animation-delay: 3.08s; }
+.kim-jewel .kim-cx:nth-child(8) .kim-cx-facts .is-time { animation-delay: 3.36s; }
+.kim-jewel .kim-cx:nth-child(9) .kim-cx-facts .is-time { animation-delay: 3.64s; }
 .kim-jewel .kim-contact-item:nth-child(2) > i { animation-delay: 0.45s; }
 .kim-jewel .kim-contact-item:nth-child(3) > i { animation-delay: 0.9s; }
 @keyframes kimSweep {
