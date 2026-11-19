@@ -6,10 +6,8 @@ import { parsePublicPath } from "@/lib/public-sections";
 /**
  * Tách hai mặt của cùng một ứng dụng theo TÊN MIỀN:
  *
- *   www.aihoclaptrinh.com     → trang công khai, CHỈ có trang Giới thiệu.
- *                               "/" hiện luôn nội dung Giới thiệu (không đổi URL).
- *                               /path, /projects, /courses/hoc-may… là địa chỉ của từng
- *                               khối trong chính trang đó (cũng không đổi URL).
+ *   www.aihoclaptrinh.com     → trang công khai: trang chủ "/" và các trang /path, /roadmap,
+ *                               /projects, /courses… (nội bộ là /kim/<trang>, URL không đổi).
  *                               Mọi đường dẫn quản trị đều bị đẩy về "/".
  *
  *   admin.aihoclaptrinh.com   → ứng dụng quản trị đầy đủ, có cổng đăng nhập.
@@ -63,19 +61,27 @@ export function middleware(request: NextRequest) {
   }
 
   // Trang chủ của tên miền công khai = trang "Xưởng Kim", giữ nguyên URL "/".
-  // Địa chỉ của từng khối (/path, /courses, /courses/hoc-may…) cũng hiện đúng trang đó; phần
-  // cuộn tới khối do KimRouter lo ở trình duyệt. Danh sách khối: src/lib/public-sections.ts
-  if (pathname === "/" || parsePublicPath(pathname)) {
+  // Mỗi đầu mục là một trang riêng: "/projects" hiện trang nội bộ /kim/projects, vẫn giữ URL.
+  // Địa chỉ con (/courses/hoc-may, /roadmap/ml) hiện trang mẹ; hộp chi tiết do trình duyệt mở.
+  // Danh sách trang: src/lib/public-sections.ts
+  if (pathname === "/") {
     const url = request.nextUrl.clone();
     url.pathname = PUBLIC_HOME;
     return NextResponse.rewrite(url);
   }
+  const page = parsePublicPath(pathname);
+  if (page) {
+    const url = request.nextUrl.clone();
+    url.pathname = `${PUBLIC_HOME}/${page.section}`;
+    return NextResponse.rewrite(url);
+  }
 
-  // Link cũ aihoclaptrinh.com/about (đã chia sẻ, đã được Google ghi nhận) và tên
-  // nội bộ /kim đều đưa về "/", để mỗi trang chỉ có đúng một địa chỉ.
+  // Tên nội bộ /kim/<trang> → địa chỉ công khai /<trang>; link cũ aihoclaptrinh.com/about
+  // (đã chia sẻ, đã được Google ghi nhận) → "/". Mỗi trang chỉ có đúng một địa chỉ.
   if (under(pathname, "/about") || under(pathname, PUBLIC_HOME)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    const rest = under(pathname, PUBLIC_HOME) ? pathname.slice(PUBLIC_HOME.length) : "";
+    url.pathname = rest && parsePublicPath(rest) ? rest : "/";
     return NextResponse.redirect(url, 308);
   }
 
@@ -93,6 +99,8 @@ export const config = {
   // bộ lọc ở trên và bị đẩy về "/" — thêm loại file tĩnh mới vào public/ thì phải thêm đuôi vào
   // đây (glb: mô hình 3D của trang công khai, public/kim/models).
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\.(?:webp|jpg|jpeg|png|gif|svg|ico|woff|woff2|ttf|css|js|map|txt|xml|json|glb)$).*)",
+    // "\\." (hai gạch): trong chuỗi JS, "\." chỉ còn là "." và khớp MỌI ký tự, khi đó cả
+    // "/roadmap" (tận cùng bằng "map") cũng bị coi là tệp tĩnh và lọt qua middleware.
+    "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:webp|jpg|jpeg|png|gif|svg|ico|woff|woff2|ttf|css|js|map|txt|xml|json|glb)$).*)",
   ],
 };

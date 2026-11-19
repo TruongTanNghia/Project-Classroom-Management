@@ -17,8 +17,8 @@ import { useEffect } from "react";
    React sẽ ghi đè className của những phần tử nó quản lý (thẻ dự án, khung trình diễn). */
 
 const REVEAL =
-  ".kim-head, .kim-phases, .kim-station, .kim-proj-layout, .kim-sol, .kim-step, .kim-course, .kim-topics, .kim-year, .kim-motto, .kim-tools, .kim-qw-pillars, .kim-qw-row, .kim-contact";
-const SPOT = ".kim-sol, .kim-course, .kim-quote, .kim-panel, .kim-proj-cta, .kim-topic-list a, .kim-proof, .kim-proj, .kim-journey, .kim-contact-item";
+  ".kim-head, .kim-phases, .kim-station, .kim-proj-layout, .kim-sol, .kim-step, .kim-course, .kim-topics, .kim-year, .kim-motto, .kim-tools, .kim-qw-pillars, .kim-qw-row, .kim-explore-grid > li, .kim-next, .kim-rm-tier, .kim-rm-stagebar, .kim-contact";
+const SPOT = ".kim-sol, .kim-course, .kim-quote, .kim-panel, .kim-proj-cta, .kim-topic-list a, .kim-proof, .kim-proj, .kim-journey, .kim-contact-item, .kim-exp-card, .kim-next, .kim-ph, .kim-rm-tile";
 
 /** bộ sinh số giả ngẫu nhiên có hạt giống: sao rơi cùng chỗ ở mọi lần tải trang */
 function rng(seed: number) {

@@ -1,59 +1,24 @@
-import "./kim.css";
-import "./kim-shell.css";
-import "./kim-courses.css";
-import "./kim-journey.css";
-import "./kim-organ-scan.css";
-import "./kim-quotes.css";
-import "./kim-diamond.css";
+import { kimEnv, type KimPageProps } from "./env";
 
-import { cookies } from "next/headers";
-
-import KimControls from "@/components/kim/KimControls";
-import KimFx from "@/components/kim/KimFx";
-import KimProjects from "@/components/kim/KimProjects";
-import KimRouter from "@/components/kim/KimRouter";
-import type { KimLang } from "@/components/kim/i18n-kim";
-import KimContact from "@/components/kim/gen/KimContact";
-import KimCourses from "@/components/kim/gen/KimCourses";
+import KimShell from "@/components/kim/KimShell";
+import { KimExplore } from "@/components/kim/KimPageHero";
 import KimHero from "@/components/kim/gen/KimHero";
-import KimJourney from "@/components/kim/gen/KimJourney";
-import KimNav from "@/components/kim/gen/KimNav";
-import KimPath from "@/components/kim/gen/KimPath";
-import KimProcess from "@/components/kim/gen/KimProcess";
-import KimQuotes from "@/components/kim/gen/KimQuotes";
-import KimSolutions from "@/components/kim/gen/KimSolutions";
 
-/* Trang công khai của aihoclaptrinh.com — bản thiết kế "Giới thiệu v6 · Xưởng Kim".
+/* Trang chủ của aihoclaptrinh.com — bản thiết kế "Giới thiệu v6 · Xưởng Kim".
 
-   Chỉ tên miền công khai mới tới được đây: middleware đổi "/" thành "/kim" ở đó,
-   còn trong khu quản trị thì "/kim" bị đẩy về trang Giới thiệu bản cũ. Hai bản
-   không dùng chung dòng CSS nào (bản này tiền tố kim-, bản cũ abt-).
+   Từ 18/11/2026 trang công khai chia thành nhiều trang (anh Nghĩa dặn), xem
+   src/lib/public-sections.ts. Trang chủ giữ phần mở đầu của thiết kế (chân dung, viên kim
+   cương, số liệu) và một lưới dẫn sang từng trang. Chân trang (khối Liên hệ) ở KimShell.
 
-   Ngôn ngữ và giao diện sáng/tối đọc từ cookie để dựng sẵn trên máy chủ. */
-export default async function KimPage({ searchParams }: { searchParams: Promise<{ plain?: string }> }) {
-  const [ck, sp] = await Promise.all([cookies(), searchParams]);
-  const lang: KimLang = ck.get("aihlt-lang")?.value === "en" ? "en" : "vi";
-  const dark = ck.get("aihlt-kim-theme")?.value === "dark";
-  // ?plain=1: tắt lớp kim cương, còn lại đúng nguyên bản thiết kế — để đo đối chiếu
-  const jewel = sp.plain !== "1";
-
+   Chỉ tên miền công khai mới tới được đây: middleware đổi "/" thành "/kim" ở đó, còn trong
+   khu quản trị thì "/kim" bị đẩy về trang Giới thiệu bản cũ. Hai bản không dùng chung dòng CSS
+   nào (bản này tiền tố kim-, bản cũ abt-). */
+export default async function KimHomePage({ searchParams }: KimPageProps) {
+  const { lang, dark, jewel } = await kimEnv(searchParams);
   return (
-    <div id="kim-canvas" className={"kim-canvas" + (dark ? " dark" : "") + (jewel ? " kim-jewel" : "")} lang={lang}>
-      <KimControls lang={lang} dark={dark} />
-      <main className="kim-root">
-        <KimHero lang={lang} />
-        <KimNav lang={lang} />
-        <KimPath lang={lang} />
-        <KimProjects lang={lang} />
-        <KimSolutions lang={lang} />
-        <KimProcess lang={lang} />
-        <KimCourses lang={lang} />
-        <KimJourney lang={lang} />
-        <KimQuotes lang={lang} />
-        <KimContact lang={lang} />
-      </main>
-      <KimRouter />
-      {jewel && <KimFx />}
-    </div>
+    <KimShell lang={lang} dark={dark} jewel={jewel} current={null}>
+      <KimHero lang={lang} />
+      <KimExplore lang={lang} />
+    </KimShell>
   );
 }

@@ -1,5 +1,16 @@
-import type { Metadata } from "next";
+import "./kim.css";
+import "./kim-shell.css";
+import "./kim-site.css";
+import "./kim-courses.css";
+import "./kim-journey.css";
+import "./kim-organ-scan.css";
+import "./kim-quotes.css";
+import "./kim-roadmap.css";
+import "./kim-diamond.css";
+
 import { Archivo, JetBrains_Mono, Patrick_Hand } from "next/font/google";
+
+import { homeMetadata } from "./page-meta";
 
 /* Phông của bản thiết kế "Xưởng Kim". Archivo phải nạp cả trục bề rộng (wdth):
    tiêu đề dùng font-stretch 114–125% để ra dáng chữ dập trên kim loại; thiếu trục
@@ -25,14 +36,8 @@ const mono = JetBrains_Mono({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "Trương Tấn Nghĩa — Co-Founder AIhoclaptrinh",
-  // /path, /projects, /courses/hoc-may… đều hiện cùng một trang (xem src/lib/public-sections.ts).
-  // Báo cho máy tìm kiếm biết địa chỉ gốc là "/", kẻo chúng coi là chín trang trùng nội dung.
-  alternates: { canonical: "https://www.aihoclaptrinh.com/" },
-  description:
-    "Trương Tấn Nghĩa làm mọi thứ về AI, từ mô hình học máy đến robot chạy ngoài đời thật: AI agent, chatbot, thị giác máy tính, Edge AI, robotics và đào tạo lập trình AI.",
-};
+// tiêu đề, mô tả, canonical của trang chủ (theo ngôn ngữ đang chọn); trang con tự khai ở page-meta.ts
+export const generateMetadata = homeMetadata;
 
 export default function KimLayout({ children }: { children: React.ReactNode }) {
   return <div className={`${archivo.variable} ${patrickHand.variable} ${mono.variable}`}>{children}</div>;

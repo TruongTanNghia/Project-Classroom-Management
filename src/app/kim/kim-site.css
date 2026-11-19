@@ -1,0 +1,726 @@
+/* Phần khung của trang công khai từ khi chia thành nhiều trang (18/11/2026): thanh mục lục
+   dẫn sang các trang, menu điện thoại, phần mở đầu của từng trang, ô "Trang tiếp theo",
+   lưới "Khám phá" ở trang chủ, chân trang, và hiệu ứng chuyển trang.
+
+   Cùng chất liệu với bản thiết kế: nhôm xước (--panel + --brushed), đồng thau (--plate),
+   thép (--steel). Luật màu mệnh Kim: chỉ trắng, bạc, thép, vàng, nâu đất. */
+
+/* ---------- Chuyển trang mượt (View Transitions giữa hai trang thật) ---------- */
+/* Trình duyệt hỗ trợ (Chrome, Edge, Safari mới) thì trang cũ mờ dần sang trang mới, thanh
+   mục lục và cụm nút góc đứng yên. Trình duyệt chưa hỗ trợ thì chuyển trang như thường. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+}
+.kim-site-nav {
+  view-transition-name: kim-nav;
+}
+.kim-ctl {
+  view-transition-name: kim-ctl;
+}
+::view-transition-old(root) {
+  animation: kimVtOut 0.22s ease both;
+}
+::view-transition-new(root) {
+  animation: kimVtIn 0.38s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes kimVtOut {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes kimVtIn {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+}
+
+/* ---------- Thân trang ---------- */
+/* <main> nằm giữa thanh mục lục và chân trang. Giữ kiểu cột flex như .kim-root của thiết kế
+   để lề trên dưới của các khối không bị "gộp" khác đi so với bản một trang. */
+.kim-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ---------- Thanh mục lục dẫn sang các trang ---------- */
+.kim-nav.kim-site-nav {
+  align-self: flex-start;
+  margin-top: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.kim-site-nav::-webkit-scrollbar {
+  display: none;
+}
+.kim-site-nav a {
+  flex: none;
+  padding: 0 12px;
+}
+.kim-site-nav a[aria-current="page"]:not(.is-cta) {
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: inset 0 -2px 0 var(--brass), var(--shadow-sm);
+}
+.kim-site-nav .is-cta[aria-current="page"] {
+  box-shadow: inset 0 -2px 0 var(--brass-2);
+}
+.kim-site-home {
+  width: 42px;
+  justify-content: center;
+  padding: 0 !important;
+}
+.kim-site-home .kim-ico {
+  width: 26px;
+  height: 26px;
+}
+/* màn hẹp: mục lục đầy đủ không còn chỗ, chuyển sang nút Mục lục trong cụm nút góc */
+@media (max-width: 1180px) {
+  .kim-nav.kim-site-nav {
+    display: none;
+  }
+}
+
+/* ---------- Nút Mục lục + tấm menu (màn hẹp) ---------- */
+.kim-ctl-menu {
+  display: none;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 12px 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--steel);
+  color: var(--on-steel);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.kim-canvas.dark .kim-ctl-menu {
+  color: #24272b;
+  background: var(--brass-2);
+}
+@media (max-width: 1180px) {
+  .kim-ctl-menu {
+    display: inline-flex;
+  }
+}
+.kim-menu {
+  position: fixed;
+  inset: 0 0 0 auto;
+  margin: 0;
+  width: min(420px, 100%);
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid var(--line-2);
+  color: var(--ink);
+  background: var(--surface);
+  background-image: var(--brushed);
+  box-shadow: -30px 0 60px -30px rgba(12, 14, 16, 0.6);
+}
+.kim-menu[open] {
+  display: flex;
+  flex-direction: column;
+  animation: kimMenuIn 0.32s var(--ease);
+}
+.kim-menu::backdrop {
+  background: rgba(20, 22, 24, 0.55);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+@keyframes kimMenuIn {
+  from {
+    translate: 40px 0;
+    opacity: 0;
+  }
+}
+.kim-menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 18px 10px 24px;
+}
+.kim-menu-head b {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brass-ink);
+}
+.kim-menu-x {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  border: 1px solid var(--line-2);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.kim-menu ul {
+  flex: 1;
+  margin: 0;
+  padding: 4px 16px 24px;
+  list-style: none;
+  overflow-y: auto;
+}
+.kim-menu li a {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 11px 10px;
+  border-radius: 12px;
+  font-size: 24px;
+  font-weight: 760;
+  font-stretch: 112%;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-decoration: none;
+}
+.kim-menu li a .no {
+  font-family: var(--font-kim-mono), "JetBrains Mono", ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+.kim-menu li a:hover {
+  background: var(--panel);
+}
+.kim-menu li a[aria-current="page"] {
+  color: var(--brass-ink);
+  background: color-mix(in srgb, var(--brass-2) 14%, transparent);
+}
+.kim-menu li a[aria-current="page"] .no {
+  color: var(--brass-ink);
+}
+
+/* ---------- Phần mở đầu của trang con ---------- */
+.kim-ph {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 28px 40px;
+  align-items: center;
+  margin-top: 28px;
+  padding: clamp(28px, 5vw, 60px);
+  border-radius: 32px;
+  background: var(--panel);
+  background-image: var(--brushed);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+/* số thứ tự rất lớn, chỉ có viền, chìm sau huy hiệu */
+.kim-ph-big {
+  position: absolute;
+  z-index: -1;
+  right: -0.04em;
+  bottom: -0.22em;
+  font-size: clamp(180px, 30vw, 400px);
+  font-weight: 860;
+  font-stretch: 125%;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: transparent;
+  -webkit-text-stroke: 2px color-mix(in srgb, var(--line-2) 80%, transparent);
+  pointer-events: none;
+  user-select: none;
+}
+.kim-ph-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+.kim-ph-crumb {
+  display: flex;
+  gap: 8px;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+html :where(.kim-canvas) .kim-ph-crumb a {
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+html :where(.kim-canvas) .kim-ph-crumb a:hover {
+  color: var(--ink);
+}
+.kim-ph-no {
+  font-family: var(--font-kim-mono), "JetBrains Mono", ui-monospace, monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--brass-ink);
+}
+.kim-ph-no i {
+  margin-left: 6px;
+  font-style: normal;
+  color: var(--muted);
+}
+.kim-ph-title {
+  margin: 0;
+  font-size: clamp(52px, 8.4vw, 124px);
+  font-weight: 850;
+  font-stretch: 125%;
+  line-height: 0.96;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+.kim-ph-lead {
+  margin: 4px 0 0;
+  max-width: 54ch;
+  font-size: clamp(16px, 1.5vw, 19px);
+  line-height: 1.6;
+  color: var(--body);
+  text-wrap: pretty;
+}
+.kim-ph-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 30px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.kim-ph-stats li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 14px;
+  border-left: 3px solid var(--brass);
+}
+.kim-ph-stats b {
+  font-size: clamp(30px, 3.2vw, 44px);
+  font-weight: 830;
+  font-stretch: 120%;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.kim-ph-stats span {
+  font-size: 14px;
+  color: var(--muted);
+}
+/* huy hiệu trong vòng vạch chia */
+.kim-ph-art {
+  position: relative;
+  justify-self: center;
+  width: min(100%, 340px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+.kim-ph-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.kim-ph-ring .r1 {
+  fill: none;
+  stroke: var(--brass);
+  stroke-width: 6;
+  stroke-dasharray: 1.4 7.9;
+  opacity: 0.75;
+}
+.kim-ph-ring .r2 {
+  fill: none;
+  stroke: var(--line-2);
+  stroke-width: 1.5;
+}
+.kim-ph-ring .r3 {
+  fill: none;
+  stroke: var(--brass);
+  stroke-width: 1;
+  opacity: 0.45;
+}
+.kim-ph-medal {
+  position: relative;
+  width: 64%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 34% 28%, var(--face-1), var(--face-2));
+  border: 1.5px solid var(--line-2);
+  box-shadow: 0 0 0 10px var(--panel), 0 0 0 11px var(--line), 0 30px 50px -30px rgba(20, 22, 24, 0.7);
+}
+.kim-ph-medal .kim-ico {
+  width: 58%;
+  height: 58%;
+}
+
+@media (max-width: 860px) {
+  .kim-ph {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .kim-ph-art {
+    grid-row: 1;
+    justify-self: start;
+    width: 150px;
+  }
+  .kim-ph-medal {
+    box-shadow: 0 0 0 6px var(--panel), 0 0 0 7px var(--line), 0 18px 30px -20px rgba(20, 22, 24, 0.7);
+  }
+}
+@media (max-width: 640px) {
+  .kim-ph {
+    margin-top: 6px;
+    padding: 24px 20px 28px;
+    border-radius: 24px;
+  }
+  .kim-ph-art {
+    width: 118px;
+  }
+  .kim-ph-stats {
+    gap: 12px 22px;
+  }
+}
+
+/* ---------- Trang tiếp theo ---------- */
+html :where(.kim-canvas) a.kim-next {
+  color: var(--ink);
+  text-decoration: none;
+}
+.kim-next {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 18px 28px;
+  align-items: center;
+  margin-top: 96px;
+  padding: clamp(22px, 3.4vw, 36px);
+  border-radius: 26px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  transition: border-color 0.25s ease, translate 0.35s var(--ease);
+}
+.kim-next:hover {
+  border-color: var(--brass);
+  translate: 0 -3px;
+}
+.kim-next-medal {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--panel);
+  border: 1.5px solid var(--line-2);
+  box-shadow: 0 0 0 6px var(--surface), 0 0 0 7px var(--line);
+}
+.kim-next-medal .kim-ico {
+  width: 56px;
+  height: 56px;
+}
+.kim-next-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.kim-next-copy small {
+  font-family: var(--font-kim-mono), "JetBrains Mono", ui-monospace, monospace;
+  font-size: 13px;
+  color: var(--brass-ink);
+}
+.kim-next-copy b {
+  font-size: clamp(28px, 3.6vw, 48px);
+  font-weight: 820;
+  font-stretch: 118%;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+.kim-next-copy span {
+  max-width: 60ch;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.kim-next-arrow {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #2e2412;
+  background: var(--plate);
+  border: 1px solid #a9802c;
+  transition: translate 0.35s var(--ease);
+}
+.kim-next:hover .kim-next-arrow {
+  translate: 6px 0;
+}
+@media (max-width: 640px) {
+  .kim-next {
+    grid-template-columns: minmax(0, 1fr) auto;
+    margin-top: 64px;
+  }
+  .kim-next-medal {
+    display: none;
+  }
+  .kim-next-arrow {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+/* ---------- Khám phá (trang chủ) ---------- */
+.kim-explore-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+html :where(.kim-canvas) a.kim-exp-card {
+  color: var(--ink);
+  text-decoration: none;
+}
+.kim-exp-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  padding: 22px 22px 24px;
+  border-radius: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  transition: border-color 0.25s ease, translate 0.35s var(--ease), box-shadow 0.35s var(--ease);
+}
+.kim-exp-card:hover {
+  border-color: var(--brass);
+  translate: 0 -4px;
+  box-shadow: 0 1px 0 rgba(36, 39, 43, 0.05), 0 30px 46px -30px rgba(36, 39, 43, 0.6);
+}
+.kim-exp-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.kim-exp-medal {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--panel);
+  border: 1.5px solid var(--line-2);
+  box-shadow: 0 0 0 5px var(--surface), var(--shadow-sm);
+}
+.kim-exp-medal .kim-ico {
+  width: 36px;
+  height: 36px;
+}
+.kim-exp-no {
+  font-size: 44px;
+  font-weight: 860;
+  font-stretch: 125%;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--line-2);
+}
+.kim-exp-card b {
+  font-size: 22px;
+  font-weight: 780;
+  font-stretch: 112%;
+  line-height: 1.15;
+}
+.kim-exp-lead {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.kim-exp-stat {
+  margin-top: auto;
+  padding-top: 8px;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+.kim-exp-stat em {
+  font-style: normal;
+  font-size: 20px;
+  font-weight: 800;
+  font-stretch: 115%;
+  color: var(--brass-ink);
+}
+.kim-exp-go {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+.kim-exp-card:hover .kim-exp-go {
+  color: #2e2412;
+  background: var(--plate);
+  border-color: #a9802c;
+}
+@media (max-width: 1024px) {
+  .kim-explore-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .kim-explore-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+}
+
+/* ---------- Chân trang ---------- */
+.kim-foot-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 28px;
+  margin-top: 26px;
+  padding: 18px 4px 4px;
+  border-top: 1px solid var(--line);
+}
+html :where(.kim-canvas) .kim-foot-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.kim-foot-brand .kim-ico {
+  width: 34px;
+  height: 34px;
+}
+.kim-foot-brand b {
+  display: block;
+  font-size: 15px;
+  font-weight: 760;
+}
+.kim-foot-brand small {
+  display: block;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.kim-foot-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+html :where(.kim-canvas) .kim-foot-links a {
+  font-size: 13.5px;
+  color: var(--muted);
+  text-decoration: none;
+}
+html :where(.kim-canvas) .kim-foot-links a:hover,
+html :where(.kim-canvas) .kim-foot-links a[aria-current="page"] {
+  color: var(--ink);
+}
+.kim-foot-copy {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+/* ============================================================
+   Lớp kim cương cho các phần trên
+   ============================================================ */
+/* tiêu đề trang: chữ kim loại có vệt sáng lướt qua, như tên ở trang chủ */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .kim-jewel .kim-ph-title {
+    background-color: var(--ink);
+    background-image: linear-gradient(104deg, transparent 0 47.6%, var(--name-hi) 50%, transparent 52.4% 100%);
+    background-size: 300% 100%;
+    background-repeat: no-repeat;
+    background-position: 100% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    animation: kimTextSweep 7.5s ease-in-out infinite 1.2s;
+  }
+}
+/* vòng vạch chia quay chậm; huy hiệu, chữ, số liệu hiện lần lượt khi vào trang */
+.kim-jewel .kim-ph-ring .r1 {
+  transform-origin: 100px 100px;
+  animation: kimPhSpin 60s linear infinite;
+}
+@keyframes kimPhSpin {
+  to {
+    rotate: 360deg;
+  }
+}
+.kim-jewel .kim-ph-copy > * {
+  animation: kimRise 0.75s var(--ease) backwards;
+}
+.kim-jewel .kim-ph-copy > :nth-child(2) { animation-delay: 0.06s; }
+.kim-jewel .kim-ph-copy > :nth-child(3) { animation-delay: 0.12s; }
+.kim-jewel .kim-ph-copy > :nth-child(4) { animation-delay: 0.2s; }
+.kim-jewel .kim-ph-copy > :nth-child(5) { animation-delay: 0.28s; }
+.kim-jewel .kim-ph-medal {
+  animation: kimPop 0.9s var(--ease) backwards 0.2s;
+}
+.kim-jewel .kim-ph-big {
+  animation: kimRise 1.1s var(--ease) backwards 0.1s;
+}
+/* mũi tên vàng của ô "Trang tiếp theo" và đồng hồ số của thẻ khám phá có vệt sáng lướt */
+.kim-jewel .kim-next-arrow {
+  background-image: var(--sweep), var(--plate);
+  background-size: 240% 100%, 100% 100%;
+  background-repeat: no-repeat;
+  background-position: 160% 0, 0 0;
+  animation: kimSweep 6.4s ease-in-out infinite 1.5s;
+}
+/* viền sáng chạy theo con trỏ, như các thẻ khác của trang */
+.kim-jewel :is(.kim-exp-card, .kim-next, .kim-ph)::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  padding: 1.5px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  background: radial-gradient(300px circle at var(--px, 50%) var(--py, 50%), var(--spot-edge), transparent 64%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.kim-jewel :is(.kim-exp-card, .kim-next, .kim-ph):hover::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kim-jewel .kim-ph-ring .r1 {
+    animation: none;
+  }
+}
