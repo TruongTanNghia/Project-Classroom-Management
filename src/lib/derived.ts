@@ -225,11 +225,16 @@ export function studentHistory(student: Student, records: AttRecord[]) {
     .sort((a, b) => b.date.localeCompare(a.date));
 }
 
+/** Các ca học trong ngày, theo thứ tự giờ. "Ca N" trên màn hình là vị trí trong danh sách này;
+    buổi học lưu giờ dạng chữ ("09:00–10:30") chứ không lưu số ca, nên thêm ca vào giữa không làm
+    lệch buổi nào. 10:30–12:00 và 18:00–19:30 thêm ngày 22/11/2026 (anh Nghĩa dặn: 8 ca). */
 export const CA_SLOTS = [
   "07:30–09:00",
   "09:00–10:30",
+  "10:30–12:00",
   "14:30–16:00",
   "16:00–17:30",
+  "18:00–19:30",
   "19:30–21:00",
   "21:00–22:30",
 ];

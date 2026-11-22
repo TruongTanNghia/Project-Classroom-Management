@@ -52,7 +52,7 @@
 
 ### 📅 Lịch tuần có màu riêng
 
-Lưới **T2–T6 × 6 ca**, mỗi học viên được cấp **một màu không trùng với ai**, hiển thị **tên gọi** thay vì họ để nhìn phát biết ngay. Điểm danh ngay trên ô lịch.
+Lưới **T2–CN × 8 ca**, mỗi học viên được cấp **một màu không trùng với ai**, hiển thị **tên gọi** thay vì họ để nhìn phát biết ngay. Điểm danh ngay trên ô lịch.
 
 </td>
 <td width="33%" valign="top">
